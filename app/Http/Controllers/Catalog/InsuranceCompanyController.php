@@ -34,7 +34,7 @@ class InsuranceCompanyController extends Controller
 
         $this->service->create($data);
 
-        alert()->success('Created', 'Insurance company added successfully.');
+        alert()->success(__('Created'), __('Insurance company added successfully.'));
 
         return redirect()->route('catalog.insurance.index');
     }
@@ -53,7 +53,7 @@ class InsuranceCompanyController extends Controller
 
         $this->service->update($insuranceCompany, $data);
 
-        alert()->success('Updated', 'Insurance company updated successfully.');
+        alert()->success(__('Updated'), __('Insurance company updated successfully.'));
 
         return redirect()->route('catalog.insurance.index');
     }
@@ -62,7 +62,7 @@ class InsuranceCompanyController extends Controller
     {
         $this->service->delete($insuranceCompany);
 
-        alert()->success('Deleted', 'Insurance company removed.');
+        alert()->success(__('Deleted'), __('Insurance company removed.'));
 
         return redirect()->route('catalog.insurance.index');
     }

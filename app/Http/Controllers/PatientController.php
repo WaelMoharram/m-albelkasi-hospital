@@ -40,7 +40,7 @@ class PatientController extends Controller
 
         $this->service->create($data);
 
-        alert()->success('Registered', 'Patient registered successfully.');
+        alert()->success(__('Registered'), __('Patient registered successfully.'));
 
         return redirect()->route('patients.index');
     }
@@ -65,7 +65,7 @@ class PatientController extends Controller
 
         $this->service->update($patient, $data);
 
-        alert()->success('Updated', 'Patient updated successfully.');
+        alert()->success(__('Updated'), __('Patient updated successfully.'));
 
         return redirect()->route('patients.index');
     }
@@ -74,7 +74,7 @@ class PatientController extends Controller
     {
         $this->service->delete($patient);
 
-        alert()->success('Deleted', 'Patient removed.');
+        alert()->success(__('Deleted'), __('Patient removed.'));
 
         return redirect()->route('patients.index');
     }

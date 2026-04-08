@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Patient')
-@section('page_title', 'Edit Patient')
+@section('title', __('Edit Patient'))
+@section('page_title', __('Edit Patient'))
 
 @section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('patients.index') }}">Patients</a></li>
-    <li class="breadcrumb-item active">Edit</li>
+    <li class="breadcrumb-item"><a href="{{ route('patients.index') }}">{{ __('Patients') }}</a></li>
+    <li class="breadcrumb-item active">{{ __('Edit') }}</li>
 @endsection
 
 @section('content')
@@ -16,9 +16,9 @@
             @include('patients._form')
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Update
+                    <i class="bi bi-check-lg ms-1"></i> {{ __('Update') }}
                 </button>
-                <a href="{{ route('patients.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('patients.index') }}" class="btn btn-outline-secondary">{{ __('Cancel') }}</a>
             </div>
         </form>
     </div>

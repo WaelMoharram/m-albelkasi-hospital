@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Sign In')
+@section('title', __('Sign In'))
 
 @section('content')
 <div class="card shadow-sm border-0">
@@ -8,7 +8,7 @@
         <div class="text-center mb-4">
             <i class="bi bi-hospital fs-1 text-primary"></i>
             <h4 class="mt-2 mb-0 fw-bold">{{ config('app.name', 'Hospital') }}</h4>
-            <p class="text-muted small">Insurance Billing System</p>
+            <p class="text-muted small">{{ __('Insurance Billing System') }}</p>
         </div>
 
         @if ($errors->any())
@@ -20,7 +20,7 @@
         <form method="POST" action="{{ route('login') }}">
             @csrf
             <div class="mb-3">
-                <label for="email" class="form-label">Email address</label>
+                <label for="email" class="form-label">{{ __('Email address') }}</label>
                 <input
                     id="email"
                     type="email"
@@ -34,7 +34,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
+                <label for="password" class="form-label">{{ __('Password') }}</label>
                 <input
                     id="password"
                     type="password"
@@ -47,12 +47,12 @@
 
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                <label class="form-check-label" for="remember">Remember me</label>
+                <label class="form-check-label" for="remember">{{ __('Remember me') }}</label>
             </div>
 
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                    <i class="bi bi-box-arrow-in-left ms-1"></i> {{ __('Sign In') }}
                 </button>
             </div>
         </form>

@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Admission')
-@section('page_title', 'Edit Admission')
+@section('title', __('Edit Admission'))
+@section('page_title', __('Edit Admission'))
 
 @section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admissions.index') }}">Admissions</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('admissions.index') }}">{{ __('Admissions') }}</a></li>
     <li class="breadcrumb-item"><a href="{{ route('admissions.show', $admission) }}">#{{ $admission->id }}</a></li>
-    <li class="breadcrumb-item active">Edit</li>
+    <li class="breadcrumb-item active">{{ __('Edit') }}</li>
 @endsection
 
 @section('content')
@@ -17,9 +17,9 @@
             @include('admissions._form')
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Update
+                    <i class="bi bi-check-lg ms-1"></i> {{ __('Update') }}
                 </button>
-                <a href="{{ route('admissions.show', $admission) }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('admissions.show', $admission) }}" class="btn btn-outline-secondary">{{ __('Cancel') }}</a>
             </div>
         </form>
     </div>

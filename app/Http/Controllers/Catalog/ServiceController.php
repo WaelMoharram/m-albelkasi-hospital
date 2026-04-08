@@ -35,7 +35,7 @@ class ServiceController extends Controller
 
         $this->service->create($data);
 
-        alert()->success('Created', 'Service added successfully.');
+        alert()->success(__('Created'), __('Service added successfully.'));
 
         return redirect()->route('catalog.services.index');
     }
@@ -55,7 +55,7 @@ class ServiceController extends Controller
 
         $this->service->update($service, $data);
 
-        alert()->success('Updated', 'Service updated successfully.');
+        alert()->success(__('Updated'), __('Service updated successfully.'));
 
         return redirect()->route('catalog.services.index');
     }
@@ -64,7 +64,7 @@ class ServiceController extends Controller
     {
         $this->service->delete($service);
 
-        alert()->success('Deleted', 'Service removed.');
+        alert()->success(__('Deleted'), __('Service removed.'));
 
         return redirect()->route('catalog.services.index');
     }

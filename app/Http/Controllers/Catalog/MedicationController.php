@@ -36,7 +36,7 @@ class MedicationController extends Controller
 
         $this->service->create($data);
 
-        alert()->success('Created', 'Medication added successfully.');
+        alert()->success(__('Created'), __('Medication added successfully.'));
 
         return redirect()->route('catalog.medications.index');
     }
@@ -57,7 +57,7 @@ class MedicationController extends Controller
 
         $this->service->update($medication, $data);
 
-        alert()->success('Updated', 'Medication updated successfully.');
+        alert()->success(__('Updated'), __('Medication updated successfully.'));
 
         return redirect()->route('catalog.medications.index');
     }
@@ -66,7 +66,7 @@ class MedicationController extends Controller
     {
         $this->service->delete($medication);
 
-        alert()->success('Deleted', 'Medication removed.');
+        alert()->success(__('Deleted'), __('Medication removed.'));
 
         return redirect()->route('catalog.medications.index');
     }

@@ -1,36 +1,32 @@
 @extends('layouts.app')
 
-@section('title', 'Services')
-@section('page_title', 'Services')
+@section('title', __('Services'))
+@section('page_title', __('Services'))
 
 @section('breadcrumb')
-    <li class="breadcrumb-item active">Catalog</li>
-    <li class="breadcrumb-item active">Services</li>
+    <li class="breadcrumb-item active">{{ __('Catalog') }}</li>
+    <li class="breadcrumb-item active">{{ __('Services') }}</li>
 @endsection
 
 @section('content')
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3 d-flex align-items-center gap-3">
         <form method="GET" action="{{ route('catalog.services.index') }}" class="d-flex gap-2 flex-grow-1">
-            <input
-                type="text"
-                name="search"
-                value="{{ request('search') }}"
-                class="form-control form-control-sm"
-                placeholder="Search by name…"
-                style="max-width: 280px;"
-            >
+            <input type="text" name="search" value="{{ request('search') }}"
+                   class="form-control form-control-sm"
+                   placeholder="{{ __('Search by name…') }}"
+                   style="max-width: 280px;">
             <button class="btn btn-sm btn-outline-secondary" type="submit">
                 <i class="bi bi-search"></i>
             </button>
             @if(request('search'))
                 <a href="{{ route('catalog.services.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x"></i> Clear
+                    <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>
             @endif
         </form>
-        <a href="{{ route('catalog.services.create') }}" class="btn btn-sm btn-primary ms-auto">
-            <i class="bi bi-plus-lg me-1"></i> Add Service
+        <a href="{{ route('catalog.services.create') }}" class="btn btn-sm btn-primary me-auto">
+            <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Service') }}
         </a>
     </div>
 
@@ -39,10 +35,10 @@
             <thead class="table-light">
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Category</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ __('Full Name') }}</th>
+                    <th>{{ __('Price') }}</th>
+                    <th>{{ __('Category') }}</th>
+                    <th class="text-start">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -54,15 +50,15 @@
                     <td>
                         @php
                             $catMap = [
-                                'daily'     => ['bg-primary-subtle text-primary border-primary-subtle', 'Daily'],
-                                'lab'       => ['bg-info-subtle text-info border-info-subtle', 'Lab'],
-                                'radiology' => ['bg-purple-subtle text-secondary border-secondary-subtle', 'Radiology'],
+                                'daily'     => ['bg-primary-subtle text-primary border-primary-subtle',     __('Daily')],
+                                'lab'       => ['bg-info-subtle text-info border-info-subtle',               __('Lab')],
+                                'radiology' => ['bg-secondary-subtle text-secondary border-secondary-subtle', __('Radiology')],
                             ];
                             [$cls, $label] = $catMap[$service->category];
                         @endphp
                         <span class="badge {{ $cls }} border">{{ $label }}</span>
                     </td>
-                    <td class="text-end">
+                    <td class="text-start">
                         <a href="{{ route('catalog.services.edit', $service) }}"
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil"></i>
@@ -70,9 +66,8 @@
                         <form method="POST"
                               action="{{ route('catalog.services.destroy', $service) }}"
                               class="d-inline"
-                              onsubmit="return confirm('Delete this service?')">
-                            @csrf
-                            @method('DELETE')
+                              onsubmit="return confirm('{{ __('Delete this service?') }}')">
+                            @csrf @method('DELETE')
                             <button class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -81,7 +76,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No services found.</td>
+                    <td colspan="5" class="text-center text-muted py-4">{{ __('No services found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -91,7 +86,7 @@
     @if ($services->hasPages())
     <div class="card-footer bg-white d-flex justify-content-between align-items-center">
         <small class="text-muted">
-            Showing {{ $services->firstItem() }}–{{ $services->lastItem() }} of {{ $services->total() }}
+            {{ __('Showing :from–:to of :total', ['from' => $services->firstItem(), 'to' => $services->lastItem(), 'total' => $services->total()]) }}
         </small>
         {{ $services->links() }}
     </div>

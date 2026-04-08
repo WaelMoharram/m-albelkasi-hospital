@@ -43,7 +43,7 @@ class AdmissionController extends Controller
 
         $admission = $this->service->create($data);
 
-        alert()->success('Admitted', 'Patient admitted and daily services scheduled.');
+        alert()->success(__('Admitted'), __('Patient admitted and daily services scheduled.'));
 
         return redirect()->route('admissions.show', $admission);
     }
@@ -76,7 +76,7 @@ class AdmissionController extends Controller
 
         $this->service->update($admission, $data);
 
-        alert()->success('Updated', 'Admission updated successfully.');
+        alert()->success(__('Updated'), __('Admission updated successfully.'));
 
         return redirect()->route('admissions.show', $admission);
     }
@@ -84,7 +84,7 @@ class AdmissionController extends Controller
     public function discharge(Request $request, Admission $admission): RedirectResponse
     {
         if (! $admission->isActive()) {
-            alert()->warning('Already Discharged', 'This admission has already been discharged.');
+            alert()->warning(__('Already Discharged'), __('This admission has already been discharged.'));
 
             return redirect()->route('admissions.show', $admission);
         }
@@ -100,7 +100,7 @@ class AdmissionController extends Controller
 
         $this->service->discharge($admission, $data['discharge_date']);
 
-        alert()->success('Discharged', 'Patient discharged and invoice finalised.');
+        alert()->success(__('Discharged'), __('Patient discharged and invoice finalised.'));
 
         return redirect()->route('admissions.show', $admission);
     }

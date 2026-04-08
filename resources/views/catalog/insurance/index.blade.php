@@ -1,36 +1,32 @@
 @extends('layouts.app')
 
-@section('title', 'Insurance Companies')
-@section('page_title', 'Insurance Companies')
+@section('title', __('Insurance Companies'))
+@section('page_title', __('Insurance Companies'))
 
 @section('breadcrumb')
-    <li class="breadcrumb-item active">Catalog</li>
-    <li class="breadcrumb-item active">Insurance Companies</li>
+    <li class="breadcrumb-item active">{{ __('Catalog') }}</li>
+    <li class="breadcrumb-item active">{{ __('Insurance Companies') }}</li>
 @endsection
 
 @section('content')
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3 d-flex align-items-center gap-3">
         <form method="GET" action="{{ route('catalog.insurance.index') }}" class="d-flex gap-2 flex-grow-1">
-            <input
-                type="text"
-                name="search"
-                value="{{ request('search') }}"
-                class="form-control form-control-sm"
-                placeholder="Search by name…"
-                style="max-width: 280px;"
-            >
+            <input type="text" name="search" value="{{ request('search') }}"
+                   class="form-control form-control-sm"
+                   placeholder="{{ __('Search by name…') }}"
+                   style="max-width: 280px;">
             <button class="btn btn-sm btn-outline-secondary" type="submit">
                 <i class="bi bi-search"></i>
             </button>
             @if(request('search'))
                 <a href="{{ route('catalog.insurance.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x"></i> Clear
+                    <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>
             @endif
         </form>
-        <a href="{{ route('catalog.insurance.create') }}" class="btn btn-sm btn-primary ms-auto">
-            <i class="bi bi-plus-lg me-1"></i> Add Company
+        <a href="{{ route('catalog.insurance.create') }}" class="btn btn-sm btn-primary me-auto">
+            <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Company') }}
         </a>
     </div>
 
@@ -39,9 +35,9 @@
             <thead class="table-light">
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
-                    <th>Contact Info</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ __('Full Name') }}</th>
+                    <th>{{ __('Contact Info') }}</th>
+                    <th class="text-start">{{ __('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,7 +46,7 @@
                     <td class="text-muted small">{{ $company->id }}</td>
                     <td>{{ $company->name }}</td>
                     <td class="text-muted small">{{ Str::limit($company->contact_info, 60) ?: '—' }}</td>
-                    <td class="text-end">
+                    <td class="text-start">
                         <a href="{{ route('catalog.insurance.edit', $company) }}"
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil"></i>
@@ -58,9 +54,8 @@
                         <form method="POST"
                               action="{{ route('catalog.insurance.destroy', $company) }}"
                               class="d-inline"
-                              onsubmit="return confirm('Delete this insurance company?')">
-                            @csrf
-                            @method('DELETE')
+                              onsubmit="return confirm('{{ __('Delete this insurance company?') }}')">
+                            @csrf @method('DELETE')
                             <button class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -69,7 +64,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-4">No insurance companies found.</td>
+                    <td colspan="4" class="text-center text-muted py-4">{{ __('No insurance companies found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -79,7 +74,7 @@
     @if ($companies->hasPages())
     <div class="card-footer bg-white d-flex justify-content-between align-items-center">
         <small class="text-muted">
-            Showing {{ $companies->firstItem() }}–{{ $companies->lastItem() }} of {{ $companies->total() }}
+            {{ __('Showing :from–:to of :total', ['from' => $companies->firstItem(), 'to' => $companies->lastItem(), 'total' => $companies->total()]) }}
         </small>
         {{ $companies->links() }}
     </div>

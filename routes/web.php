@@ -6,7 +6,10 @@ use App\Http\Controllers\Catalog\InsuranceCompanyController;
 use App\Http\Controllers\Catalog\MedicationController;
 use App\Http\Controllers\Catalog\ServiceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,16 +45,88 @@ Route::middleware('auth')->group(function () {
     /*
     |----------------------------------------------------------------------
     | Admissions — admin, super_admin (manage); all auth users (view)
+    |
+    | IMPORTANT: fixed-path routes (/create, /edit) must be registered
+    | before the wildcard show route so they are not swallowed by
+    | admissions/{admission}.
     |----------------------------------------------------------------------
     */
-    Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
-
     Route::middleware('role:super_admin|admin')->group(function () {
         Route::resource('admissions', AdmissionController::class)
             ->except(['show', 'destroy']);
         Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])
             ->name('admissions.discharge');
     });
+
+    // show is open to every authenticated user — registered AFTER the resource
+    // so that admissions/create and admissions/{id}/edit are matched first.
+    Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
+
+    /*
+    |----------------------------------------------------------------------
+    | Invoices
+    |  - index, show, print → all authenticated users (view_invoices)
+    |  - add/remove items   → data_entry and above
+    |  - finalize           → admin and above only
+    |
+    | Same fixed-path-before-wildcard rule applies: register
+    | invoices/{invoice}/print BEFORE the open show wildcard.
+    |----------------------------------------------------------------------
+    */
+    // Finalize — admin+ only
+    Route::middleware('role:super_admin|admin')->group(function () {
+        Route::post('invoices/{invoice}/finalize', [InvoiceController::class, 'finalize'])
+            ->name('invoices.finalize');
+    });
+
+    // Add / remove items — data_entry and above
+    Route::middleware('role:super_admin|admin|data_entry')->group(function () {
+        Route::post('invoices/{invoice}/items', [InvoiceController::class, 'addItem'])
+            ->name('invoices.items.store');
+        Route::delete('invoices/{invoice}/items/{item}', [InvoiceController::class, 'removeItem'])
+            ->name('invoices.items.destroy');
+    });
+
+    // Print PDF — all auth (open)
+    Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])
+        ->name('invoices.print');
+
+    // Index & show — all auth, registered last so wildcards don't shadow fixed paths
+    Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+
+    /*
+    |----------------------------------------------------------------------
+    | Reports — admin and above only
+    |  export must be registered before the wildcard index to avoid
+    |  any future route shadowing issues.
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:super_admin|admin')
+        ->prefix('reports')
+        ->name('reports.')
+        ->group(function () {
+            Route::get('export', [ReportController::class, 'export'])->name('export');
+            Route::get('/',      [ReportController::class, 'index'])->name('index');
+        });
+
+    /*
+    |----------------------------------------------------------------------
+    | User Management — super_admin only
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:super_admin')
+        ->prefix('users')
+        ->name('users.')
+        ->group(function () {
+            Route::get('/',               [UserController::class, 'index'])        ->name('index');
+            Route::get('/create',         [UserController::class, 'create'])       ->name('create');
+            Route::post('/',              [UserController::class, 'store'])        ->name('store');
+            Route::get('/{user}/edit',    [UserController::class, 'edit'])         ->name('edit');
+            Route::put('/{user}',         [UserController::class, 'update'])       ->name('update');
+            Route::post('/{user}/toggle', [UserController::class, 'toggleActive']) ->name('toggle-active');
+            Route::delete('/{user}',      [UserController::class, 'destroy'])      ->name('destroy');
+        });
 
     /*
     |----------------------------------------------------------------------

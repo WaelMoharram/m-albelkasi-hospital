@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Add Insurance Company')
-@section('page_title', 'Add Insurance Company')
+@section('title', __('Add Insurance Company'))
+@section('page_title', __('Add Insurance Company'))
 
 @section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('catalog.insurance.index') }}">Insurance Companies</a></li>
-    <li class="breadcrumb-item active">Add</li>
+    <li class="breadcrumb-item"><a href="{{ route('catalog.insurance.index') }}">{{ __('Insurance Companies') }}</a></li>
+    <li class="breadcrumb-item active">{{ __('Add') }}</li>
 @endsection
 
 @section('content')
@@ -18,10 +18,10 @@
                     @include('catalog.insurance._form')
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i> Save
+                            <i class="bi bi-check-lg ms-1"></i> {{ __('Save') }}
                         </button>
                         <a href="{{ route('catalog.insurance.index') }}" class="btn btn-outline-secondary">
-                            Cancel
+                            {{ __('Cancel') }}
                         </a>
                     </div>
                 </form>
