@@ -178,14 +178,52 @@ Key invariants:
 
 ## Screenshots
 
-> Replace with real screenshots before publishing.
+> The screenshots below show the current Arabic (RTL) interface. An English version is planned and will be added soon — Laravel's standard `lang/` files make the swap straightforward.
 
-| | |
-|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Patients](docs/screenshots/patients.png) |
-| Dashboard overview | Patient registry |
-| ![Invoice](docs/screenshots/invoice.png) | ![Monthly Report](docs/screenshots/monthly-report.png) |
-| Itemized invoice with four sections | A3 landscape monthly report |
+### Dashboard
+At-a-glance KPIs — total patients, active admissions, draft invoices, and a quick link to monthly reports.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Patients
+Patient registry with search by name, national ID, or insurance policy number. Each row links to the patient's admissions and invoices.
+
+![Patients list](docs/screenshots/patients.png)
+
+### Admissions
+Active and discharged admissions with patient, insurance, room/ward, admission date, status, and rolled-up invoice total.
+
+![Admissions](docs/screenshots/admissions.png)
+
+### Invoices
+Invoices listed by status (draft / final) with quick access to view, print, and finalize actions. Each invoice is auto-generated when an admission is created.
+
+![Invoices](docs/screenshots/invoices.png)
+
+### Monthly Report
+Per-admission breakdown by section — local meds, imported meds, lab, radiology, daily charges — with column totals. Exportable as A3 landscape PDF.
+
+![Monthly Report](docs/screenshots/monthly-report.png)
+
+### Medications Catalog
+Master list of medications with unit, price, and `local` / `imported` type — the type drives the invoice section automatically.
+
+![Medications catalog](docs/screenshots/medications.png)
+
+### Services Catalog
+Master list of services categorized as `lab`, `radiology`, or `daily`. Daily services are auto-charged to the admission's invoice every day.
+
+![Services catalog](docs/screenshots/services.png)
+
+### Insurance Companies
+Insurance carriers managed in a simple registry — patients are linked to a carrier and a policy number on registration.
+
+![Insurance companies](docs/screenshots/insurance-companies.png)
+
+### Users Management
+Super-admin-only screen for creating users, assigning roles, and enabling or disabling accounts (soft toggle, not deletion).
+
+![Users management](docs/screenshots/users.png)
 
 ---
 
