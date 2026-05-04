@@ -43,22 +43,80 @@ new TomSelect('#patient_id', {
     </div>
 
     <div class="col-md-6">
-        <label class="form-label" for="room">{{ __('Room') }}</label>
-        <input id="room" type="text" name="room"
-               value="{{ old('room', $admission->room ?? '') }}"
-               class="form-control @error('room') is-invalid @enderror"
-               placeholder="مثال: 204">
-        @error('room') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    </div>
-
-    <div class="col-md-6">
         <label class="form-label" for="ward">{{ __('Ward') }}</label>
+        @if($wards->isNotEmpty())
+        <select id="ward" name="ward"
+                class="form-select @error('ward') is-invalid @enderror">
+            <option value="">— {{ __('Select —') }}</option>
+            @foreach ($wards as $w)
+                <option value="{{ $w->name }}"
+                    {{ old('ward', $admission->ward ?? '') === $w->name ? 'selected' : '' }}
+                    data-rooms="{{ $w->rooms->pluck('name')->toJson() }}">
+                    {{ $w->name }}
+                </option>
+            @endforeach
+        </select>
+        @else
         <input id="ward" type="text" name="ward"
                value="{{ old('ward', $admission->ward ?? '') }}"
                class="form-control @error('ward') is-invalid @enderror"
-               placeholder="مثال: القلب">
+               placeholder="{{ __('Ward name') }}">
+        @endif
         @error('ward') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="room">{{ __('Room') }}</label>
+        <select id="room" name="room"
+                class="form-select @error('room') is-invalid @enderror">
+            <option value="">— {{ __('Select ward first') }} —</option>
+            {{-- Options populated by JS based on ward selection --}}
+            @if(old('room', $admission->room ?? ''))
+                <option value="{{ old('room', $admission->room ?? '') }}" selected>
+                    {{ old('room', $admission->room ?? '') }}
+                </option>
+            @endif
+        </select>
+        @error('room') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    </div>
+
+@push('scripts')
+<script>
+(function () {
+    var wardSel = document.getElementById('ward');
+    var roomSel = document.getElementById('room');
+    if (!wardSel || !roomSel) return;
+
+    var currentRoom = '{{ old('room', $admission->room ?? '') }}';
+
+    function populateRooms(rooms, selected) {
+        roomSel.innerHTML = '<option value="">— {{ __("Select —") }} —</option>';
+        rooms.forEach(function (r) {
+            var opt = document.createElement('option');
+            opt.value = r;
+            opt.textContent = r;
+            if (r === selected) opt.selected = true;
+            roomSel.appendChild(opt);
+        });
+        if (rooms.length === 0) {
+            roomSel.innerHTML = '<option value="">— {{ __("No rooms") }} —</option>';
+        }
+    }
+
+    wardSel.addEventListener('change', function () {
+        var opt   = this.options[this.selectedIndex];
+        var rooms = opt.dataset.rooms ? JSON.parse(opt.dataset.rooms) : [];
+        populateRooms(rooms, '');
+    });
+
+    // On load: restore rooms for the already-selected ward
+    var selectedOpt = wardSel.options[wardSel.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset.rooms) {
+        populateRooms(JSON.parse(selectedOpt.dataset.rooms), currentRoom);
+    }
+}());
+</script>
+@endpush
 
     <div class="col-md-6">
         <label class="form-label" for="referral_number">{{ __('Referral Number') }}</label>

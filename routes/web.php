@@ -6,6 +6,7 @@ use App\Http\Controllers\Catalog\InsuranceCompanyController;
 use App\Http\Controllers\Catalog\MedicationController;
 use App\Http\Controllers\Catalog\ServiceController;
 use App\Http\Controllers\Catalog\UnitController;
+use App\Http\Controllers\Catalog\WardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceCategoryController;
 use App\Http\Controllers\InvoiceController;
@@ -167,6 +168,15 @@ Route::middleware('auth')->group(function () {
             Route::resource('units', UnitController::class)
                 ->only(['index', 'store', 'update', 'destroy'])
                 ->names('units');
+
+            Route::resource('wards', WardController::class)
+                ->only(['index', 'store', 'update', 'destroy'])
+                ->names('wards');
+
+            Route::post('wards/{ward}/rooms', [WardController::class, 'storeRoom'])
+                ->name('wards.rooms.store');
+            Route::delete('wards/{ward}/rooms/{room}', [WardController::class, 'destroyRoom'])
+                ->name('wards.rooms.destroy');
         });
 
     /*

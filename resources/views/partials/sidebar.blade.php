@@ -108,6 +108,12 @@
                 <i class="bi bi-rulers ms-2"></i> {{ __('Units') }}
             </a>
         </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('catalog.wards.index') }}"
+               class="nav-link text-white {{ request()->routeIs('catalog.wards.*') ? 'active' : '' }}">
+                <i class="bi bi-building ms-2"></i> {{ __('Wards & Rooms') }}
+            </a>
+        </li>
         @endcan
 
         @canany(['manage_users'])
