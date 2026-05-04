@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admission;
+use App\Models\InsuranceCompany;
 use App\Models\Patient;
 use App\Services\AdmissionService;
 use Illuminate\Http\RedirectResponse;
@@ -26,10 +27,11 @@ class AdmissionController extends Controller
     public function create(Request $request): View
     {
         // Allow pre-filling patient_id from query string (e.g. from patient profile)
-        $patients        = Patient::orderBy('name')->get(['id', 'name', 'national_id']);
-        $selectedPatient = $request->input('patient_id');
+        $patients          = Patient::orderBy('name')->get(['id', 'name', 'national_id']);
+        $selectedPatient   = $request->input('patient_id');
+        $insuranceCompanies = InsuranceCompany::orderBy('name')->pluck('name');
 
-        return view('admissions.create', compact('patients', 'selectedPatient'));
+        return view('admissions.create', compact('patients', 'selectedPatient', 'insuranceCompanies'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -62,9 +64,10 @@ class AdmissionController extends Controller
 
     public function edit(Admission $admission): View
     {
-        $patients = Patient::orderBy('name')->get(['id', 'name', 'national_id']);
+        $patients           = Patient::orderBy('name')->get(['id', 'name', 'national_id']);
+        $insuranceCompanies = InsuranceCompany::orderBy('name')->pluck('name');
 
-        return view('admissions.edit', compact('admission', 'patients'));
+        return view('admissions.edit', compact('admission', 'patients', 'insuranceCompanies'));
     }
 
     public function update(Request $request, Admission $admission): RedirectResponse

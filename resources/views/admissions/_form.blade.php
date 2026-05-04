@@ -2,17 +2,36 @@
     <div class="col-md-8">
         <label class="form-label" for="patient_id">{{ __('Patient') }} <span class="text-danger">*</span></label>
         <select id="patient_id" name="patient_id"
-                class="form-select @error('patient_id') is-invalid @enderror" required>
-            <option value="">— {{ __('Select —') }}</option>
+                class="@error('patient_id') is-invalid @enderror" required>
+            <option value="">— {{ __('Search by name or national ID…') }} —</option>
             @foreach ($patients as $p)
                 <option value="{{ $p->id }}"
                     {{ old('patient_id', $admission->patient_id ?? $selectedPatient ?? '') == $p->id ? 'selected' : '' }}>
-                    {{ $p->name }} ({{ $p->national_id }})
+                    {{ $p->name }} — {{ $p->national_id }}
                 </option>
             @endforeach
         </select>
-        @error('patient_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        @error('patient_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<style>
+    .ts-wrapper .ts-control          { direction: rtl; text-align: right; }
+    .ts-dropdown                     { direction: rtl; text-align: right; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+new TomSelect('#patient_id', {
+    placeholder: '— {{ __("Search by name or national ID…") }} —',
+    maxOptions: null,
+    highlight: true,
+});
+</script>
+@endpush
 
     <div class="col-md-4">
         <label class="form-label" for="admission_date">{{ __('Admission Date') }} <span class="text-danger">*</span></label>
@@ -52,10 +71,16 @@
 
     <div class="col-md-6">
         <label class="form-label" for="referral_source">{{ __('Referral Source') }}</label>
-        <input id="referral_source" type="text" name="referral_source"
-               value="{{ old('referral_source', $admission->referral_source ?? '') }}"
-               class="form-control @error('referral_source') is-invalid @enderror"
-               placeholder="{{ __('Optional') }}">
+        <select id="referral_source" name="referral_source"
+                class="form-select @error('referral_source') is-invalid @enderror">
+            <option value="">— {{ __('Optional') }} —</option>
+            @foreach ($insuranceCompanies as $company)
+                <option value="{{ $company }}"
+                    {{ old('referral_source', $admission->referral_source ?? '') === $company ? 'selected' : '' }}>
+                    {{ $company }}
+                </option>
+            @endforeach
+        </select>
         @error('referral_source') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 </div>
