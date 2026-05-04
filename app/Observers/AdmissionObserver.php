@@ -26,12 +26,48 @@ class AdmissionObserver
             'total_amount' => 0,
         ]);
 
-        // 2. Seed daily service items
+        // 2. Seed once-per-admission items
+        $this->seedOnceItems($invoice, $admission->admission_date);
+
+        // 3. Seed daily service items
         $this->seedDailyItems(
             invoice:        $invoice,
             admissionDate:  Carbon::parse($admission->admission_date),
             endDate:        Carbon::today(),
         );
+    }
+
+    /**
+     * Insert one invoice_item per is_once service, dated on the admission date.
+     */
+    public function seedOnceItems(Invoice $invoice, string $admissionDate): void
+    {
+        $onceServices = Service::where('is_once', true)->get();
+
+        if ($onceServices->isEmpty()) {
+            return;
+        }
+
+        $now  = now();
+        $rows = [];
+
+        foreach ($onceServices as $service) {
+            $rows[] = [
+                'invoice_id'    => $invoice->id,
+                'itemable_type' => Service::class,
+                'itemable_id'   => $service->id,
+                'qty'           => 1,
+                'unit_price'    => $service->price,
+                'total'         => $service->price,
+                'section'       => 'daily',
+                'service_date'  => $admissionDate,
+                'created_at'    => $now,
+                'updated_at'    => $now,
+            ];
+        }
+
+        InvoiceItem::insert($rows);
+        $invoice->recalculateTotal();
     }
 
     /**

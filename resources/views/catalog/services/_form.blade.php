@@ -39,6 +39,7 @@
                 'supplies'  => __('Supplies'),
                 'lab'       => __('Lab'),
                 'radiology' => __('Radiology'),
+                'other'     => __('Other'),
             ] as $val => $lbl)
                 <option value="{{ $val }}"
                     {{ old('category', $service->category ?? '') === $val ? 'selected' : '' }}>
@@ -67,17 +68,29 @@
     </div>
 </div>
 
-{{-- Auto-charge daily toggle --}}
-<div class="mb-3">
-    <div class="form-check form-switch">
+{{-- Auto-charge toggles --}}
+<div class="card border-0 bg-light rounded mb-3 p-3">
+    <div class="fw-semibold small text-muted mb-2">{{ __('Auto-add to Invoice') }}</div>
+
+    <div class="form-check form-switch mb-2">
         <input class="form-check-input" type="checkbox" role="switch"
                id="is_daily" name="is_daily" value="1"
                {{ old('is_daily', $service->is_daily ?? false) ? 'checked' : '' }}>
-        <label class="form-check-label fw-semibold" for="is_daily">
-            {{ __('Auto-charge daily') }}
+        <label class="form-check-label" for="is_daily">
+            <span class="fw-semibold">{{ __('Auto-charge daily') }}</span>
+            <span class="text-muted small d-block">{{ __('If enabled, this service is added automatically for every day of admission.') }}</span>
         </label>
     </div>
-    <div class="form-text">{{ __('If enabled, this service is added automatically for every day of admission.') }}</div>
+
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch"
+               id="is_once" name="is_once" value="1"
+               {{ old('is_once', $service->is_once ?? false) ? 'checked' : '' }}>
+        <label class="form-check-label" for="is_once">
+            <span class="fw-semibold">{{ __('Add once at admission') }}</span>
+            <span class="text-muted small d-block">{{ __('If enabled, this service is added once automatically when the admission is created.') }}</span>
+        </label>
+    </div>
 </div>
 
 {{-- Linked (triggered) services --}}

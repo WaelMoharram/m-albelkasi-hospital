@@ -7,12 +7,13 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ServiceCatalogService
 {
-    public function paginate(?string $search, ?string $category = null, ?string $isDaily = null, int $perPage = 30): LengthAwarePaginator
+    public function paginate(?string $search, ?string $category = null, ?string $isDaily = null, ?string $isOnce = null, int $perPage = 30): LengthAwarePaginator
     {
         return Service::query()
             ->search($search)
             ->when($category, fn($q) => $q->where('category', $category))
             ->when($isDaily === '1', fn($q) => $q->where('is_daily', true))
+            ->when($isOnce === '1', fn($q) => $q->where('is_once', true))
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();

@@ -34,13 +34,21 @@
                    class="btn {{ request('category') === 'radiology' ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('Radiology') }}
                 </a>
-                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['is_daily' => '1'])) }}"
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily','is_once'), ['category' => 'other'])) }}"
+                   class="btn {{ request('category') === 'other' ? 'btn-dark' : 'btn-outline-dark' }}">
+                    {{ __('Other') }}
+                </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily','is_once'), ['is_daily' => '1'])) }}"
                    class="btn {{ request('is_daily') === '1' ? 'btn-primary' : 'btn-outline-primary' }}">
                     <i class="bi bi-arrow-repeat"></i> {{ __('Auto-daily') }}
                 </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily','is_once'), ['is_once' => '1'])) }}"
+                   class="btn {{ request('is_once') === '1' ? 'btn-success' : 'btn-outline-success' }}">
+                    <i class="bi bi-1-circle"></i> {{ __('Once') }}
+                </a>
             </div>
 
-            @if(request('search') || request('category') || request('is_daily'))
+            @if(request('search') || request('category') || request('is_daily') || request('is_once'))
                 <a href="{{ route('catalog.services.index') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>
@@ -76,6 +84,7 @@
                                 'supplies'  => ['bg-warning-subtle text-warning border-warning-subtle',      __('Supplies')],
                                 'lab'       => ['bg-info-subtle text-info border-info-subtle',                __('Lab')],
                                 'radiology' => ['bg-secondary-subtle text-secondary border-secondary-subtle', __('Radiology')],
+                                'other'     => ['bg-dark-subtle text-dark border-dark-subtle',                __('Other')],
                             ];
                             [$cls, $label] = $catMap[$service->category] ?? ['bg-light text-muted border-secondary-subtle', $service->category];
                         @endphp
@@ -83,6 +92,11 @@
                         @if($service->is_daily)
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">
                                 <i class="bi bi-arrow-repeat"></i> {{ __('Auto-daily') }}
+                            </span>
+                        @endif
+                        @if($service->is_once)
+                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">
+                                <i class="bi bi-1-circle"></i> {{ __('Once') }}
                             </span>
                         @endif
                     </td>

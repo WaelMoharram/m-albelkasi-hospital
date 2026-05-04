@@ -347,5 +347,10 @@
     "Supplies": "مستلزمات",
     "Auto-charge daily": "يُضاف يومياً تلقائياً",
     "If enabled, this service is added automatically for every day of admission.": "إذا كان مفعّلاً، يُضاف هذا الصنف تلقائياً عن كل يوم إقامة.",
-    "Auto-daily": "يومي تلقائي"
+    "Auto-daily": "يومي تلقائي",
+    "Add once at admission": "يُضاف مرة واحدة عند الدخول",
+    "If enabled, this service is added once automatically when the admission is created.": "إذا كان مفعّلاً، يُضاف هذا الصنف تلقائياً مرة واحدة عند بداية الإقامة.",
+    "Once": "مرة واحدة",
+    "Auto-add to Invoice": "إضافة تلقائية للفاتورة",
+    "Other": "أخرى"
 }
