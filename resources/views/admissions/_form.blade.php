@@ -40,4 +40,22 @@
                placeholder="مثال: القلب">
         @error('ward') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="referral_number">{{ __('Referral Number') }}</label>
+        <input id="referral_number" type="text" name="referral_number"
+               value="{{ old('referral_number', $admission->referral_number ?? '') }}"
+               class="form-control @error('referral_number') is-invalid @enderror"
+               placeholder="{{ __('Optional') }}">
+        @error('referral_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="referral_source">{{ __('Referral Source') }}</label>
+        <input id="referral_source" type="text" name="referral_source"
+               value="{{ old('referral_source', $admission->referral_source ?? '') }}"
+               class="form-control @error('referral_source') is-invalid @enderror"
+               placeholder="{{ __('Optional') }}">
+        @error('referral_source') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    </div>
 </div>

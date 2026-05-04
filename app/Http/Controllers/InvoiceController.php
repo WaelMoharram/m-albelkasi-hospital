@@ -108,7 +108,7 @@ class InvoiceController extends Controller
     {
         $invoice->load([
             'admission.patient.insuranceCompany',
-            'items.itemable',
+            'items.itemable.invoiceCategory',
         ]);
 
         $pdf = Pdf::loadView('invoices.print', compact('invoice'))

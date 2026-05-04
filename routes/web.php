@@ -6,9 +6,11 @@ use App\Http\Controllers\Catalog\InsuranceCompanyController;
 use App\Http\Controllers\Catalog\MedicationController;
 use App\Http\Controllers\Catalog\ServiceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceCategoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -106,8 +108,16 @@ Route::middleware('auth')->group(function () {
         ->prefix('reports')
         ->name('reports.')
         ->group(function () {
-            Route::get('export', [ReportController::class, 'export'])->name('export');
-            Route::get('/',      [ReportController::class, 'index'])->name('index');
+            Route::get('export',              [ReportController::class, 'export'])           ->name('export');
+            Route::get('claim/print',         [ReportController::class, 'claimPrint'])        ->name('claim.print');
+            Route::get('claim',               [ReportController::class, 'claim'])             ->name('claim');
+            Route::get('patient-list/print',  [ReportController::class, 'patientListPrint'])  ->name('patient-list.print');
+            Route::get('patient-list',        [ReportController::class, 'patientList'])       ->name('patient-list');
+            Route::get('summary/print',       [ReportController::class, 'summaryPrint'])      ->name('summary.print');
+            Route::get('summary',             [ReportController::class, 'summary'])            ->name('summary');
+            Route::get('performance/print',   [ReportController::class, 'performancePrint'])  ->name('performance.print');
+            Route::get('performance',         [ReportController::class, 'performance'])        ->name('performance');
+            Route::get('/',                   [ReportController::class, 'index'])              ->name('index');
         });
 
     /*
@@ -148,5 +158,21 @@ Route::middleware('auth')->group(function () {
             Route::resource('insurance-companies', InsuranceCompanyController::class)
                 ->except(['show'])
                 ->names('insurance');
+
+            Route::resource('invoice-categories', InvoiceCategoryController::class)
+                ->except(['show'])
+                ->names('invoice-categories');
+        });
+
+    /*
+    |----------------------------------------------------------------------
+    | Settings — super_admin only
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:super_admin')
+        ->name('settings.')
+        ->group(function () {
+            Route::get('/settings',  [SettingsController::class, 'index'])  ->name('index');
+            Route::put('/settings',  [SettingsController::class, 'update']) ->name('update');
         });
 });

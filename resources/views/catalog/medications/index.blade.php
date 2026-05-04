@@ -36,6 +36,7 @@
                 <tr>
                     <th>#</th>
                     <th>{{ __('Full Name') }}</th>
+                    <th>{{ __('Item Code') }}</th>
                     <th>{{ __('Unit') }}</th>
                     <th>{{ __('Price') }}</th>
                     <th>{{ __('Type') }}</th>
@@ -47,6 +48,7 @@
                 <tr>
                     <td class="text-muted small">{{ $medication->id }}</td>
                     <td>{{ $medication->name }}</td>
+                    <td class="text-muted small">{{ $medication->code ?? '—' }}</td>
                     <td>{{ $medication->unit }}</td>
                     <td>{{ number_format($medication->price, 2) }}</td>
                     <td>

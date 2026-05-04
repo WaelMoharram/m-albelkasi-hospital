@@ -167,6 +167,14 @@
                                required>
                         @error('discharge_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="discharge_reason">{{ __('Discharge Reason') }} <span class="text-danger">*</span></label>
+                        <select id="discharge_reason" name="discharge_reason" class="form-select" required>
+                            <option value="discharged">{{ __('Discharged (recovered)') }}</option>
+                            <option value="died">{{ __('Died') }}</option>
+                            <option value="transferred">{{ __('Transferred') }}</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>

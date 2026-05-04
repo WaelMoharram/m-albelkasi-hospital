@@ -32,4 +32,16 @@ class ServiceCatalogService
     {
         $service->delete();
     }
+
+    /**
+     * Sync which services are auto-triggered when $service is added to an invoice.
+     *
+     * @param array<int> $triggerIds
+     */
+    public function syncTriggers(Service $service, array $triggerIds): void
+    {
+        $service->triggers()->sync(
+            collect($triggerIds)->filter(fn ($id) => (int) $id !== $service->id)->map(fn ($id) => (int) $id)->all()
+        );
+    }
 }

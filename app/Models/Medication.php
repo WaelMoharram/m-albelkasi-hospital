@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Medication extends Model
 {
-    protected $fillable = ['name', 'unit', 'price', 'type'];
+    protected $fillable = ['name', 'code', 'unit', 'price', 'type'];
 
     protected function casts(): array
     {

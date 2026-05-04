@@ -35,10 +35,12 @@ class AdmissionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'patient_id'     => ['required', 'exists:patients,id'],
-            'admission_date' => ['required', 'date', 'before_or_equal:today'],
-            'room'           => ['nullable', 'string', 'max:50'],
-            'ward'           => ['nullable', 'string', 'max:100'],
+            'patient_id'      => ['required', 'exists:patients,id'],
+            'admission_date'  => ['required', 'date', 'before_or_equal:today'],
+            'room'            => ['nullable', 'string', 'max:50'],
+            'ward'            => ['nullable', 'string', 'max:100'],
+            'referral_number' => ['nullable', 'string', 'max:50'],
+            'referral_source' => ['nullable', 'string', 'max:100'],
         ]);
 
         $admission = $this->service->create($data);
@@ -68,10 +70,12 @@ class AdmissionController extends Controller
     public function update(Request $request, Admission $admission): RedirectResponse
     {
         $data = $request->validate([
-            'patient_id'     => ['required', 'exists:patients,id'],
-            'admission_date' => ['required', 'date'],
-            'room'           => ['nullable', 'string', 'max:50'],
-            'ward'           => ['nullable', 'string', 'max:100'],
+            'patient_id'      => ['required', 'exists:patients,id'],
+            'admission_date'  => ['required', 'date'],
+            'room'            => ['nullable', 'string', 'max:50'],
+            'ward'            => ['nullable', 'string', 'max:100'],
+            'referral_number' => ['nullable', 'string', 'max:50'],
+            'referral_source' => ['nullable', 'string', 'max:100'],
         ]);
 
         $this->service->update($admission, $data);
@@ -90,15 +94,11 @@ class AdmissionController extends Controller
         }
 
         $data = $request->validate([
-            'discharge_date' => [
-                'required',
-                'date',
-                'after_or_equal:' . $admission->admission_date->toDateString(),
-                'before_or_equal:today',
-            ],
+            'discharge_date'   => ['required', 'date', 'after_or_equal:' . $admission->admission_date->toDateString(), 'before_or_equal:today'],
+            'discharge_reason' => ['required', 'in:discharged,died,transferred'],
         ]);
 
-        $this->service->discharge($admission, $data['discharge_date']);
+        $this->service->discharge($admission, $data['discharge_date'], $data['discharge_reason']);
 
         alert()->success(__('Discharged'), __('Patient discharged and invoice finalised.'));
 

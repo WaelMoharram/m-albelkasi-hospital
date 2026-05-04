@@ -29,6 +29,7 @@ class MedicationController extends Controller
     {
         $data = $request->validate([
             'name'  => ['required', 'string', 'max:255'],
+            'code'  => ['nullable', 'string', 'max:50'],
             'unit'  => ['required', 'string', 'max:100'],
             'price' => ['required', 'numeric', 'min:0'],
             'type'  => ['required', 'in:local,imported'],
@@ -50,6 +51,7 @@ class MedicationController extends Controller
     {
         $data = $request->validate([
             'name'  => ['required', 'string', 'max:255'],
+            'code'  => ['nullable', 'string', 'max:50'],
             'unit'  => ['required', 'string', 'max:100'],
             'price' => ['required', 'numeric', 'min:0'],
             'type'  => ['required', 'in:local,imported'],

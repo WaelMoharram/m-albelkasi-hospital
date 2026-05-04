@@ -14,7 +14,10 @@ class Admission extends Model
         'discharge_date',
         'room',
         'ward',
+        'referral_number',
+        'referral_source',
         'status',
+        'discharge_reason',
     ];
 
     protected function casts(): array

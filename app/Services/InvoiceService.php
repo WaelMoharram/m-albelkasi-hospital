@@ -42,13 +42,37 @@ class InvoiceService
             throw new LogicException('Cannot add items to a finalised invoice.');
         }
 
+        $item = $this->createItem($invoice, $data);
+
+        // Auto-add triggered services (one level deep, no chains)
+        if ($data['item_type'] !== 'medication') {
+            $service = Service::find((int) $data['itemable_id']);
+            if ($service) {
+                foreach ($service->triggers as $triggered) {
+                    $this->createItem($invoice, [
+                        'item_type'   => $triggered->category,
+                        'itemable_id' => $triggered->id,
+                        'qty'         => $data['qty'],
+                        'unit_price'  => $triggered->price,
+                    ]);
+                }
+            }
+        }
+
+        $invoice->recalculateTotal();
+
+        return $item;
+    }
+
+    private function createItem(Invoice $invoice, array $data): InvoiceItem
+    {
         [$itemable, $section] = $this->resolveItemable($data['item_type'], (int) $data['itemable_id']);
 
         $qty       = max(1, (int) $data['qty']);
         $unitPrice = (float) $data['unit_price'];
         $total     = round($qty * $unitPrice, 2);
 
-        $item = InvoiceItem::create([
+        return InvoiceItem::create([
             'invoice_id'    => $invoice->id,
             'itemable_type' => $itemable::class,
             'itemable_id'   => $itemable->id,
@@ -58,10 +82,6 @@ class InvoiceService
             'section'       => $section,
             'service_date'  => null,
         ]);
-
-        $invoice->recalculateTotal();
-
-        return $item;
     }
 
     /**

@@ -44,8 +44,32 @@
         @can('view_reports')
         <li class="nav-item mt-1">
             <a href="{{ route('reports.index') }}"
-               class="nav-link text-white {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+               class="nav-link text-white {{ request()->routeIs('reports.index') || request()->routeIs('reports.export') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-bar-graph ms-2"></i> {{ __('Reports') }}
+            </a>
+        </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('reports.claim') }}"
+               class="nav-link text-white {{ request()->routeIs('reports.claim*') ? 'active' : '' }}">
+                <i class="bi bi-file-earmark-medical ms-2"></i> {{ __('Claim Sheet') }}
+            </a>
+        </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('reports.patient-list') }}"
+               class="nav-link text-white {{ request()->routeIs('reports.patient-list*') ? 'active' : '' }}">
+                <i class="bi bi-list-ol ms-2"></i> {{ __('Patient List') }}
+            </a>
+        </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('reports.summary') }}"
+               class="nav-link text-white {{ request()->routeIs('reports.summary*') ? 'active' : '' }}">
+                <i class="bi bi-collection ms-2"></i> {{ __('Summary') }}
+            </a>
+        </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('reports.performance') }}"
+               class="nav-link text-white {{ request()->routeIs('reports.performance*') ? 'active' : '' }}">
+                <i class="bi bi-graph-up-arrow ms-2"></i> {{ __('Performance Indicators') }}
             </a>
         </li>
         @endcan
@@ -72,9 +96,15 @@
                 <i class="bi bi-shield-check ms-2"></i> {{ __('Insurance Companies') }}
             </a>
         </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('catalog.invoice-categories.index') }}"
+               class="nav-link text-white {{ request()->routeIs('catalog.invoice-categories.*') ? 'active' : '' }}">
+                <i class="bi bi-layout-text-sidebar ms-2"></i> {{ __('Invoice Sections') }}
+            </a>
+        </li>
         @endcan
 
-        @can('manage_users')
+        @canany(['manage_users'])
         <li class="mt-3">
             <span class="text-uppercase text-muted small px-2">{{ __('Administration') }}</span>
         </li>
@@ -84,7 +114,15 @@
                 <i class="bi bi-person-gear ms-2"></i> {{ __('Users') }}
             </a>
         </li>
-        @endcan
+        @endcanany
+        @role('super_admin')
+        <li class="nav-item mt-1">
+            <a href="{{ route('settings.index') }}"
+               class="nav-link text-white {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                <i class="bi bi-gear ms-2"></i> {{ __('Settings') }}
+            </a>
+        </li>
+        @endrole
     </ul>
 
     <hr>
