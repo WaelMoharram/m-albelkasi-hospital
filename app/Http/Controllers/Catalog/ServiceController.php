@@ -16,7 +16,7 @@ class ServiceController extends Controller
 
     public function index(Request $request): View
     {
-        $category = in_array($request->input('category'), ['daily', 'lab', 'radiology']) ? $request->input('category') : null;
+        $category = in_array($request->input('category'), ['daily', 'lab', 'radiology', 'supplies']) ? $request->input('category') : null;
         $services = $this->service->paginate($request->input('search'), $category);
 
         return view('catalog.services.index', compact('services'));
@@ -36,7 +36,7 @@ class ServiceController extends Controller
             'name'                => ['required', 'string', 'max:255'],
             'code'                => ['nullable', 'string', 'max:50'],
             'price'               => ['required', 'numeric', 'min:0'],
-            'category'            => ['required', 'in:daily,lab,radiology'],
+            'category'            => ['required', 'in:daily,lab,radiology,supplies'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
         ]);
 
@@ -62,7 +62,7 @@ class ServiceController extends Controller
             'name'                => ['required', 'string', 'max:255'],
             'code'                => ['nullable', 'string', 'max:50'],
             'price'               => ['required', 'numeric', 'min:0'],
-            'category'            => ['required', 'in:daily,lab,radiology'],
+            'category'            => ['required', 'in:daily,lab,radiology,supplies'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
         ]);
 

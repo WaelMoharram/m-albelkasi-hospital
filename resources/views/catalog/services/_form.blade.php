@@ -37,6 +37,7 @@
             <option value="">— {{ __('Select —') }}</option>
             @foreach ([
                 'daily'     => __('Daily'),
+                'supplies'  => __('Supplies'),
                 'lab'       => __('Lab'),
                 'radiology' => __('Radiology'),
             ] as $val => $lbl)
@@ -85,7 +86,7 @@
     @foreach($allServices->groupBy('category') as $cat => $group)
         <div class="mb-2">
             <span class="badge bg-secondary mb-1">
-                {{ match($cat) { 'daily' => __('Daily'), 'lab' => __('Lab'), 'radiology' => __('Radiology'), default => $cat } }}
+                {{ match($cat) { 'daily' => __('Daily'), 'supplies' => __('Supplies'), 'lab' => __('Lab'), 'radiology' => __('Radiology'), default => $cat } }}
             </span>
             @foreach($group as $s)
                 <div class="form-check">

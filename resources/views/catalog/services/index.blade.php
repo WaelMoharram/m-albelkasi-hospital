@@ -30,6 +30,10 @@
                    class="btn {{ request('category') === 'lab' ? 'btn-info text-white' : 'btn-outline-info' }}">
                     {{ __('Lab') }}
                 </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'supplies'])) }}"
+                   class="btn {{ request('category') === 'supplies' ? 'btn-warning' : 'btn-outline-warning' }}">
+                    {{ __('Supplies') }}
+                </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'radiology'])) }}"
                    class="btn {{ request('category') === 'radiology' ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('Radiology') }}
@@ -69,9 +73,10 @@
                     <td>
                         @php
                             $catMap = [
-                                'daily'     => ['bg-primary-subtle text-primary border-primary-subtle',     __('Daily')],
-                                'lab'       => ['bg-info-subtle text-info border-info-subtle',               __('Lab')],
-                                'radiology' => ['bg-secondary-subtle text-secondary border-secondary-subtle', __('Radiology')],
+                                'daily'     => ['bg-primary-subtle text-primary border-primary-subtle',       __('Daily')],
+                                'supplies'  => ['bg-warning-subtle text-warning border-warning-subtle',       __('Supplies')],
+                                'lab'       => ['bg-info-subtle text-info border-info-subtle',                 __('Lab')],
+                                'radiology' => ['bg-secondary-subtle text-secondary border-secondary-subtle',  __('Radiology')],
                             ];
                             [$cls, $label] = $catMap[$service->category];
                         @endphp
