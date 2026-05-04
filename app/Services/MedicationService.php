@@ -7,10 +7,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class MedicationService
 {
-    public function paginate(?string $search, int $perPage = 15): LengthAwarePaginator
+    public function paginate(?string $search, ?string $type = null, int $perPage = 15): LengthAwarePaginator
     {
         return Medication::query()
             ->search($search)
+            ->when($type, fn($q) => $q->where('type', $type))
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();

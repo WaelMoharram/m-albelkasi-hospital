@@ -15,7 +15,8 @@ class MedicationController extends Controller
 
     public function index(Request $request): View
     {
-        $medications = $this->service->paginate($request->input('search'));
+        $type        = in_array($request->input('type'), ['local', 'imported']) ? $request->input('type') : null;
+        $medications = $this->service->paginate($request->input('search'), $type);
 
         return view('catalog.medications.index', compact('medications'));
     }

@@ -329,5 +329,8 @@
     "Item": "البند",
     "Grand Total": "الإجمالي الكلي",
     "Print PDF": "طباعة PDF",
-    "Month": "الشهر"
+    "Month": "الشهر",
+    "Item Code": "رقم الصنف",
+    "All": "الكل",
+    "Search by name or unit…": "ابحث بالاسم أو الوحدة..."
 }

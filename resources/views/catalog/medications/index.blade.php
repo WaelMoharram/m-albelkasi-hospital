@@ -10,22 +10,35 @@
 
 @section('content')
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 d-flex align-items-center gap-3">
-        <form method="GET" action="{{ route('catalog.medications.index') }}" class="d-flex gap-2 flex-grow-1">
+    <div class="card-header bg-white py-3 d-flex align-items-center gap-3 flex-wrap">
+        <form method="GET" action="{{ route('catalog.medications.index') }}" class="d-flex gap-2 flex-grow-1 flex-wrap">
             <input type="text" name="search" value="{{ request('search') }}"
                    class="form-control form-control-sm"
                    placeholder="{{ __('Search by name or unit…') }}"
-                   style="max-width: 280px;">
-            <button class="btn btn-sm btn-outline-secondary" type="submit">
-                <i class="bi bi-search"></i>
-            </button>
-            @if(request('search'))
+                   style="max-width: 260px;">
+
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="{{ route('catalog.medications.index', array_merge(request()->except('type'), [])) }}"
+                   class="btn {{ !request('type') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                    {{ __('All') }}
+                </a>
+                <a href="{{ route('catalog.medications.index', array_merge(request()->except('type'), ['type' => 'local'])) }}"
+                   class="btn {{ request('type') === 'local' ? 'btn-success' : 'btn-outline-success' }}">
+                    {{ __('Local') }}
+                </a>
+                <a href="{{ route('catalog.medications.index', array_merge(request()->except('type'), ['type' => 'imported'])) }}"
+                   class="btn {{ request('type') === 'imported' ? 'btn-warning' : 'btn-outline-warning' }}">
+                    {{ __('Imported') }}
+                </a>
+            </div>
+
+            @if(request('search') || request('type'))
                 <a href="{{ route('catalog.medications.index') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>
             @endif
         </form>
-        <a href="{{ route('catalog.medications.create') }}" class="btn btn-sm btn-primary me-auto">
+        <a href="{{ route('catalog.medications.create') }}" class="btn btn-sm btn-primary">
             <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Medication') }}
         </a>
     </div>
