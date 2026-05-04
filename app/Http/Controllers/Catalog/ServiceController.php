@@ -40,10 +40,12 @@ class ServiceController extends Controller
             'category'            => ['required', 'in:supplies,lab,radiology,other'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
             'is_daily'            => ['nullable', 'boolean'],
+            'daily_qty'           => ['nullable', 'integer', 'min:1', 'max:99'],
             'is_once'             => ['nullable', 'boolean'],
         ]);
-        $data['is_daily'] = $request->boolean('is_daily');
-        $data['is_once']  = $request->boolean('is_once');
+        $data['is_daily']  = $request->boolean('is_daily');
+        $data['daily_qty'] = $request->boolean('is_daily') ? max(1, (int) $request->input('daily_qty', 1)) : 1;
+        $data['is_once']   = $request->boolean('is_once');
 
         $service = $this->service->create($data);
         $this->service->syncTriggers($service, $request->input('triggers', []));
@@ -70,10 +72,12 @@ class ServiceController extends Controller
             'category'            => ['required', 'in:supplies,lab,radiology,other'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
             'is_daily'            => ['nullable', 'boolean'],
+            'daily_qty'           => ['nullable', 'integer', 'min:1', 'max:99'],
             'is_once'             => ['nullable', 'boolean'],
         ]);
-        $data['is_daily'] = $request->boolean('is_daily');
-        $data['is_once']  = $request->boolean('is_once');
+        $data['is_daily']  = $request->boolean('is_daily');
+        $data['daily_qty'] = $request->boolean('is_daily') ? max(1, (int) $request->input('daily_qty', 1)) : 1;
+        $data['is_once']   = $request->boolean('is_once');
 
         $this->service->update($service, $data);
         $this->service->syncTriggers($service, $request->input('triggers', []));

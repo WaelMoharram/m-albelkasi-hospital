@@ -349,6 +349,7 @@
     "e.g.": "مثال:",
     "Supplies": "مستلزمات",
     "Auto-charge daily": "يُضاف يومياً تلقائياً",
+    "Times per day": "كم مرة يومياً؟",
     "If enabled, this service is added automatically for every day of admission.": "إذا كان مفعّلاً، يُضاف هذا الصنف تلقائياً عن كل يوم إقامة.",
     "Auto-daily": "يومي تلقائي",
     "Add once at admission": "يُضاف مرة واحدة عند الدخول",

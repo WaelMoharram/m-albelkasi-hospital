@@ -88,13 +88,14 @@ class AdmissionObserver
         /** @var Carbon $date */
         foreach (CarbonPeriod::create($admissionDate->startOfDay(), $endDate->copy()->startOfDay()) as $date) {
             foreach ($dailyServices as $service) {
+                $qty    = max(1, $service->daily_qty ?? 1);
                 $rows[] = [
                     'invoice_id'    => $invoice->id,
                     'itemable_type' => Service::class,
                     'itemable_id'   => $service->id,
-                    'qty'           => 1,
+                    'qty'           => $qty,
                     'unit_price'    => $service->price,
-                    'total'         => $service->price,
+                    'total'         => $service->price * $qty,
                     'section'       => 'daily',
                     'service_date'  => $date->toDateString(),
                     'created_at'    => $now,
