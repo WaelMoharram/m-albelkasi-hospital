@@ -12,7 +12,7 @@
     <div class="card-header bg-white py-3 d-flex align-items-center gap-3">
         <form method="GET" action="{{ route('patients.index') }}" class="d-flex gap-2 flex-grow-1">
             <input type="text" name="search" value="{{ request('search') }}"
-                   class="form-control form-control-sm" placeholder="{{ __('Search name, national ID, policy…') }}"
+                   class="form-control form-control-sm" placeholder="{{ __('Search name or national ID…') }}"
                    style="max-width:320px;">
             <button class="btn btn-sm btn-outline-secondary" type="submit">
                 <i class="bi bi-search"></i>
@@ -40,7 +40,6 @@
                     <th>{{ __('DOB') }}</th>
                     <th>{{ __('Gender') }}</th>
                     <th>{{ __('Insurance') }}</th>
-                    <th>{{ __('Policy #') }}</th>
                     <th class="text-start">{{ __('Actions') }}</th>
                 </tr>
             </thead>
@@ -59,7 +58,6 @@
                         @endif
                     </td>
                     <td class="small">{{ $patient->insuranceCompany->name ?? '—' }}</td>
-                    <td class="font-monospace small">{{ $patient->policy_number }}</td>
                     <td class="text-start">
                         @can('manage_admissions')
                         <a href="{{ route('admissions.create', ['patient_id' => $patient->id]) }}"
@@ -82,7 +80,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">{{ __('No patients found.') }}</td>
+                    <td colspan="7" class="text-center text-muted py-4">{{ __('No patients found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>

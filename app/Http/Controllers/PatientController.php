@@ -35,7 +35,6 @@ class PatientController extends Controller
             'dob'                  => ['required', 'date', 'before:today'],
             'gender'               => ['required', 'in:male,female'],
             'insurance_company_id' => ['required', 'exists:insurance_companies,id'],
-            'policy_number'        => ['required', 'string', 'max:100'],
         ]);
 
         $this->service->create($data);
@@ -60,7 +59,6 @@ class PatientController extends Controller
             'dob'                  => ['required', 'date', 'before:today'],
             'gender'               => ['required', 'in:male,female'],
             'insurance_company_id' => ['required', 'exists:insurance_companies,id'],
-            'policy_number'        => ['required', 'string', 'max:100'],
         ]);
 
         $this->service->update($patient, $data);

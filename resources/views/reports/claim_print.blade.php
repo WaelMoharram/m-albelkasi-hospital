@@ -141,7 +141,7 @@ td.name { text-align: right; padding-right: 3px; }
             <tr>
                 <td>{{ $row['seq'] }}</td>
                 <td class="name">{{ $row['patient']->name }}</td>
-                <td>{{ $row['patient']->policy_number }}</td>
+                <td>{{ $row['admission']->referral_number ?? '' }}</td>
                 <td>{{ $row['admission']->admission_date->format('Y/m/d') }}</td>
                 <td>{{ $row['admission']->discharge_date->format('Y/m/d') }}</td>
                 <td>{{ $row['days'] }}</td>

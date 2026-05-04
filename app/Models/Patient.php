@@ -14,7 +14,6 @@ class Patient extends Model
         'dob',
         'gender',
         'insurance_company_id',
-        'policy_number',
     ];
 
     protected function casts(): array
@@ -43,8 +42,7 @@ class Patient extends Model
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('national_id', 'like', "%{$search}%")
-                  ->orWhere('policy_number', 'like', "%{$search}%");
+                  ->orWhere('national_id', 'like', "%{$search}%");
             });
         }
 

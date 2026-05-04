@@ -252,7 +252,7 @@
             <div class="p-label">الاسم</div>
             <div class="p-value">{{ $patient->name }}</div>
             <div class="p-sub">{{ $patient->insuranceCompany->name ?? '—' }}</div>
-            <div class="p-sub">البوليصة: {{ $patient->policy_number }}</div>
+            @if($admission->referral_number)<div class="p-sub">رقم التحويل: {{ $admission->referral_number }}</div>@endif
         </div>
         <div class="patient-cell" style="width:20%;">
             <div class="p-label">تاريخ الدخول</div>

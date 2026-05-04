@@ -81,7 +81,9 @@
             <div class="col-md-4">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Insurance') }}</div>
                 <div>{{ $patient->insuranceCompany->name ?? '—' }}</div>
-                <div class="text-muted small">{{ __('Policy') }}: {{ $patient->policy_number }}</div>
+                @if($admission->referral_number)
+                <div class="text-muted small">{{ __('Referral #') }}: {{ $admission->referral_number }}</div>
+                @endif
             </div>
             <div class="col-md-4">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Admission') }}</div>

@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 class ReportService
 {
     /**
-     * Summary report (المجمع): groups by ward + policy_number for one insurance company.
+     * Summary report (المجمع): groups by ward + referral_number for one insurance company.
      */
     public function getSummaryData(int $month, int $year, int $insuranceCompanyId): array
     {
@@ -24,7 +24,7 @@ class ReportService
             ->get();
 
         $groups = $admissions->groupBy(fn ($a) =>
-            ($a->ward ?? 'غير محدد') . '|||' . ($a->patient->policy_number ?? 'غير محدد')
+            ($a->ward ?? 'غير محدد') . '|||' . ($a->referral_number ?? 'غير محدد')
         );
 
         $rows = $groups->values()->map(function ($group, int $idx) {
@@ -37,7 +37,7 @@ class ReportService
             return [
                 'seq'          => $idx + 1,
                 'service_type' => $sample->ward ?? 'غير محدد',
-                'law'          => $sample->patient->policy_number ?? 'غير محدد',
+                'law'          => $sample->referral_number ?? 'غير محدد',
                 'count'        => $group->count(),
                 'days'         => $days,
                 'amount'       => round($amount, 3),

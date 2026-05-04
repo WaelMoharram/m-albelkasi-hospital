@@ -27,9 +27,11 @@
                     <span><i class="bi bi-shield-check text-primary ms-1"></i>
                         {{ $admission->patient->insuranceCompany->name ?? '—' }}
                     </span>
+                    @if($admission->referral_number)
                     <span><i class="bi bi-card-text text-secondary ms-1"></i>
-                        {{ __('Policy') }}: {{ $admission->patient->policy_number }}
+                        {{ __('Referral #') }}: {{ $admission->referral_number }}
                     </span>
+                    @endif
                     <span><i class="bi bi-geo-alt text-secondary ms-1"></i>
                         {{ __('Room') }} {{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}
                     </span>

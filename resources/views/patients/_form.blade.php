@@ -103,15 +103,6 @@
         @error('insurance_company_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 
-    {{-- Policy number --}}
-    <div class="col-md-4">
-        <label class="form-label" for="policy_number">{{ __('Policy Number') }} <span class="text-danger">*</span></label>
-        <input id="policy_number" type="text" name="policy_number"
-               value="{{ old('policy_number', $patient->policy_number ?? '') }}"
-               class="form-control @error('policy_number') is-invalid @enderror"
-               required>
-        @error('policy_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    </div>
 
 </div>
 
