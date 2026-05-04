@@ -344,5 +344,8 @@
     "Unit updated successfully.": "تم تحديث الوحدة بنجاح.",
     "Unit removed.": "تم حذف الوحدة.",
     "e.g.": "مثال:",
-    "Supplies": "مستلزمات"
+    "Supplies": "مستلزمات",
+    "Auto-charge daily": "يُضاف يومياً تلقائياً",
+    "If enabled, this service is added automatically for every day of admission.": "إذا كان مفعّلاً، يُضاف هذا الصنف تلقائياً عن كل يوم إقامة.",
+    "Auto-daily": "يومي تلقائي"
 }

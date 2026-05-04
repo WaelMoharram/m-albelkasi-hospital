@@ -40,7 +40,7 @@ class AdmissionObserver
      */
     public function seedDailyItems(Invoice $invoice, Carbon $admissionDate, Carbon $endDate): void
     {
-        $dailyServices = Service::where('category', 'daily')->get();
+        $dailyServices = Service::where('is_daily', true)->get();
 
         if ($dailyServices->isEmpty()) {
             return;

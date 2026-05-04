@@ -36,7 +36,6 @@
                 class="form-select @error('category') is-invalid @enderror" required>
             <option value="">— {{ __('Select —') }}</option>
             @foreach ([
-                'daily'     => __('Daily'),
                 'supplies'  => __('Supplies'),
                 'lab'       => __('Lab'),
                 'radiology' => __('Radiology'),
@@ -48,7 +47,7 @@
             @endforeach
         </select>
         @error('category') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-text">{{ __('Daily services are auto-charged per day from admission to discharge.') }}</div>
+        <div class="form-text">{{ __('Which section this service appears in on the printed invoice.') }}</div>
     </div>
 
     <div class="col-md-6">
@@ -66,6 +65,19 @@
         @error('invoice_category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
         <div class="form-text">{{ __('Which section this service appears in on the printed invoice.') }}</div>
     </div>
+</div>
+
+{{-- Auto-charge daily toggle --}}
+<div class="mb-3">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch"
+               id="is_daily" name="is_daily" value="1"
+               {{ old('is_daily', $service->is_daily ?? false) ? 'checked' : '' }}>
+        <label class="form-check-label fw-semibold" for="is_daily">
+            {{ __('Auto-charge daily') }}
+        </label>
+    </div>
+    <div class="form-text">{{ __('If enabled, this service is added automatically for every day of admission.') }}</div>
 </div>
 
 {{-- Linked (triggered) services --}}

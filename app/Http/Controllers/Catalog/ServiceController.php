@@ -16,8 +16,9 @@ class ServiceController extends Controller
 
     public function index(Request $request): View
     {
-        $category = in_array($request->input('category'), ['daily', 'lab', 'radiology', 'supplies']) ? $request->input('category') : null;
-        $services = $this->service->paginate($request->input('search'), $category);
+        $category = in_array($request->input('category'), ['supplies', 'lab', 'radiology']) ? $request->input('category') : null;
+        $isDaily  = $request->input('is_daily');
+        $services = $this->service->paginate($request->input('search'), $category, $isDaily);
 
         return view('catalog.services.index', compact('services'));
     }
@@ -36,9 +37,11 @@ class ServiceController extends Controller
             'name'                => ['required', 'string', 'max:255'],
             'code'                => ['nullable', 'string', 'max:50'],
             'price'               => ['required', 'numeric', 'min:0'],
-            'category'            => ['required', 'in:daily,lab,radiology,supplies'],
+            'category'            => ['required', 'in:supplies,lab,radiology'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
+            'is_daily'            => ['nullable', 'boolean'],
         ]);
+        $data['is_daily'] = $request->boolean('is_daily');
 
         $service = $this->service->create($data);
         $this->service->syncTriggers($service, $request->input('triggers', []));
@@ -62,9 +65,11 @@ class ServiceController extends Controller
             'name'                => ['required', 'string', 'max:255'],
             'code'                => ['nullable', 'string', 'max:50'],
             'price'               => ['required', 'numeric', 'min:0'],
-            'category'            => ['required', 'in:daily,lab,radiology,supplies'],
+            'category'            => ['required', 'in:supplies,lab,radiology'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
+            'is_daily'            => ['nullable', 'boolean'],
         ]);
+        $data['is_daily'] = $request->boolean('is_daily');
 
         $this->service->update($service, $data);
         $this->service->syncTriggers($service, $request->input('triggers', []));

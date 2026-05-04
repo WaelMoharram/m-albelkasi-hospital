@@ -18,29 +18,29 @@
                    style="max-width: 240px;">
 
             <div class="btn-group btn-group-sm" role="group">
-                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), [])) }}"
-                   class="btn {{ !request('category') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), [])) }}"
+                   class="btn {{ !request('category') && !request('is_daily') ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('All') }}
                 </a>
-                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'daily'])) }}"
-                   class="btn {{ request('category') === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}">
-                    {{ __('Daily') }}
-                </a>
-                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'lab'])) }}"
-                   class="btn {{ request('category') === 'lab' ? 'btn-info text-white' : 'btn-outline-info' }}">
-                    {{ __('Lab') }}
-                </a>
-                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'supplies'])) }}"
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['category' => 'supplies'])) }}"
                    class="btn {{ request('category') === 'supplies' ? 'btn-warning' : 'btn-outline-warning' }}">
                     {{ __('Supplies') }}
                 </a>
-                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'radiology'])) }}"
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['category' => 'lab'])) }}"
+                   class="btn {{ request('category') === 'lab' ? 'btn-info text-white' : 'btn-outline-info' }}">
+                    {{ __('Lab') }}
+                </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['category' => 'radiology'])) }}"
                    class="btn {{ request('category') === 'radiology' ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('Radiology') }}
                 </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['is_daily' => '1'])) }}"
+                   class="btn {{ request('is_daily') === '1' ? 'btn-primary' : 'btn-outline-primary' }}">
+                    <i class="bi bi-arrow-repeat"></i> {{ __('Auto-daily') }}
+                </a>
             </div>
 
-            @if(request('search') || request('category'))
+            @if(request('search') || request('category') || request('is_daily'))
                 <a href="{{ route('catalog.services.index') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>
@@ -73,14 +73,18 @@
                     <td>
                         @php
                             $catMap = [
-                                'daily'     => ['bg-primary-subtle text-primary border-primary-subtle',       __('Daily')],
-                                'supplies'  => ['bg-warning-subtle text-warning border-warning-subtle',       __('Supplies')],
-                                'lab'       => ['bg-info-subtle text-info border-info-subtle',                 __('Lab')],
-                                'radiology' => ['bg-secondary-subtle text-secondary border-secondary-subtle',  __('Radiology')],
+                                'supplies'  => ['bg-warning-subtle text-warning border-warning-subtle',      __('Supplies')],
+                                'lab'       => ['bg-info-subtle text-info border-info-subtle',                __('Lab')],
+                                'radiology' => ['bg-secondary-subtle text-secondary border-secondary-subtle', __('Radiology')],
                             ];
-                            [$cls, $label] = $catMap[$service->category];
+                            [$cls, $label] = $catMap[$service->category] ?? ['bg-light text-muted border-secondary-subtle', $service->category];
                         @endphp
                         <span class="badge {{ $cls }} border">{{ $label }}</span>
+                        @if($service->is_daily)
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">
+                                <i class="bi bi-arrow-repeat"></i> {{ __('Auto-daily') }}
+                            </span>
+                        @endif
                     </td>
                     <td class="text-start">
                         <a href="{{ route('catalog.services.edit', $service) }}"
