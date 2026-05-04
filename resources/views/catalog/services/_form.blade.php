@@ -95,38 +95,53 @@
 
 {{-- Linked (triggered) services --}}
 @if(! empty($allServices) && $allServices->count())
+@php
+    $selectedTriggers = old('triggers',
+        isset($service) ? $service->triggers->pluck('id')->map(fn($id) => (string)$id)->all() : []
+    );
+@endphp
+
 <div class="mb-3">
-    <label class="form-label fw-semibold">
+    <label class="form-label fw-semibold" for="triggers">
         <i class="bi bi-link-45deg ms-1"></i>
         {{ __('Linked Services') }}
     </label>
     <div class="form-text mb-2">{{ __('These services will be added automatically when this service is added to an invoice.') }}</div>
 
-    @php
-        $selectedTriggers = old('triggers',
-            isset($service) ? $service->triggers->pluck('id')->map(fn($id) => (string)$id)->all() : []
-        );
-    @endphp
-
-    @foreach($allServices->groupBy('category') as $cat => $group)
-        <div class="mb-2">
-            <span class="badge bg-secondary mb-1">
-                {{ match($cat) { 'daily' => __('Daily'), 'supplies' => __('Supplies'), 'lab' => __('Lab'), 'radiology' => __('Radiology'), default => $cat } }}
-            </span>
-            @foreach($group as $s)
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox"
-                           name="triggers[]"
-                           id="trigger_{{ $s->id }}"
-                           value="{{ $s->id }}"
-                           {{ in_array((string)$s->id, $selectedTriggers) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="trigger_{{ $s->id }}">
-                        {{ $s->name }}
-                        <span class="text-muted small">({{ number_format($s->price, 2) }} ج.م)</span>
-                    </label>
-                </div>
-            @endforeach
-        </div>
-    @endforeach
+    <select id="triggers" name="triggers[]" multiple>
+        @foreach($allServices->groupBy('category') as $cat => $group)
+            <optgroup label="{{ match($cat) { 'supplies' => __('Supplies'), 'lab' => __('Lab'), 'radiology' => __('Radiology'), 'other' => __('Other'), default => $cat } }}">
+                @foreach($group as $s)
+                    <option value="{{ $s->id }}"
+                        {{ in_array((string)$s->id, $selectedTriggers) ? 'selected' : '' }}>
+                        {{ $s->name }} — {{ number_format($s->price, 2) }} ج.م
+                    </option>
+                @endforeach
+            </optgroup>
+        @endforeach
+    </select>
 </div>
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<style>
+    .ts-wrapper .ts-control          { direction: rtl; text-align: right; min-height: 38px; }
+    .ts-dropdown                     { direction: rtl; text-align: right; }
+    .ts-dropdown .optgroup-header    { font-size: .75rem; text-transform: none; color: #6c757d; font-weight: 600; }
+    .ts-wrapper.multi .ts-control > .item { background: #e9ecef; border-radius: .25rem; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+new TomSelect('#triggers', {
+    plugins: ['remove_button', 'clear_button'],
+    placeholder: '— {{ __("Select linked services") }} —',
+    maxOptions: null,
+    closeAfterSelect: false,
+    hideSelected: false,
+});
+</script>
+@endpush
 @endif
