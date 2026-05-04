@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Service extends Model
 {
-    protected $fillable = ['name', 'price', 'category', 'invoice_category_id'];
+    protected $fillable = ['name', 'code', 'price', 'category', 'invoice_category_id'];
 
     protected function casts(): array
     {

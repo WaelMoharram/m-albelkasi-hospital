@@ -7,10 +7,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ServiceCatalogService
 {
-    public function paginate(?string $search, int $perPage = 15): LengthAwarePaginator
+    public function paginate(?string $search, ?string $category = null, int $perPage = 30): LengthAwarePaginator
     {
         return Service::query()
             ->search($search)
+            ->when($category, fn($q) => $q->where('category', $category))
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();

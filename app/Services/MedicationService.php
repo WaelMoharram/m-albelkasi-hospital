@@ -7,7 +7,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class MedicationService
 {
-    public function paginate(?string $search, ?string $type = null, int $perPage = 15): LengthAwarePaginator
+    public function paginate(?string $search, ?string $type = null, int $perPage = 30): LengthAwarePaginator
     {
         return Medication::query()
             ->search($search)

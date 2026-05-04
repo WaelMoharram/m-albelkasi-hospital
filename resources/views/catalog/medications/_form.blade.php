@@ -18,13 +18,23 @@
 </div>
 
 <div class="mb-3">
-    <label class="form-label" for="unit">{{ __('Unit') }} <span class="text-danger">*</span></label>
-    <input id="unit" type="text" name="unit"
-           value="{{ old('unit', $medication->unit ?? '') }}"
-           class="form-control @error('unit') is-invalid @enderror"
-           placeholder="مثال: حبة، قارورة، مغ"
-           required>
+    <label class="form-label" for="unit">{{ __('Unit') }}</label>
+    <select id="unit" name="unit"
+            class="form-select @error('unit') is-invalid @enderror">
+        <option value="">— {{ __('Optional') }} —</option>
+        @foreach ($units as $u)
+            <option value="{{ $u->name }}"
+                {{ old('unit', $medication->unit ?? '') === $u->name ? 'selected' : '' }}>
+                {{ $u->name }}
+            </option>
+        @endforeach
+    </select>
     @error('unit') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="form-text">
+        <a href="{{ route('catalog.units.index') }}" target="_blank" class="small">
+            <i class="bi bi-plus-circle"></i> {{ __('Manage Units') }}
+        </a>
+    </div>
 </div>
 
 <div class="mb-3">

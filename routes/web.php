@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Catalog\InsuranceCompanyController;
 use App\Http\Controllers\Catalog\MedicationController;
 use App\Http\Controllers\Catalog\ServiceController;
+use App\Http\Controllers\Catalog\UnitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceCategoryController;
 use App\Http\Controllers\InvoiceController;
@@ -162,6 +163,10 @@ Route::middleware('auth')->group(function () {
             Route::resource('invoice-categories', InvoiceCategoryController::class)
                 ->except(['show'])
                 ->names('invoice-categories');
+
+            Route::resource('units', UnitController::class)
+                ->only(['index', 'store', 'update', 'destroy'])
+                ->names('units');
         });
 
     /*

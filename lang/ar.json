@@ -332,5 +332,16 @@
     "Month": "الشهر",
     "Item Code": "رقم الصنف",
     "All": "الكل",
-    "Search by name or unit…": "ابحث بالاسم أو الوحدة..."
+    "Search by name or unit…": "ابحث بالاسم أو الوحدة...",
+    "Units": "الوحدات",
+    "Unit Name": "اسم الوحدة",
+    "Add Unit": "إضافة وحدة",
+    "All Units": "كل الوحدات",
+    "Manage Units": "إدارة الوحدات",
+    "No units yet.": "لا توجد وحدات بعد.",
+    "Delete this unit?": "حذف هذه الوحدة؟",
+    "Unit added successfully.": "تمت إضافة الوحدة بنجاح.",
+    "Unit updated successfully.": "تم تحديث الوحدة بنجاح.",
+    "Unit removed.": "تم حذف الوحدة.",
+    "e.g.": "مثال:"
 }

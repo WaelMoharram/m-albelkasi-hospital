@@ -10,22 +10,39 @@
 
 @section('content')
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 d-flex align-items-center gap-3">
-        <form method="GET" action="{{ route('catalog.services.index') }}" class="d-flex gap-2 flex-grow-1">
+    <div class="card-header bg-white py-3 d-flex align-items-center gap-3 flex-wrap">
+        <form method="GET" action="{{ route('catalog.services.index') }}" class="d-flex gap-2 flex-grow-1 flex-wrap">
             <input type="text" name="search" value="{{ request('search') }}"
                    class="form-control form-control-sm"
                    placeholder="{{ __('Search by name…') }}"
-                   style="max-width: 280px;">
-            <button class="btn btn-sm btn-outline-secondary" type="submit">
-                <i class="bi bi-search"></i>
-            </button>
-            @if(request('search'))
+                   style="max-width: 240px;">
+
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), [])) }}"
+                   class="btn {{ !request('category') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                    {{ __('All') }}
+                </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'daily'])) }}"
+                   class="btn {{ request('category') === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}">
+                    {{ __('Daily') }}
+                </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'lab'])) }}"
+                   class="btn {{ request('category') === 'lab' ? 'btn-info text-white' : 'btn-outline-info' }}">
+                    {{ __('Lab') }}
+                </a>
+                <a href="{{ route('catalog.services.index', array_merge(request()->except('category'), ['category' => 'radiology'])) }}"
+                   class="btn {{ request('category') === 'radiology' ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                    {{ __('Radiology') }}
+                </a>
+            </div>
+
+            @if(request('search') || request('category'))
                 <a href="{{ route('catalog.services.index') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>
             @endif
         </form>
-        <a href="{{ route('catalog.services.create') }}" class="btn btn-sm btn-primary me-auto">
+        <a href="{{ route('catalog.services.create') }}" class="btn btn-sm btn-primary">
             <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Service') }}
         </a>
     </div>
@@ -36,6 +53,7 @@
                 <tr>
                     <th>#</th>
                     <th>{{ __('Full Name') }}</th>
+                    <th>{{ __('Item Code') }}</th>
                     <th>{{ __('Price') }}</th>
                     <th>{{ __('Category') }}</th>
                     <th class="text-start">{{ __('Actions') }}</th>
@@ -46,6 +64,7 @@
                 <tr>
                     <td class="text-muted small">{{ $service->id }}</td>
                     <td>{{ $service->name }}</td>
+                    <td class="text-muted small">{{ $service->code ?? '—' }}</td>
                     <td>{{ number_format($service->price, 2) }}</td>
                     <td>
                         @php
@@ -76,7 +95,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">{{ __('No services found.') }}</td>
+                    <td colspan="6" class="text-center text-muted py-4">{{ __('No services found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>

@@ -102,6 +102,12 @@
                 <i class="bi bi-layout-text-sidebar ms-2"></i> {{ __('Invoice Sections') }}
             </a>
         </li>
+        <li class="nav-item mt-1">
+            <a href="{{ route('catalog.units.index') }}"
+               class="nav-link text-white {{ request()->routeIs('catalog.units.*') ? 'active' : '' }}">
+                <i class="bi bi-rulers ms-2"></i> {{ __('Units') }}
+            </a>
+        </li>
         @endcan
 
         @canany(['manage_users'])

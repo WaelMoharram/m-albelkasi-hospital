@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Models\Medication;
+use App\Models\Unit;
 use App\Services\MedicationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,8 @@ class MedicationController extends Controller
 
     public function create(): View
     {
-        return view('catalog.medications.create');
+        $units = Unit::orderBy('name')->get();
+        return view('catalog.medications.create', compact('units'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -31,7 +33,7 @@ class MedicationController extends Controller
         $data = $request->validate([
             'name'  => ['required', 'string', 'max:255'],
             'code'  => ['nullable', 'string', 'max:50'],
-            'unit'  => ['required', 'string', 'max:100'],
+            'unit'  => ['nullable', 'string', 'max:100'],
             'price' => ['required', 'numeric', 'min:0'],
             'type'  => ['required', 'in:local,imported'],
         ]);
@@ -45,7 +47,8 @@ class MedicationController extends Controller
 
     public function edit(Medication $medication): View
     {
-        return view('catalog.medications.edit', compact('medication'));
+        $units = Unit::orderBy('name')->get();
+        return view('catalog.medications.edit', compact('medication', 'units'));
     }
 
     public function update(Request $request, Medication $medication): RedirectResponse
@@ -53,7 +56,7 @@ class MedicationController extends Controller
         $data = $request->validate([
             'name'  => ['required', 'string', 'max:255'],
             'code'  => ['nullable', 'string', 'max:50'],
-            'unit'  => ['required', 'string', 'max:100'],
+            'unit'  => ['nullable', 'string', 'max:100'],
             'price' => ['required', 'numeric', 'min:0'],
             'type'  => ['required', 'in:local,imported'],
         ]);
