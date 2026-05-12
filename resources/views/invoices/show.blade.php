@@ -36,6 +36,27 @@
     }
     $dailyCategoryGroups = $dailyCategoryGroups->sortBy('sort_order');
 
+    // Aggregate repeated items (e.g. daily charges per day) by service within each category
+    $dailyCategoryGroups->transform(function ($group) {
+        $group['items'] = $group['items']
+            ->groupBy('itemable_id')
+            ->map(function ($rows) {
+                $first      = $rows->first();
+                $agg        = new \stdClass;
+                $agg->id         = $first->id;
+                $agg->itemable   = $first->itemable;
+                $agg->qty        = $rows->sum('qty');
+                $agg->unit_price = (float) $first->unit_price;
+                $agg->total      = (float) $rows->sum('total');
+                $agg->section    = $first->section;
+                $agg->isSingle   = $rows->count() === 1;
+                $agg->singleItem = $rows->count() === 1 ? $first : null;
+                return $agg;
+            })
+            ->values();
+        return $group;
+    });
+
     $sections = [
         'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',        'color' => 'success'],
         'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill',    'color' => 'warning'],
@@ -243,30 +264,29 @@
                                     <span class="text-muted mx-1">—</span>
                                 @endif
                                 {{ $item->itemable->name ?? '—' }}
-                                @if($item->service_date)
-                                    <span class="ms-1 badge bg-light text-muted border" style="font-size:0.7em;">{{ \Carbon\Carbon::parse($item->service_date)->format('d/m') }}</span>
-                                @endif
                             </td>
                             @if($isDraft)
                             <td class="text-end">
                                 @canany(['add_invoice_items', 'edit_invoices'])
+                                @if($item->isSingle)
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
-                                        data-item-id="{{ $item->id }}"
+                                        data-item-id="{{ $item->singleItem->id }}"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
                                         data-item-qty="{{ $item->qty }}"
                                         data-item-price="{{ $item->unit_price }}"
-                                        data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
+                                        data-item-url="{{ route('invoices.items.update', [$invoice, $item->singleItem]) }}">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <form method="POST" action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
+                                <form method="POST" action="{{ route('invoices.items.destroy', [$invoice, $item->singleItem]) }}"
                                       class="d-inline" onsubmit="return confirm('{{ __('Remove this item?') }}')">
                                     @csrf @method('DELETE')
                                     <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </form>
+                                @endif
                                 @endcanany
                             </td>
                             @endif
