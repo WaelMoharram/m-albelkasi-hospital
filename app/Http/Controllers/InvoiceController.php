@@ -44,9 +44,10 @@ class InvoiceController extends Controller
         $catalogJson = '{}';
 
         if ($invoice->status === 'draft') {
-            $medications = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type']);
-            $labServices = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price']);
+            $medications       = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type']);
+            $labServices       = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price']);
             $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price']);
+            $dailyServices     = Service::where('category', 'daily')->orderBy('name')->get(['id', 'name', 'price']);
 
             $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price];
             $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price];
@@ -56,6 +57,7 @@ class InvoiceController extends Controller
                 'imported_med' => $medications->where('type', 'imported')->map($toMed)->values(),
                 'lab'          => $labServices->map($toSvc)->values(),
                 'radiology'    => $radiologyServices->map($toSvc)->values(),
+                'daily'        => $dailyServices->map($toSvc)->values(),
             ]);
         }
 
@@ -65,7 +67,7 @@ class InvoiceController extends Controller
     public function addItem(Request $request, Invoice $invoice): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
-            'item_type'  => ['required', 'in:medication,lab,radiology'],
+            'item_type'  => ['required', 'in:medication,lab,radiology,daily'],
             'itemable_id'=> ['required', 'integer', 'min:1'],
             'qty'        => ['required', 'integer', 'min:1'],
             'unit_price' => ['required', 'numeric', 'min:0'],

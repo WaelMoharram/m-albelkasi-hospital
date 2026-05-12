@@ -160,6 +160,7 @@ class InvoiceService
             'medication' => $this->resolveMedication($id),
             'lab'        => $this->resolveService($id, 'lab'),
             'radiology'  => $this->resolveService($id, 'radiology'),
+            'daily'      => $this->resolveService($id, 'daily'),
             default      => throw new \InvalidArgumentException("Unknown item type: {$itemType}"),
         };
     }
