@@ -18,7 +18,7 @@
     $sections = [
         'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',        'color' => 'success'],
         'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill',    'color' => 'warning'],
-        'lab'          => ['label' => __('Lab Tests'),             'icon' => 'bi-eyedropper',      'color' => 'info'],
+        'lab'          => ['label' => __('Lab'),                   'icon' => 'bi-eyedropper',      'color' => 'info'],
         'radiology'    => ['label' => __('Radiology'),             'icon' => 'bi-radioactive',     'color' => 'purple'],
     ];
 
@@ -154,17 +154,14 @@
             @foreach ($sections as $sectionKey => $meta)
             @php $tabItems = $grouped[$sectionKey] ?? collect(); @endphp
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $loop->first ? 'active' : '' }} text-{{ $meta['color'] }}"
+                <button class="nav-link {{ $loop->first ? 'active' : '' }}"
                         id="tab-{{ $sectionKey }}-btn"
                         data-bs-toggle="tab"
                         data-bs-target="#tab-{{ $sectionKey }}"
                         type="button" role="tab">
-                    <i class="bi {{ $meta['icon'] }} ms-1"></i>
                     {{ $meta['label'] }}
                     @if($tabItems->isNotEmpty())
-                        <span class="badge bg-{{ $meta['color'] }}-subtle text-{{ $meta['color'] }} border border-{{ $meta['color'] }}-subtle me-1">
-                            {{ $tabItems->count() }}
-                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $tabItems->count() }}</span>
                     @endif
                 </button>
             </li>
