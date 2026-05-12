@@ -9,6 +9,7 @@ use App\Models\Medication;
 use App\Models\Service;
 use App\Services\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -61,7 +62,7 @@ class InvoiceController extends Controller
         return view('invoices.show', compact('invoice', 'catalogJson'));
     }
 
-    public function addItem(Request $request, Invoice $invoice): RedirectResponse
+    public function addItem(Request $request, Invoice $invoice): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'item_type'  => ['required', 'in:medication,lab,radiology'],
@@ -71,9 +72,32 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $this->service->addItem($invoice, $data);
+            $item = $this->service->addItem($invoice, $data);
+
+            if ($request->expectsJson()) {
+                $item->load('itemable');
+                $unit = $item->itemable instanceof Medication ? ($item->itemable->unit ?? '') : '';
+                return response()->json([
+                    'item' => [
+                        'id'          => $item->id,
+                        'name'        => $item->itemable->name ?? '—',
+                        'unit'        => $unit,
+                        'qty'         => $item->qty,
+                        'unit_price'  => (float) $item->unit_price,
+                        'total'       => (float) $item->total,
+                        'section'     => $item->section,
+                        'update_url'  => route('invoices.items.update', [$invoice, $item]),
+                        'destroy_url' => route('invoices.items.destroy', [$invoice, $item]),
+                    ],
+                    'invoice_total' => (float) $invoice->fresh()->total_amount,
+                ]);
+            }
+
             alert()->success(__('Added'), __('Item added to invoice.'));
         } catch (LogicException $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
             alert()->error(__('Error'), $e->getMessage());
         }
 

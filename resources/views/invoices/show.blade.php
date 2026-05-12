@@ -45,11 +45,6 @@
 
     <div class="me-auto d-flex gap-2">
         @if($isDraft)
-            @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
-            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Item') }}
-            </button>
-            @endcanany
             @can('edit_invoices')
             <form method="POST" action="{{ route('invoices.finalize', $invoice) }}"
                   onsubmit="return confirm('{{ __('Finalise invoice') }} #{{ $invoice->id }}؟ {{ __('This cannot be undone.') }}')">
@@ -173,26 +168,22 @@
     <div class="tab-content border-bottom">
         @foreach ($sections as $sectionKey => $meta)
         @php $items = $grouped[$sectionKey] ?? collect(); @endphp
-        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-3"
+        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-0"
              id="tab-{{ $sectionKey }}" role="tabpanel">
-
-            @if($items->isEmpty())
-                <p class="text-muted small fst-italic mb-0 py-2">{{ __('No items in this section.') }}</p>
-            @else
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>{{ __('Item') }}</th>
-                            <th class="text-end" style="width:70px;">{{ __('Qty') }}</th>
+                            <th class="text-end" style="width:80px;">{{ __('Qty') }}</th>
                             <th class="text-end" style="width:120px;">{{ __('Unit Price') }}</th>
                             <th class="text-end" style="width:120px;">{{ __('Total') }}</th>
                             @if($isDraft) <th style="width:60px;"></th> @endif
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach ($items as $item)
-                        <tr>
+                    <tbody id="tbody-{{ $sectionKey }}">
+                        @forelse ($items as $item)
+                        <tr id="item-{{ $item->id }}">
                             <td>
                                 <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
                                 @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
@@ -207,9 +198,7 @@
                                 @canany(['add_invoice_items', 'edit_invoices'])
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
-                                        title="{{ __('Edit') }}"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editItemModal"
+                                        data-bs-toggle="modal" data-bs-target="#editItemModal"
                                         data-item-id="{{ $item->id }}"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
                                         data-item-qty="{{ $item->qty }}"
@@ -230,18 +219,61 @@
                             </td>
                             @endif
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr id="empty-{{ $sectionKey }}">
+                            <td colspan="{{ $isDraft ? 5 : 4 }}" class="text-muted small fst-italic py-3 text-center">
+                                {{ __('No items in this section.') }}
+                            </td>
+                        </tr>
+                        @endforelse
                     </tbody>
-                    <tfoot class="table-light">
+
+                    {{-- Subtotal footer (hidden when empty) --}}
+                    <tfoot class="table-light {{ $items->isEmpty() ? 'd-none' : '' }}" id="tfoot-{{ $sectionKey }}">
                         <tr>
-                            <td colspan="{{ $isDraft ? 4 : 3 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
-                            <td class="text-end fw-bold">{{ number_format($items->sum('total'), 2) }}</td>
+                            <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
+                            <td class="text-end fw-bold" id="subtotal-{{ $sectionKey }}">{{ number_format($items->sum('total'), 2) }}</td>
                             @if($isDraft) <td></td> @endif
                         </tr>
                     </tfoot>
+
+                    {{-- Inline add row (draft only) --}}
+                    @if($isDraft)
+                    @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
+                    <tfoot>
+                        <tr class="table-warning">
+                            <td>
+                                <select class="form-select form-select-sm"
+                                        id="select-{{ $sectionKey }}"
+                                        data-section="{{ $sectionKey }}">
+                                    <option value="">— {{ __('Select item —') }} —</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-end"
+                                       id="qty-{{ $sectionKey }}"
+                                       value="1" min="1">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-end"
+                                       id="price-{{ $sectionKey }}"
+                                       step="0.01" min="0" readonly placeholder="—">
+                            </td>
+                            <td class="text-end text-muted small fw-medium" id="preview-{{ $sectionKey }}">—</td>
+                            <td class="text-end">
+                                <button type="button"
+                                        class="btn btn-sm btn-primary add-item-btn"
+                                        data-section="{{ $sectionKey }}"
+                                        data-url="{{ route('invoices.items.store', $invoice) }}">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                    @endcanany
+                    @endif
                 </table>
             </div>
-            @endif
         </div>
         @endforeach
     </div>
@@ -282,7 +314,7 @@
                     @endif
                     <tr class="border-top">
                         <td class="fw-bold pt-2 border-0">{{ __('GRAND TOTAL') }}</td>
-                        <td class="text-end fw-bold fs-5 pt-2 border-0">
+                        <td class="text-end fw-bold fs-5 pt-2 border-0" id="grand-total-display">
                             {{ number_format($invoice->total_amount, 2) }}
                         </td>
                     </tr>
@@ -293,166 +325,157 @@
 
 </div>
 
-{{-- ── Add Item Modal ──────────────────────────────────────────────────── --}}
+{{-- ── Inline Add AJAX Script ───────────────────────────────────────────── --}}
 @if($isDraft)
 @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
-<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('invoices.items.store', $invoice) }}" id="addItemForm">
-                @csrf
-                <input type="hidden" name="item_type" id="item_type_hidden" value="medication">
-
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addItemModalLabel">
-                        <i class="bi bi-plus-circle ms-1 text-primary"></i> {{ __('Add Invoice Item') }}
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    {{-- Category Tabs --}}
-                    <ul class="nav nav-tabs mb-3" id="addItemTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" type="button"
-                                    data-tab-key="local_med" data-item-type="medication">
-                                <i class="bi bi-capsule ms-1"></i> {{ __('Local Med') }}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" type="button"
-                                    data-tab-key="imported_med" data-item-type="medication">
-                                <i class="bi bi-capsule-pill ms-1"></i> {{ __('Imported Med') }}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" type="button"
-                                    data-tab-key="lab" data-item-type="lab">
-                                <i class="bi bi-eyedropper ms-1"></i> {{ __('Lab') }}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" type="button"
-                                    data-tab-key="radiology" data-item-type="radiology">
-                                <i class="bi bi-radioactive ms-1"></i> {{ __('Radiology') }}
-                            </button>
-                        </li>
-                    </ul>
-
-                    {{-- Item select --}}
-                    <div class="mb-3">
-                        <label class="form-label" for="itemable_id">{{ __('Item') }} <span class="text-danger">*</span></label>
-                        <select id="itemable_id" name="itemable_id" class="form-select" required>
-                            <option value="">— {{ __('Select item —') }}</option>
-                        </select>
-                    </div>
-
-                    {{-- Qty + Price --}}
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label" for="qty">{{ __('Qty') }} <span class="text-danger">*</span></label>
-                            <input id="qty" type="number" name="qty" value="1" class="form-control" min="1" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="unit_price">{{ __('Unit Price') }}</label>
-                            <input id="unit_price" type="number" name="unit_price" step="0.01" min="0"
-                                   class="form-control" required readonly>
-                        </div>
-                    </div>
-
-                    {{-- Live line total --}}
-                    <div class="mt-3 text-muted small" id="line-total-preview"></div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Item') }}
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
 (function () {
     const CATALOG = {!! $catalogJson !!};
+    const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
+    const SECTION_TYPE = {
+        local_med: 'medication', imported_med: 'medication',
+        lab: 'lab', radiology: 'radiology'
+    };
+    const CONFIRM_MSG = '{{ __('Remove this item?') }}';
 
-    const itemTypeHidden = document.getElementById('item_type_hidden');
-    const itemSelect     = document.getElementById('itemable_id');
-    const priceInput     = document.getElementById('unit_price');
-    const qtyInput       = document.getElementById('qty');
-    const totalPreview   = document.getElementById('line-total-preview');
-    const tabBtns        = document.querySelectorAll('#addItemTabs button');
-
-    const noItemsLabel  = '{{ __('No items in catalog for this category') }}';
-    const selectLabel   = '— {{ __('Select item —') }}';
-    const lineTotalLabel = '{{ __('Line total:') }}';
-
-    function updateTotal() {
-        const qty   = parseFloat(qtyInput.value) || 0;
-        const price = parseFloat(priceInput.value) || 0;
-        totalPreview.textContent = (qty > 0 && price > 0)
-            ? lineTotalLabel + ' ' + (qty * price).toFixed(2)
-            : '';
-    }
-
-    function loadTab(tabKey, itemType) {
-        const items = CATALOG[tabKey] || [];
-        itemTypeHidden.value = itemType;
-
-        itemSelect.innerHTML = items.length
-            ? `<option value="">${selectLabel}</option>`
-            : `<option value="">${noItemsLabel}</option>`;
-
-        items.forEach(function (item) {
-            const label = item.unit ? `${item.name} (${item.unit})` : item.name;
-            itemSelect.insertAdjacentHTML('beforeend',
-                `<option value="${item.id}" data-price="${item.price}">${label}</option>`
+    // Populate selects from catalog
+    Object.keys(SECTION_TYPE).forEach(function (section) {
+        const select = document.getElementById('select-' + section);
+        if (!select) return;
+        (CATALOG[section] || []).forEach(function (item) {
+            const label = item.unit ? item.name + ' (' + item.unit + ')' : item.name;
+            select.insertAdjacentHTML('beforeend',
+                '<option value="' + item.id + '" data-price="' + item.price + '">' + label + '</option>'
             );
         });
+    });
 
-        itemSelect.disabled  = items.length === 0;
-        priceInput.value     = '';
-        priceInput.readOnly  = true;
-        totalPreview.textContent = '';
-    }
-
-    tabBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            loadTab(btn.dataset.tabKey, btn.dataset.itemType);
+    // Select change → auto-fill price + preview
+    document.querySelectorAll('[id^="select-"]').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+            const section = this.id.replace('select-', '');
+            const price   = this.options[this.selectedIndex]?.dataset?.price;
+            const priceEl = document.getElementById('price-' + section);
+            const qty     = parseFloat(document.getElementById('qty-' + section).value) || 1;
+            if (price) {
+                priceEl.value    = parseFloat(price).toFixed(2);
+                priceEl.readOnly = false;
+                document.getElementById('preview-' + section).textContent = (qty * parseFloat(price)).toFixed(2);
+            } else {
+                priceEl.value    = '';
+                priceEl.readOnly = true;
+                document.getElementById('preview-' + section).textContent = '—';
+            }
         });
     });
 
-    itemSelect.addEventListener('change', function () {
-        const price = this.options[this.selectedIndex]?.dataset?.price;
-        if (price) {
-            priceInput.value    = parseFloat(price).toFixed(2);
-            priceInput.readOnly = false;
-        } else {
-            priceInput.value    = '';
-            priceInput.readOnly = true;
-        }
-        updateTotal();
+    // Qty / price change → update preview
+    ['qty-', 'price-'].forEach(function (prefix) {
+        document.querySelectorAll('[id^="' + prefix + '"]').forEach(function (inp) {
+            inp.addEventListener('input', function () {
+                const section = this.id.replace(prefix, '');
+                const qty   = parseFloat(document.getElementById('qty-'   + section).value) || 0;
+                const price = parseFloat(document.getElementById('price-' + section).value) || 0;
+                document.getElementById('preview-' + section).textContent =
+                    (qty > 0 && price > 0) ? (qty * price).toFixed(2) : '—';
+            });
+        });
     });
 
-    qtyInput.addEventListener('input', updateTotal);
-    priceInput.addEventListener('input', updateTotal);
+    // Add button → AJAX POST
+    document.querySelectorAll('.add-item-btn').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const section  = this.dataset.section;
+            const url      = this.dataset.url;
+            const select   = document.getElementById('select-'  + section);
+            const qtyEl    = document.getElementById('qty-'     + section);
+            const priceEl  = document.getElementById('price-'   + section);
+            const itemableId = select.value;
+            const qty        = parseInt(qtyEl.value);
+            const unitPrice  = parseFloat(priceEl.value);
 
-    document.getElementById('addItemModal').addEventListener('show.bs.modal', function () {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabBtns[0].classList.add('active');
-        loadTab('local_med', 'medication');
-        qtyInput.value = 1;
-    });
+            if (!itemableId || !qty || !unitPrice) return;
 
-    document.getElementById('addItemModal').addEventListener('hidden.bs.modal', function () {
-        document.getElementById('addItemForm').reset();
-        priceInput.readOnly      = true;
-        totalPreview.textContent = '';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            try {
+                const res  = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                    body: JSON.stringify({ item_type: SECTION_TYPE[section], itemable_id: itemableId, qty, unit_price: unitPrice })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Error'); return; }
+
+                const d = data.item;
+
+                // Remove empty-state row
+                const emptyRow = document.getElementById('empty-' + section);
+                if (emptyRow) emptyRow.remove();
+
+                // Show subtotal footer
+                const tfoot = document.getElementById('tfoot-' + section);
+                if (tfoot) tfoot.classList.remove('d-none');
+
+                // Append new item row
+                const nameHtml = (section === 'local_med' || section === 'imported_med') && d.unit
+                    ? d.name + ' <span class="text-muted small ms-1">' + d.unit + '</span>'
+                    : d.name;
+
+                document.getElementById('tbody-' + section).insertAdjacentHTML('beforeend',
+                    '<tr id="item-' + d.id + '">' +
+                    '<td><span class="fw-medium">' + nameHtml + '</span></td>' +
+                    '<td class="text-end">' + d.qty + '</td>' +
+                    '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
+                    '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
+                    '<td class="text-end">' +
+                        '<button type="button" class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"' +
+                            ' data-bs-toggle="modal" data-bs-target="#editItemModal"' +
+                            ' data-item-id="' + d.id + '" data-item-name="' + d.name + '"' +
+                            ' data-item-qty="' + d.qty + '" data-item-price="' + d.unit_price + '"' +
+                            ' data-item-url="' + d.update_url + '"><i class="bi bi-pencil"></i></button>' +
+                        '<form method="POST" action="' + d.destroy_url + '" class="d-inline"' +
+                            ' onsubmit="return confirm(\'' + CONFIRM_MSG + '\')">' +
+                            '<input type="hidden" name="_token" value="' + CSRF + '">' +
+                            '<input type="hidden" name="_method" value="DELETE">' +
+                            '<button class="btn btn-xs btn-outline-danger border-0 p-0 px-1"><i class="bi bi-x-lg"></i></button>' +
+                        '</form>' +
+                    '</td></tr>'
+                );
+
+                // Update section subtotal
+                const subtotalEl = document.getElementById('subtotal-' + section);
+                if (subtotalEl) {
+                    const prev = parseFloat(subtotalEl.textContent.replace(/,/g, '')) || 0;
+                    subtotalEl.textContent = (prev + parseFloat(d.total)).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+                }
+
+                // Update badge count
+                const badge = document.getElementById('badge-' + section);
+                if (badge) {
+                    badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+                    badge.classList.remove('d-none');
+                }
+
+                // Update grand total
+                const gt = document.getElementById('grand-total-display');
+                if (gt) gt.textContent = parseFloat(data.invoice_total).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+                // Reset add row
+                select.value     = '';
+                qtyEl.value      = 1;
+                priceEl.value    = '';
+                priceEl.readOnly = true;
+                document.getElementById('preview-' + section).textContent = '—';
+
+            } catch (e) {
+                alert('Error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-plus-lg"></i>';
+            }
+        });
     });
 }());
 </script>
