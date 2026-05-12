@@ -145,91 +145,109 @@
     </div>
 </div>
 
-{{-- ── 4 Invoice Sections ──────────────────────────────────────────────── --}}
+{{-- ── 4 Invoice Sections as Tabs ───────────────────────────────────────── --}}
 <div class="card border-0 shadow-sm">
 
-    @foreach ($sections as $sectionKey => $meta)
-    @php $items = $grouped[$sectionKey] ?? collect(); @endphp
-    <div class="card-body border-bottom py-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <h6 class="fw-semibold text-{{ $meta['color'] }} mb-0">
-                <i class="bi {{ $meta['icon'] }} ms-1"></i>{{ $meta['label'] }}
-            </h6>
-            @if($items->isNotEmpty())
-                <span class="text-muted small">
-                    {{ __('Subtotal') }}: <strong class="text-dark">{{ number_format($items->sum('total'), 2) }}</strong>
-                </span>
+    {{-- Tab nav --}}
+    <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+        <ul class="nav nav-tabs card-header-tabs" id="invoiceSectionTabs" role="tablist">
+            @foreach ($sections as $sectionKey => $meta)
+            @php $tabItems = $grouped[$sectionKey] ?? collect(); @endphp
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ $loop->first ? 'active' : '' }} text-{{ $meta['color'] }}"
+                        id="tab-{{ $sectionKey }}-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tab-{{ $sectionKey }}"
+                        type="button" role="tab">
+                    <i class="bi {{ $meta['icon'] }} ms-1"></i>
+                    {{ $meta['label'] }}
+                    @if($tabItems->isNotEmpty())
+                        <span class="badge bg-{{ $meta['color'] }}-subtle text-{{ $meta['color'] }} border border-{{ $meta['color'] }}-subtle me-1">
+                            {{ $tabItems->count() }}
+                        </span>
+                    @endif
+                </button>
+            </li>
+            @endforeach
+        </ul>
+    </div>
+
+    {{-- Tab content --}}
+    <div class="tab-content border-bottom">
+        @foreach ($sections as $sectionKey => $meta)
+        @php $items = $grouped[$sectionKey] ?? collect(); @endphp
+        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-3"
+             id="tab-{{ $sectionKey }}" role="tabpanel">
+
+            @if($items->isEmpty())
+                <p class="text-muted small fst-italic mb-0 py-2">{{ __('No items in this section.') }}</p>
+            @else
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ __('Item') }}</th>
+                            <th class="text-end" style="width:70px;">{{ __('Qty') }}</th>
+                            <th class="text-end" style="width:120px;">{{ __('Unit Price') }}</th>
+                            <th class="text-end" style="width:120px;">{{ __('Total') }}</th>
+                            @if($isDraft) <th style="width:60px;"></th> @endif
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($items as $item)
+                        <tr>
+                            <td>
+                                <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
+                                @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
+                                    <span class="text-muted small ms-1">{{ $item->itemable->unit ?? '' }}</span>
+                                @endif
+                            </td>
+                            <td class="text-end">{{ $item->qty }}</td>
+                            <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
+                            <td class="text-end fw-medium">{{ number_format($item->total, 2) }}</td>
+                            @if($isDraft)
+                            <td class="text-end">
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <button type="button"
+                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
+                                        title="{{ __('Edit') }}"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editItemModal"
+                                        data-item-id="{{ $item->id }}"
+                                        data-item-name="{{ $item->itemable->name ?? '' }}"
+                                        data-item-qty="{{ $item->qty }}"
+                                        data-item-price="{{ $item->unit_price }}"
+                                        data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="POST"
+                                      action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('{{ __('Remove this item?') }}')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
+                                @endcanany
+                            </td>
+                            @endif
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="{{ $isDraft ? 4 : 3 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
+                            <td class="text-end fw-bold">{{ number_format($items->sum('total'), 2) }}</td>
+                            @if($isDraft) <td></td> @endif
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
             @endif
         </div>
-
-        @if($items->isEmpty())
-            <p class="text-muted small fst-italic mb-0">{{ __('No items in this section.') }}</p>
-        @else
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ __('Item') }}</th>
-                        <th class="text-end" style="width:70px;">{{ __('Qty') }}</th>
-                        <th class="text-end" style="width:120px;">{{ __('Unit Price') }}</th>
-                        <th class="text-end" style="width:120px;">{{ __('Total') }}</th>
-                        @if($isDraft) <th style="width:40px;"></th> @endif
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($items as $item)
-                    <tr>
-                        <td>
-                            <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
-                            @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
-                                <span class="text-muted small ms-1">{{ $item->itemable->unit ?? '' }}</span>
-                            @endif
-                        </td>
-                        <td class="text-end">{{ $item->qty }}</td>
-                        <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-end fw-medium">{{ number_format($item->total, 2) }}</td>
-                        @if($isDraft)
-                        <td class="text-end">
-                            @canany(['add_invoice_items', 'edit_invoices'])
-                            <button type="button"
-                                    class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
-                                    title="{{ __('Edit') }}"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#editItemModal"
-                                    data-item-id="{{ $item->id }}"
-                                    data-item-name="{{ $item->itemable->name ?? '' }}"
-                                    data-item-qty="{{ $item->qty }}"
-                                    data-item-price="{{ $item->unit_price }}"
-                                    data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <form method="POST"
-                                  action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
-                                  class="d-inline"
-                                  onsubmit="return confirm('{{ __('Remove this item?') }}')">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            </form>
-                            @endcanany
-                        </td>
-                        @endif
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot class="table-light">
-                    <tr>
-                        <td colspan="{{ $isDraft ? 4 : 3 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
-                        <td class="text-end fw-bold">{{ number_format($items->sum('total'), 2) }}</td>
-                        @if($isDraft) <td></td> @endif
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        @endif
+        @endforeach
     </div>
-    @endforeach
 
     {{-- Daily services summary row --}}
     @php $dailyItems = $grouped['daily'] ?? collect(); @endphp
