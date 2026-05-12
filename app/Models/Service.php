@@ -41,7 +41,10 @@ class Service extends Model
     public function scopeSearch($query, ?string $search)
     {
         if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+            $query->where(fn ($q) =>
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%")
+            );
         }
 
         return $query;
