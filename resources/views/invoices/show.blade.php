@@ -469,6 +469,27 @@
 {{-- ── Inline Add AJAX Script ───────────────────────────────────────────── --}}
 @if($isDraft)
 @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<style>
+    .ts-wrapper .ts-control { direction: rtl; text-align: right; }
+    .ts-dropdown            { direction: rtl; text-align: right; }
+</style>
+@endpush
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[id^="select-"]').forEach(function (el) {
+        new TomSelect(el, {
+            placeholder: el.options[0]?.text || '',
+            maxOptions: null,
+            highlight: true,
+        });
+    });
+});
+</script>
+@endpush
 <script>
 (function () {
     const CATALOG = {!! $catalogJson !!};
@@ -477,12 +498,14 @@
     const WITH_UNIT    = { local_med: true, imported_med: true };
     const CONFIRM_MSG  = '{{ __('Remove this item?') }}';
 
-    // Populate all selects
+    // Populate all selects — label includes code for TomSelect search
     Object.keys(SECTION_TYPE).forEach(function (section) {
         const sel = document.getElementById('select-' + section);
         if (!sel) return;
         (CATALOG[section] || []).forEach(function (item) {
-            const label = item.unit ? item.name + ' (' + item.unit + ')' : item.name;
+            let label = item.name;
+            if (item.unit)  label += ' (' + item.unit + ')';
+            if (item.code)  label = item.code + ' — ' + label;
             sel.insertAdjacentHTML('beforeend',
                 '<option value="' + item.id + '" data-price="' + item.price + '">' + label + '</option>');
         });
@@ -603,8 +626,10 @@
                 if (gt) gt.textContent = parseFloat(data.invoice_total)
                     .toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-                // Reset add row
-                selEl.value = ''; qtyEl.value = 1;
+                // Reset add row (clear TomSelect widget if active)
+                if (selEl.tomselect) selEl.tomselect.clear();
+                else selEl.value = '';
+                qtyEl.value = 1;
                 priceEl.value = ''; priceEl.readOnly = true;
                 document.getElementById('preview-' + section).textContent = '—';
 

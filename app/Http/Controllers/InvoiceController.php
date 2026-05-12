@@ -44,13 +44,13 @@ class InvoiceController extends Controller
         $catalogJson = '{}';
 
         if ($invoice->status === 'draft') {
-            $medications       = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type']);
-            $labServices       = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price']);
-            $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price']);
-            $otherServices     = Service::whereIn('category', ['other', 'supplies'])->orderBy('name')->get(['id', 'name', 'price']);
+            $medications       = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type', 'code']);
+            $labServices       = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $otherServices     = Service::whereIn('category', ['other', 'supplies'])->orderBy('name')->get(['id', 'name', 'price', 'code']);
 
-            $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price];
-            $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price];
+            $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price, 'code' => $m->code ?? ''];
+            $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price, 'code' => $s->code ?? ''];
 
             $catalogJson = json_encode([
                 'local_med'    => $medications->where('type', 'local')->map($toMed)->values(),
