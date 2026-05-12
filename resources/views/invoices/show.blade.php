@@ -15,9 +15,10 @@
 
     $grouped = $invoice->items->groupBy('section');
 
-    // Group ALL service items by invoice_category for the الفاتورة tab
+    // Group daily + other items by invoice_category for the الفاتورة tab
     $dailyFlat   = $grouped['daily'] ?? collect();
-    $allSvcItems = $invoice->items->where('itemable_type', \App\Models\Service::class);
+    $otherFlat   = $grouped['other'] ?? collect();
+    $allSvcItems = $dailyFlat->merge($otherFlat);
     $dailyCategoryGroups = collect();
     foreach ($allSvcItems as $_item) {
         $_svc = $_item->itemable;
@@ -292,20 +293,20 @@
                     <tfoot>
                         <tr class="table-light">
                             <td colspan="2">
-                                <select class="form-select form-select-sm" id="select-daily"
-                                        data-section="daily">
+                                <select class="form-select form-select-sm" id="select-other"
+                                        data-section="other">
                                     <option value="">— {{ __('Select item —') }} —</option>
                                 </select>
                             </td>
                             <td><input type="number" class="form-control form-control-sm text-end"
-                                       id="qty-daily" value="1" min="1"></td>
+                                       id="qty-other" value="1" min="1"></td>
                             <td><input type="number" class="form-control form-control-sm text-end"
-                                       id="price-daily" step="0.01" min="0" readonly placeholder="—"></td>
-                            <td class="text-end text-muted small fw-medium" id="preview-daily">—</td>
+                                       id="price-other" step="0.01" min="0" readonly placeholder="—"></td>
+                            <td class="text-end text-muted small fw-medium" id="preview-other">—</td>
                             <td></td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
-                                        data-section="daily"
+                                        data-section="other"
                                         data-url="{{ route('invoices.items.store', $invoice) }}">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
@@ -418,8 +419,8 @@
         @endforeach
     </div>
 
-    {{-- Daily services summary row --}}
-    @php $dailyItems = $dailyFlat; @endphp
+    {{-- Daily + other services summary row --}}
+    @php $dailyItems = $allSvcItems; @endphp
     @if($dailyItems->isNotEmpty())
     <div class="card-body border-bottom py-3 bg-light bg-opacity-50">
         <div class="d-flex align-items-center justify-content-between">
@@ -472,7 +473,7 @@
 (function () {
     const CATALOG = {!! $catalogJson !!};
     const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', lab: 'lab', radiology: 'radiology', daily: 'daily' };
+    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', lab: 'lab', radiology: 'radiology', other: 'other' };
     const WITH_UNIT    = { local_med: true, imported_med: true };
     const CONFIRM_MSG  = '{{ __('Remove this item?') }}';
 
@@ -573,8 +574,8 @@
                 if (!res.ok) { alert(data.error || 'Error'); return; }
                 const d = data.item;
 
-                // Daily tab uses rowspan grouping — reload to rebuild correctly
-                if (section === 'daily') { window.location.reload(); return; }
+                // الفاتورة tab uses rowspan grouping — reload to rebuild correctly
+                if (section === 'other') { window.location.reload(); return; }
 
                 // Update tbody
                 const tbody = document.getElementById('tbody-' + section);
