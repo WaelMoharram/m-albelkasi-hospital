@@ -77,6 +77,18 @@
                            target="_blank" title="{{ __('Print PDF') }}">
                             <i class="bi bi-printer"></i>
                         </a>
+                        @can('delete_invoices')
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                title="{{ __('Delete') }}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteInvoiceModal"
+                                data-invoice-id="{{ $invoice->id }}"
+                                data-invoice-name="{{ $patient->name }}"
+                                data-url="{{ route('invoices.destroy', $invoice) }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -95,4 +107,44 @@
     </div>
     @endif
 </div>
+
+@can('delete_invoices')
+<div class="modal fade" id="deleteInvoiceModal" tabindex="-1" aria-labelledby="deleteInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteInvoiceForm" method="POST">
+                @csrf @method('DELETE')
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="deleteInvoiceModalLabel">
+                        <i class="bi bi-exclamation-triangle ms-1"></i> {{ __('Delete Invoice') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ __('Are you sure you want to delete the invoice for') }}
+                        <strong id="deleteInvoicePatientName"></strong>؟
+                    </p>
+                    <p class="text-danger small mb-0">
+                        <i class="bi bi-exclamation-circle ms-1"></i>
+                        {{ __('This will permanently delete the invoice and all its items.') }}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash ms-1"></i> {{ __('Delete') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('deleteInvoiceModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('deleteInvoiceForm').action = btn.dataset.url;
+    document.getElementById('deleteInvoicePatientName').textContent = btn.dataset.invoiceName;
+});
+</script>
+@endcan
 @endsection

@@ -85,6 +85,15 @@ class InvoiceService
     }
 
     /**
+     * Delete an invoice and all its items.
+     */
+    public function delete(Invoice $invoice): void
+    {
+        $invoice->items()->delete();
+        $invoice->delete();
+    }
+
+    /**
      * Update qty / unit_price of an existing draft invoice item.
      */
     public function updateItem(Invoice $invoice, InvoiceItem $item, array $data): InvoiceItem

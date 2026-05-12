@@ -66,8 +66,47 @@
         <a href="{{ route('admissions.show', $admission) }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-right ms-1"></i> {{ __('Admission') }}
         </a>
+        @can('delete_invoices')
+        <button type="button" class="btn btn-sm btn-outline-danger"
+                data-bs-toggle="modal" data-bs-target="#deleteInvoiceModal">
+            <i class="bi bi-trash ms-1"></i> {{ __('Delete Invoice') }}
+        </button>
+        @endcan
     </div>
 </div>
+
+@can('delete_invoices')
+<div class="modal fade" id="deleteInvoiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('invoices.destroy', $invoice) }}">
+                @csrf @method('DELETE')
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle ms-1"></i> {{ __('Delete Invoice') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ __('Are you sure you want to delete the invoice for') }}
+                        <strong>{{ $patient->name }}</strong>؟
+                    </p>
+                    <p class="text-danger small mb-0">
+                        <i class="bi bi-exclamation-circle ms-1"></i>
+                        {{ __('This will permanently delete the invoice and all its items.') }}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash ms-1"></i> {{ __('Delete') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
 
 {{-- ── Patient / Admission header ──────────────────────────────────────── --}}
 <div class="card border-0 shadow-sm mb-3">

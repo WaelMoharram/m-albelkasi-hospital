@@ -83,6 +83,12 @@ Route::middleware('auth')->group(function () {
     | invoices/{invoice}/print BEFORE the open show wildcard.
     |----------------------------------------------------------------------
     */
+    // Delete invoice — super_admin only
+    Route::middleware('role:super_admin')->group(function () {
+        Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])
+            ->name('invoices.destroy');
+    });
+
     // Finalize — admin+ only
     Route::middleware('role:super_admin|admin')->group(function () {
         Route::post('invoices/{invoice}/finalize', [InvoiceController::class, 'finalize'])

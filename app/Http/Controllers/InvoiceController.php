@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Medication;
@@ -11,6 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use LogicException;
 
@@ -76,6 +78,17 @@ class InvoiceController extends Controller
         }
 
         return redirect()->route('invoices.show', $invoice);
+    }
+
+    public function destroy(Invoice $invoice): RedirectResponse
+    {
+        Gate::authorize(Permission::DeleteInvoices->value);
+
+        $this->service->delete($invoice);
+
+        alert()->success(__('Deleted'), __('Invoice deleted successfully.'));
+
+        return redirect()->route('invoices.index');
     }
 
     public function updateItem(Request $request, Invoice $invoice, InvoiceItem $item): RedirectResponse
