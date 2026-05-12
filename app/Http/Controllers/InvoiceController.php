@@ -35,7 +35,7 @@ class InvoiceController extends Controller
     {
         $invoice->load([
             'admission.patient.insuranceCompany',
-            'items.itemable',
+            'items.itemable.invoiceCategory',
         ]);
 
         // Pre-encode catalog as JSON for the add-item modal JS (draft only).

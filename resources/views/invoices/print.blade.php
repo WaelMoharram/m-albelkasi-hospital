@@ -75,22 +75,28 @@
             vertical-align: middle;
         }
 
-        .bayan-cell {
+        .cat-row td {
+            background: #e8edf5;
             font-weight: bold;
             font-size: 8.5pt;
             color: #1a3c6e;
-            vertical-align: middle;
-            text-align: center;
+            padding: 3pt 5pt;
+            border: 0.25pt solid #b0b8c8;
         }
 
-        .row-no-col  { width: 20pt;  text-align: center; font-weight: bold; }
-        .bayan-col   { width: 65pt; }
-        .qty-col     { width: 28pt;  text-align: center; }
-        .price-col   { width: 52pt;  text-align: center; }
-        .total-col   { width: 58pt;  text-align: center; font-weight: bold; }
-        .notes-col   { /* fills remaining width */ }
-        .code-stamp  { font-weight: bold; color: #444; font-size: 7.5pt; }
-        .sep-row td  { border: none; height: 5pt; padding: 0; }
+        .row-no-col { width: 22pt; text-align: center; }
+        .code-col   { width: 55pt; }
+        .qty-col    { width: 30pt; text-align: center; }
+        .price-col  { width: 55pt; text-align: center; }
+        .total-col  { width: 60pt; text-align: center; font-weight: bold; }
+
+        .subtotal-row td {
+            background: #f2f5fb;
+            font-size: 8pt;
+            font-weight: bold;
+            border-top: 0.5pt solid #1a3c6e;
+            padding: 3pt 5pt;
+        }
 
         /* ── Summary ── */
         .summary-wrap  { display: table; width: 100%; margin-top: 4pt; }
@@ -273,45 +279,42 @@
     <thead>
         <tr>
             <th class="row-no-col">م</th>
-            <th class="bayan-col">البيان</th>
-            <th class="qty-col">العدد</th>
-            <th class="price-col">القيمة<br><span style="font-size:6pt;font-weight:normal;">جنية</span></th>
-            <th class="total-col">الإجمالي<br><span style="font-size:6pt;font-weight:normal;">جنية</span></th>
-            <th class="notes-col">ملاحظات</th>
+            <th>بيان</th>
+            <th class="qty-col">عدد</th>
+            <th class="price-col">سعر الوحدة<br><span style="font-size:6pt;font-weight:normal;">ج.م</span></th>
+            <th class="total-col">الإجمالي<br><span style="font-size:6pt;font-weight:normal;">ج.م</span></th>
+            <th class="code-col">ملاحظات</th>
         </tr>
     </thead>
     <tbody>
-        @php $catNo = 1; @endphp
+        @php $rowNo = 1; @endphp
 
         @foreach($categoryGroups as $group)
-        @php
-            $groupItems = $group['items'];
-            $count      = $groupItems->count();
-            $isFirst    = true;
-        @endphp
+        <tr class="cat-row">
+            <td class="row-no-col">{{ $rowNo }}</td>
+            <td colspan="4">{{ $group['name'] }}</td>
+            <td></td>
+        </tr>
 
-        @foreach($groupItems as $item)
+        @foreach($group['items'] as $item)
         <tr>
-            @if($isFirst)
-            <td class="row-no-col bayan-cell" rowspan="{{ $count }}">{{ $catNo }}</td>
-            <td class="bayan-col bayan-cell" rowspan="{{ $count }}">{{ $group['name'] }}</td>
-            @php $isFirst = false; @endphp
-            @endif
-            <td class="qty-col">{{ $item->qty > 0 ? $item->qty : '—' }}</td>
+            <td class="row-no-col"></td>
+            <td>{{ $item->itemable->name ?? '—' }}</td>
+            <td class="qty-col">{{ $item->qty }}</td>
             <td class="price-col">{{ number_format($item->unit_price, 2) }}</td>
-            <td class="total-col">{{ $item->total > 0 ? number_format($item->total, 2) : '—' }}</td>
-            <td class="notes-col">
-                @if($item->itemable?->code)
-                <span class="code-stamp">{{ $item->itemable->code }}</span><br>
-                @endif
-                {{ $item->itemable->name ?? '—' }}
+            <td class="total-col">{{ number_format($item->total, 2) }}</td>
+            <td class="code-col" style="font-size:7.5pt; color:#777;">
+                @if($item->service_date){{ \Carbon\Carbon::parse($item->service_date)->format('d/m') }}@endif
             </td>
         </tr>
         @endforeach
 
-        {{-- Blank separator between groups --}}
-        <tr class="sep-row"><td colspan="6"></td></tr>
-        @php $catNo++; @endphp
+        <tr class="subtotal-row">
+            <td colspan="3" style="text-align:right; color:#1a3c6e;">إجمالي {{ $group['name'] }}</td>
+            <td class="total-col" style="border-left:none;">{{ number_format($group['items']->sum('total'), 2) }}</td>
+            <td colspan="2" style="background:#f2f5fb;"></td>
+        </tr>
+        @php $rowNo++; @endphp
         @endforeach
 
         @if($categoryGroups->isEmpty())

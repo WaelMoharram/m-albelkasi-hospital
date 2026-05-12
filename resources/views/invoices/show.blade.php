@@ -15,6 +15,25 @@
 
     $grouped = $invoice->items->groupBy('section');
 
+    // Group daily items by invoice_category for the tab display
+    $dailyFlat = $grouped['daily'] ?? collect();
+    $dailyCategoryGroups = collect();
+    foreach ($dailyFlat as $_item) {
+        $_svc = $_item->itemable;
+        if (!$_svc) continue;
+        $_cat = $_svc->invoiceCategory ?? null;
+        $_key = $_cat ? 'c' . $_cat->id : 'none';
+        if (!$dailyCategoryGroups->has($_key)) {
+            $dailyCategoryGroups->put($_key, [
+                'name'       => $_cat?->name ?? __('Other'),
+                'sort_order' => $_cat?->sort_order ?? 999,
+                'items'      => collect(),
+            ]);
+        }
+        $dailyCategoryGroups[$_key]['items']->push($_item);
+    }
+    $dailyCategoryGroups = $dailyCategoryGroups->sortBy('sort_order');
+
     $sections = [
         'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',        'color' => 'success'],
         'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill',    'color' => 'warning'],
@@ -184,31 +203,49 @@
     {{-- Tab content --}}
     <div class="tab-content border-bottom">
 
-        {{-- ── "الفاتورة" tab — daily services ── --}}
-        @php $dailyItems2 = $grouped['daily'] ?? collect(); @endphp
+        {{-- ── "الفاتورة" tab — daily services grouped by invoice category ── --}}
         <div class="tab-pane fade show active p-0" id="tab-daily" role="tabpanel">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>{{ __('Item') }}</th>
-                            <th class="text-end" style="width:90px;">{{ __('Date') }}</th>
-                            <th class="text-end" style="width:80px;">{{ __('Qty') }}</th>
-                            <th class="text-end" style="width:120px;">{{ __('Unit Price') }}</th>
-                            <th class="text-end" style="width:120px;">{{ __('Total') }}</th>
+                            <th class="text-center" style="width:36px;">م</th>
+                            <th style="width:110px;">{{ __('Category') }}</th>
+                            <th class="text-end" style="width:55px;">{{ __('Qty') }}</th>
+                            <th class="text-end" style="width:100px;">{{ __('Unit Price') }}</th>
+                            <th class="text-end" style="width:100px;">{{ __('Total') }}</th>
+                            <th>{{ __('Notes') }}</th>
                             @if($isDraft) <th style="width:60px;"></th> @endif
                         </tr>
                     </thead>
                     <tbody id="tbody-daily">
-                        @forelse ($dailyItems2 as $item)
+                        @php $catNo = 1; @endphp
+                        @forelse ($dailyCategoryGroups as $group)
+                        @php $count = $group['items']->count(); $isFirst = true; @endphp
+                        @foreach ($group['items'] as $item)
                         <tr id="item-daily-{{ $item->id }}">
-                            <td><span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span></td>
-                            <td class="text-end text-muted small">
-                                {{ $item->service_date ? \Carbon\Carbon::parse($item->service_date)->format('d/m') : '—' }}
-                            </td>
+                            @if($isFirst)
+                            <td rowspan="{{ $count }}"
+                                class="text-center fw-bold align-middle"
+                                style="background:#f0f4fa; border-right:3px solid #1a3c6e; color:#1a3c6e;">{{ $catNo }}</td>
+                            <td rowspan="{{ $count }}"
+                                class="fw-semibold align-middle small"
+                                style="color:#1a3c6e;">{{ $group['name'] }}</td>
+                            @php $isFirst = false; @endphp
+                            @endif
                             <td class="text-end">{{ $item->qty }}</td>
                             <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
                             <td class="text-end fw-medium">{{ number_format($item->total, 2) }}</td>
+                            <td class="small">
+                                @if($item->itemable?->code)
+                                    <span class="font-monospace text-muted fw-semibold">{{ $item->itemable->code }}</span>
+                                    <span class="text-muted mx-1">—</span>
+                                @endif
+                                {{ $item->itemable->name ?? '—' }}
+                                @if($item->service_date)
+                                    <span class="ms-1 badge bg-light text-muted border" style="font-size:0.7em;">{{ \Carbon\Carbon::parse($item->service_date)->format('d/m') }}</span>
+                                @endif
+                            </td>
                             @if($isDraft)
                             <td class="text-end">
                                 @canany(['add_invoice_items', 'edit_invoices'])
@@ -233,19 +270,21 @@
                             </td>
                             @endif
                         </tr>
+                        @endforeach
+                        @php $catNo++; @endphp
                         @empty
                         <tr id="empty-daily">
-                            <td colspan="{{ $isDraft ? 6 : 5 }}" class="text-muted small fst-italic py-3 text-center">
+                            <td colspan="{{ $isDraft ? 7 : 6 }}" class="text-muted small fst-italic py-3 text-center">
                                 {{ __('No items in this section.') }}
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
-                    <tfoot class="table-light {{ $dailyItems2->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
+                    <tfoot class="table-light {{ $dailyFlat->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
                         <tr>
-                            <td colspan="{{ $isDraft ? 4 : 3 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
-                            <td class="text-end fw-bold" id="subtotal-daily">{{ number_format($dailyItems2->sum('total'), 2) }}</td>
-                            @if($isDraft) <td></td> @endif
+                            <td colspan="4" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
+                            <td class="text-end fw-bold" id="subtotal-daily">{{ number_format($dailyFlat->sum('total'), 2) }}</td>
+                            <td colspan="{{ $isDraft ? 2 : 1 }}"></td>
                         </tr>
                     </tfoot>
                     @if($isDraft)
@@ -254,7 +293,7 @@
                         <tr class="table-light">
                             <td colspan="2">
                                 <select class="form-select form-select-sm" id="select-daily"
-                                        data-section="daily" data-prefix="">
+                                        data-section="daily">
                                     <option value="">— {{ __('Select item —') }} —</option>
                                 </select>
                             </td>
@@ -263,9 +302,10 @@
                             <td><input type="number" class="form-control form-control-sm text-end"
                                        id="price-daily" step="0.01" min="0" readonly placeholder="—"></td>
                             <td class="text-end text-muted small fw-medium" id="preview-daily">—</td>
+                            <td></td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
-                                        data-section="daily" data-prefix=""
+                                        data-section="daily"
                                         data-url="{{ route('invoices.items.store', $invoice) }}">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
@@ -379,7 +419,7 @@
     </div>
 
     {{-- Daily services summary row --}}
-    @php $dailyItems = $grouped['daily'] ?? collect(); @endphp
+    @php $dailyItems = $dailyFlat; @endphp
     @if($dailyItems->isNotEmpty())
     <div class="card-body border-bottom py-3 bg-light bg-opacity-50">
         <div class="d-flex align-items-center justify-content-between">
@@ -532,6 +572,9 @@
                 const data = await res.json();
                 if (!res.ok) { alert(data.error || 'Error'); return; }
                 const d = data.item;
+
+                // Daily tab uses rowspan grouping — reload to rebuild correctly
+                if (section === 'daily') { window.location.reload(); return; }
 
                 // Update tbody
                 const tbody = document.getElementById('tbody-' + section);
