@@ -85,6 +85,29 @@ class InvoiceService
     }
 
     /**
+     * Update qty / unit_price of an existing draft invoice item.
+     */
+    public function updateItem(Invoice $invoice, InvoiceItem $item, array $data): InvoiceItem
+    {
+        if ($invoice->status === 'final') {
+            throw new LogicException('Cannot edit items on a finalised invoice.');
+        }
+
+        $qty       = max(1, (int) $data['qty']);
+        $unitPrice = (float) $data['unit_price'];
+
+        $item->update([
+            'qty'        => $qty,
+            'unit_price' => $unitPrice,
+            'total'      => round($qty * $unitPrice, 2),
+        ]);
+
+        $invoice->recalculateTotal();
+
+        return $item;
+    }
+
+    /**
      * Remove an item from a draft invoice.
      */
     public function removeItem(Invoice $invoice, InvoiceItem $item): void

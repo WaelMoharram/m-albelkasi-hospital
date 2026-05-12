@@ -80,6 +80,23 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.show', $invoice);
     }
 
+    public function updateItem(Request $request, Invoice $invoice, InvoiceItem $item): RedirectResponse
+    {
+        $data = $request->validate([
+            'qty'        => ['required', 'integer', 'min:1'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        try {
+            $this->service->updateItem($invoice, $item, $data);
+            alert()->success(__('Updated'), __('Item updated successfully.'));
+        } catch (LogicException $e) {
+            alert()->error(__('Error'), $e->getMessage());
+        }
+
+        return redirect()->route('invoices.show', $invoice);
+    }
+
     public function removeItem(Invoice $invoice, InvoiceItem $item): RedirectResponse
     {
         try {

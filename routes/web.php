@@ -93,6 +93,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:super_admin|admin|data_entry')->group(function () {
         Route::post('invoices/{invoice}/items', [InvoiceController::class, 'addItem'])
             ->name('invoices.items.store');
+        Route::put('invoices/{invoice}/items/{item}', [InvoiceController::class, 'updateItem'])
+            ->name('invoices.items.update');
         Route::delete('invoices/{invoice}/items/{item}', [InvoiceController::class, 'removeItem'])
             ->name('invoices.items.destroy');
     });

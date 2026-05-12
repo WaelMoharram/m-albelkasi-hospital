@@ -152,8 +152,21 @@
                         @if($isDraft)
                         <td class="text-end">
                             @canany(['add_invoice_items', 'edit_invoices'])
+                            <button type="button"
+                                    class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
+                                    title="{{ __('Edit') }}"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editItemModal"
+                                    data-item-id="{{ $item->id }}"
+                                    data-item-name="{{ $item->itemable->name ?? '' }}"
+                                    data-item-qty="{{ $item->qty }}"
+                                    data-item-price="{{ $item->unit_price }}"
+                                    data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                             <form method="POST"
                                   action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
+                                  class="d-inline"
                                   onsubmit="return confirm('{{ __('Remove this item?') }}')">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
@@ -365,6 +378,68 @@
         totalPreview.textContent = '';
     });
 }());
+</script>
+@endcanany
+
+{{-- ── Edit Item Modal ─────────────────────────────────────────────────── --}}
+@canany(['add_invoice_items', 'edit_invoices'])
+<div class="modal fade" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editItemForm" method="POST">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editItemModalLabel">
+                        <i class="bi bi-pencil ms-1 text-primary"></i> {{ __('Edit Item') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-medium mb-3" id="editItemName"></p>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label" for="edit_qty">{{ __('Qty') }} <span class="text-danger">*</span></label>
+                            <input id="edit_qty" type="number" name="qty" class="form-control" min="1" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="edit_unit_price">{{ __('Unit Price') }} <span class="text-danger">*</span></label>
+                            <input id="edit_unit_price" type="number" name="unit_price" step="0.01" min="0" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-muted small" id="edit-line-total"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg ms-1"></i> {{ __('Save') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('editItemModal').addEventListener('show.bs.modal', function (e) {
+    const btn   = e.relatedTarget;
+    const form  = document.getElementById('editItemForm');
+    const qty   = document.getElementById('edit_qty');
+    const price = document.getElementById('edit_unit_price');
+    const total = document.getElementById('edit-line-total');
+
+    form.action = btn.dataset.itemUrl;
+    document.getElementById('editItemName').textContent = btn.dataset.itemName;
+    qty.value   = btn.dataset.itemQty;
+    price.value = parseFloat(btn.dataset.itemPrice).toFixed(2);
+
+    function updateTotal() {
+        const q = parseFloat(qty.value) || 0;
+        const p = parseFloat(price.value) || 0;
+        total.textContent = q > 0 && p > 0 ? '{{ __('Line total:') }} ' + (q * p).toFixed(2) : '';
+    }
+    updateTotal();
+    qty.oninput   = updateTotal;
+    price.oninput = updateTotal;
+});
 </script>
 @endcanany
 @endif
