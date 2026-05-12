@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Models\Admission;
 use App\Models\InsuranceCompany;
 use App\Models\Patient;
@@ -9,6 +10,7 @@ use App\Models\Ward;
 use App\Services\AdmissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdmissionController extends Controller
@@ -43,7 +45,7 @@ class AdmissionController extends Controller
             'admission_date'  => ['required', 'date', 'before_or_equal:today'],
             'room'            => ['nullable', 'string', 'max:50'],
             'ward'            => ['nullable', 'string', 'max:100'],
-            'referral_number' => ['nullable', 'string', 'max:50'],
+            'referral_number' => ['nullable', 'string', 'max:50', 'unique:admissions,referral_number'],
             'referral_source' => ['nullable', 'string', 'max:100'],
         ]);
 
@@ -80,7 +82,7 @@ class AdmissionController extends Controller
             'admission_date'  => ['required', 'date'],
             'room'            => ['nullable', 'string', 'max:50'],
             'ward'            => ['nullable', 'string', 'max:100'],
-            'referral_number' => ['nullable', 'string', 'max:50'],
+            'referral_number' => ['nullable', 'string', 'max:50', Rule::unique('admissions', 'referral_number')->ignore($admission->id)],
             'referral_source' => ['nullable', 'string', 'max:100'],
         ]);
 
@@ -89,6 +91,17 @@ class AdmissionController extends Controller
         alert()->success(__('Updated'), __('Admission updated successfully.'));
 
         return redirect()->route('admissions.show', $admission);
+    }
+
+    public function destroy(Admission $admission): RedirectResponse
+    {
+        $this->authorize(Permission::DeleteAdmissions->value);
+
+        $this->service->delete($admission);
+
+        alert()->success(__('Deleted'), __('Admission deleted successfully.'));
+
+        return redirect()->route('admissions.index');
     }
 
     public function discharge(Request $request, Admission $admission): RedirectResponse

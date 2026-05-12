@@ -99,6 +99,18 @@
                         </a>
                         @endif
                         @endcan
+                        @can('delete_admissions')
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                title="{{ __('Delete') }}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal"
+                                data-id="{{ $admission->id }}"
+                                data-name="{{ $admission->patient->name }}"
+                                data-url="{{ route('admissions.destroy', $admission) }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        @endcan
                     </td>
                 </tr>
                 @empty
@@ -117,4 +129,44 @@
     </div>
     @endif
 </div>
+
+@can('delete_admissions')
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteForm" method="POST">
+                @csrf @method('DELETE')
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle ms-1"></i> {{ __('Delete Admission') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ __('Are you sure you want to delete the admission for') }}
+                        <strong id="deletePatientName"></strong>؟
+                    </p>
+                    <p class="text-danger small mb-0">
+                        <i class="bi bi-exclamation-circle ms-1"></i>
+                        {{ __('This will permanently delete the admission and its invoice.') }}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash ms-1"></i> {{ __('Delete') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('deleteModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('deleteForm').action = btn.dataset.url;
+    document.getElementById('deletePatientName').textContent = btn.dataset.name;
+});
+</script>
+@endcan
 @endsection

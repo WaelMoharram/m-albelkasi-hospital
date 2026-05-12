@@ -61,6 +61,12 @@
                     <i class="bi bi-receipt ms-1"></i> {{ __('View Invoice') }}
                 </a>
                 @endif
+                @can('delete_admissions')
+                <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                        data-bs-toggle="modal" data-bs-target="#deleteAdmissionModal">
+                    <i class="bi bi-trash ms-1"></i> {{ __('Delete') }}
+                </button>
+                @endcan
             </div>
         </div>
     </div>
@@ -190,5 +196,38 @@
 </div>
 @endcan
 @endif
+
+@can('delete_admissions')
+<div class="modal fade" id="deleteAdmissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admissions.destroy', $admission) }}">
+                @csrf @method('DELETE')
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle ms-1"></i> {{ __('Delete Admission') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ __('Are you sure you want to delete the admission for') }}
+                        <strong>{{ $admission->patient->name }}</strong>؟
+                    </p>
+                    <p class="text-danger small mb-0">
+                        <i class="bi bi-exclamation-circle ms-1"></i>
+                        {{ __('This will permanently delete the admission and its invoice.') }}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash ms-1"></i> {{ __('Delete') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
 
 @endsection

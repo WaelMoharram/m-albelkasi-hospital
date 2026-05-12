@@ -62,6 +62,12 @@ Route::middleware('auth')->group(function () {
             ->name('admissions.discharge');
     });
 
+    // Delete — super_admin only
+    Route::middleware('role:super_admin')->group(function () {
+        Route::delete('admissions/{admission}', [AdmissionController::class, 'destroy'])
+            ->name('admissions.destroy');
+    });
+
     // show is open to every authenticated user — registered AFTER the resource
     // so that admissions/create and admissions/{id}/edit are matched first.
     Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');

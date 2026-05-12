@@ -18,6 +18,7 @@ enum Permission: string
     // Admissions
     case ManageAdmissions = 'manage_admissions';
     case ViewAdmissions = 'view_admissions';
+    case DeleteAdmissions = 'delete_admissions';
 
     // Invoices
     case ViewInvoices = 'view_invoices';
