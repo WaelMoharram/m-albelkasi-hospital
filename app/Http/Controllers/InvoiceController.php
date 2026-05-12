@@ -45,16 +45,14 @@ class InvoiceController extends Controller
             $labServices = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price']);
             $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price']);
 
+            $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price];
+            $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price];
+
             $catalogJson = json_encode([
-                'medication' => $medications->map(function ($m) {
-                    return ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price, 'type' => $m->type];
-                })->values(),
-                'lab' => $labServices->map(function ($s) {
-                    return ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price];
-                })->values(),
-                'radiology' => $radiologyServices->map(function ($s) {
-                    return ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price];
-                })->values(),
+                'local_med'    => $medications->where('type', 'local')->map($toMed)->values(),
+                'imported_med' => $medications->where('type', 'imported')->map($toMed)->values(),
+                'lab'          => $labServices->map($toSvc)->values(),
+                'radiology'    => $radiologyServices->map($toSvc)->values(),
             ]);
         }
 

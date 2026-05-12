@@ -243,10 +243,12 @@
 @if($isDraft)
 @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
 <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="POST" action="{{ route('invoices.items.store', $invoice) }}" id="addItemForm">
                 @csrf
+                <input type="hidden" name="item_type" id="item_type_hidden" value="medication">
+
                 <div class="modal-header">
                     <h5 class="modal-title" id="addItemModalLabel">
                         <i class="bi bi-plus-circle ms-1 text-primary"></i> {{ __('Add Invoice Item') }}
@@ -255,22 +257,39 @@
                 </div>
 
                 <div class="modal-body">
-                    {{-- Category --}}
-                    <div class="mb-3">
-                        <label class="form-label" for="item_type">{{ __('Category') }} <span class="text-danger">*</span></label>
-                        <select id="item_type" name="item_type" class="form-select" required>
-                            <option value="">— {{ __('Select category —') }}</option>
-                            <option value="medication">{{ __('Medication') }}</option>
-                            <option value="lab">{{ __('Lab Test') }}</option>
-                            <option value="radiology">{{ __('Radiology') }}</option>
-                        </select>
-                    </div>
+                    {{-- Category Tabs --}}
+                    <ul class="nav nav-tabs mb-3" id="addItemTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" type="button"
+                                    data-tab-key="local_med" data-item-type="medication">
+                                <i class="bi bi-capsule ms-1"></i> {{ __('Local Med') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" type="button"
+                                    data-tab-key="imported_med" data-item-type="medication">
+                                <i class="bi bi-capsule-pill ms-1"></i> {{ __('Imported Med') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" type="button"
+                                    data-tab-key="lab" data-item-type="lab">
+                                <i class="bi bi-eyedropper ms-1"></i> {{ __('Lab') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" type="button"
+                                    data-tab-key="radiology" data-item-type="radiology">
+                                <i class="bi bi-radioactive ms-1"></i> {{ __('Radiology') }}
+                            </button>
+                        </li>
+                    </ul>
 
-                    {{-- Item --}}
+                    {{-- Item select --}}
                     <div class="mb-3">
                         <label class="form-label" for="itemable_id">{{ __('Item') }} <span class="text-danger">*</span></label>
-                        <select id="itemable_id" name="itemable_id" class="form-select" required disabled>
-                            <option value="">— {{ __('Select category first —') }}</option>
+                        <select id="itemable_id" name="itemable_id" class="form-select" required>
+                            <option value="">— {{ __('Select item —') }}</option>
                         </select>
                     </div>
 
@@ -278,21 +297,17 @@
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="form-label" for="qty">{{ __('Qty') }} <span class="text-danger">*</span></label>
-                            <input id="qty" type="number" name="qty" value="1"
-                                   class="form-control" min="1" required>
+                            <input id="qty" type="number" name="qty" value="1" class="form-control" min="1" required>
                         </div>
                         <div class="col-6">
-                            <label class="form-label" for="unit_price">
-                                {{ __('Unit Price') }}
-                                <span class="text-muted small">({{ __('Auto-filled from National ID') }})</span>
-                            </label>
+                            <label class="form-label" for="unit_price">{{ __('Unit Price') }}</label>
                             <input id="unit_price" type="number" name="unit_price" step="0.01" min="0"
                                    class="form-control" required readonly>
                         </div>
                     </div>
 
                     {{-- Live line total --}}
-                    <div class="mt-3 text-start text-muted small" id="line-total-preview"></div>
+                    <div class="mt-3 text-muted small" id="line-total-preview"></div>
                 </div>
 
                 <div class="modal-footer">
@@ -310,32 +325,33 @@
 (function () {
     const CATALOG = {!! $catalogJson !!};
 
-    const typeSelect   = document.getElementById('item_type');
-    const itemSelect   = document.getElementById('itemable_id');
-    const priceInput   = document.getElementById('unit_price');
-    const qtyInput     = document.getElementById('qty');
-    const totalPreview = document.getElementById('line-total-preview');
+    const itemTypeHidden = document.getElementById('item_type_hidden');
+    const itemSelect     = document.getElementById('itemable_id');
+    const priceInput     = document.getElementById('unit_price');
+    const qtyInput       = document.getElementById('qty');
+    const totalPreview   = document.getElementById('line-total-preview');
+    const tabBtns        = document.querySelectorAll('#addItemTabs button');
 
-    const noItemsLabel    = '{{ __('No items in catalog for this category') }}';
-    const selectFirstLabel = '— {{ __('Select category first —') }}';
-    const selectItemLabel  = '— {{ __('Select item —') }}';
-    const lineTotalLabel   = '{{ __('Line total:') }}';
+    const noItemsLabel  = '{{ __('No items in catalog for this category') }}';
+    const selectLabel   = '— {{ __('Select item —') }}';
+    const lineTotalLabel = '{{ __('Line total:') }}';
 
     function updateTotal() {
         const qty   = parseFloat(qtyInput.value) || 0;
         const price = parseFloat(priceInput.value) || 0;
-        if (qty > 0 && price > 0) {
-            totalPreview.textContent = lineTotalLabel + ' ' + (qty * price).toFixed(2);
-        } else {
-            totalPreview.textContent = '';
-        }
+        totalPreview.textContent = (qty > 0 && price > 0)
+            ? lineTotalLabel + ' ' + (qty * price).toFixed(2)
+            : '';
     }
 
-    typeSelect.addEventListener('change', function () {
-        const type  = this.value;
-        const items = CATALOG[type] || [];
+    function loadTab(tabKey, itemType) {
+        const items = CATALOG[tabKey] || [];
+        itemTypeHidden.value = itemType;
 
-        itemSelect.innerHTML = `<option value="">${selectItemLabel}</option>`;
+        itemSelect.innerHTML = items.length
+            ? `<option value="">${selectLabel}</option>`
+            : `<option value="">${noItemsLabel}</option>`;
+
         items.forEach(function (item) {
             const label = item.unit ? `${item.name} (${item.unit})` : item.name;
             itemSelect.insertAdjacentHTML('beforeend',
@@ -343,19 +359,22 @@
             );
         });
 
-        itemSelect.disabled      = items.length === 0;
-        priceInput.value         = '';
-        priceInput.readOnly      = true;
+        itemSelect.disabled  = items.length === 0;
+        priceInput.value     = '';
+        priceInput.readOnly  = true;
         totalPreview.textContent = '';
+    }
 
-        if (items.length === 0) {
-            itemSelect.innerHTML = `<option value="">${noItemsLabel}</option>`;
-        }
+    tabBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadTab(btn.dataset.tabKey, btn.dataset.itemType);
+        });
     });
 
     itemSelect.addEventListener('change', function () {
-        const selected = this.options[this.selectedIndex];
-        const price    = selected?.dataset?.price;
+        const price = this.options[this.selectedIndex]?.dataset?.price;
         if (price) {
             priceInput.value    = parseFloat(price).toFixed(2);
             priceInput.readOnly = false;
@@ -369,11 +388,15 @@
     qtyInput.addEventListener('input', updateTotal);
     priceInput.addEventListener('input', updateTotal);
 
+    document.getElementById('addItemModal').addEventListener('show.bs.modal', function () {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabBtns[0].classList.add('active');
+        loadTab('local_med', 'medication');
+        qtyInput.value = 1;
+    });
+
     document.getElementById('addItemModal').addEventListener('hidden.bs.modal', function () {
         document.getElementById('addItemForm').reset();
-        itemSelect.innerHTML     = `<option value="">${selectFirstLabel}</option>`;
-        itemSelect.disabled      = true;
-        priceInput.value         = '';
         priceInput.readOnly      = true;
         totalPreview.textContent = '';
     });
