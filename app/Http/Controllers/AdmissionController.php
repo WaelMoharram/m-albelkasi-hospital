@@ -10,6 +10,7 @@ use App\Models\Ward;
 use App\Services\AdmissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -95,7 +96,7 @@ class AdmissionController extends Controller
 
     public function destroy(Admission $admission): RedirectResponse
     {
-        $this->authorize(Permission::DeleteAdmissions->value);
+        Gate::authorize(Permission::DeleteAdmissions->value);
 
         $this->service->delete($admission);
 
