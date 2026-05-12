@@ -43,6 +43,7 @@
             <thead class="table-light">
                 <tr>
                     <th>#</th>
+                    <th>{{ __('Referral No.') }}</th>
                     <th>{{ __('Patient') }}</th>
                     <th>{{ __('Insurance') }}</th>
                     <th>{{ __('Admitted') }}</th>
@@ -56,6 +57,7 @@
                 @forelse ($admissions as $admission)
                 <tr>
                     <td class="text-muted small">{{ $admission->id }}</td>
+                    <td class="small font-monospace">{{ $admission->referral_number ?? '—' }}</td>
                     <td>
                         <div class="fw-medium">{{ $admission->patient->name }}</div>
                         <div class="text-muted small font-monospace">{{ $admission->patient->national_id }}</div>
@@ -115,7 +117,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">{{ __('No admissions found.') }}</td>
+                    <td colspan="9" class="text-center text-muted py-4">{{ __('No admissions found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>
