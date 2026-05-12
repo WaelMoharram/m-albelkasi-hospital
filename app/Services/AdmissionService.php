@@ -37,6 +37,16 @@ class AdmissionService
         return $admission;
     }
 
+    public function delete(Admission $admission): void
+    {
+        if ($admission->invoice) {
+            $admission->invoice->items()->delete();
+            $admission->invoice->delete();
+        }
+
+        $admission->delete();
+    }
+
     /**
      * Discharge an admission:
      *  - Set status = discharged and discharge_date.
