@@ -141,23 +141,34 @@
 </div>
 
 {{-- ── 4 Invoice Sections as Tabs ───────────────────────────────────────── --}}
+<style>
+#invoiceSectionTabs .nav-link          { color: #6c757d; }
+#invoiceSectionTabs .nav-link.active   { color: #212529; font-weight: 600; }
+#invoiceSectionTabs .nav-link:hover:not(.active) { color: #343a40; }
+</style>
+
 <div class="card border-0 shadow-sm">
 
     {{-- Tab nav --}}
     <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
         <ul class="nav nav-tabs card-header-tabs" id="invoiceSectionTabs" role="tablist">
+
+            {{-- الكل tab (first, active) --}}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-all"
+                        type="button" role="tab">{{ __('All') }}</button>
+            </li>
+
+            {{-- Individual section tabs --}}
             @foreach ($sections as $sectionKey => $meta)
             @php $tabItems = $grouped[$sectionKey] ?? collect(); @endphp
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $loop->first ? 'active' : '' }}"
-                        id="tab-{{ $sectionKey }}-btn"
-                        data-bs-toggle="tab"
-                        data-bs-target="#tab-{{ $sectionKey }}"
+                <button class="nav-link" id="tab-{{ $sectionKey }}-btn"
+                        data-bs-toggle="tab" data-bs-target="#tab-{{ $sectionKey }}"
                         type="button" role="tab">
                     {{ $meta['label'] }}
-                    @if($tabItems->isNotEmpty())
-                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $tabItems->count() }}</span>
-                    @endif
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $tabItems->isEmpty() ? 'd-none' : '' }}"
+                          id="badge-{{ $sectionKey }}">{{ $tabItems->count() }}</span>
                 </button>
             </li>
             @endforeach
@@ -166,10 +177,98 @@
 
     {{-- Tab content --}}
     <div class="tab-content border-bottom">
+
+        {{-- ── "الكل" tab — all sections stacked ── --}}
+        <div class="tab-pane fade show active p-0" id="tab-all" role="tabpanel">
+            @foreach ($sections as $sectionKey => $meta)
+            @php $items = $grouped[$sectionKey] ?? collect(); @endphp
+            <div class="border-bottom">
+                <div class="px-3 pt-2 pb-1 small fw-semibold text-secondary text-uppercase">
+                    {{ $meta['label'] }}
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <tbody id="f-tbody-{{ $sectionKey }}">
+                            @forelse ($items as $item)
+                            <tr id="f-item-{{ $item->id }}">
+                                <td>
+                                    <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
+                                    @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
+                                        <span class="text-muted small ms-1">{{ $item->itemable->unit ?? '' }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-end" style="width:80px;">{{ $item->qty }}</td>
+                                <td class="text-end" style="width:120px;">{{ number_format($item->unit_price, 2) }}</td>
+                                <td class="text-end fw-medium" style="width:120px;">{{ number_format($item->total, 2) }}</td>
+                                @if($isDraft)
+                                <td class="text-end" style="width:60px;">
+                                    @canany(['add_invoice_items', 'edit_invoices'])
+                                    <button type="button"
+                                            class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
+                                            data-bs-toggle="modal" data-bs-target="#editItemModal"
+                                            data-item-id="{{ $item->id }}"
+                                            data-item-name="{{ $item->itemable->name ?? '' }}"
+                                            data-item-qty="{{ $item->qty }}"
+                                            data-item-price="{{ $item->unit_price }}"
+                                            data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
+                                          class="d-inline" onsubmit="return confirm('{{ __('Remove this item?') }}')">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                    @endcanany
+                                </td>
+                                @endif
+                            </tr>
+                            @empty
+                            <tr id="f-empty-{{ $sectionKey }}">
+                                <td colspan="{{ $isDraft ? 5 : 4 }}" class="text-muted small fst-italic py-2 text-center">
+                                    {{ __('No items in this section.') }}
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                        @if($isDraft)
+                        @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
+                        <tfoot>
+                            <tr class="table-light">
+                                <td>
+                                    <select class="form-select form-select-sm" id="f-select-{{ $sectionKey }}"
+                                            data-section="{{ $sectionKey }}" data-prefix="f-">
+                                        <option value="">— {{ __('Select item —') }} —</option>
+                                    </select>
+                                </td>
+                                <td><input type="number" class="form-control form-control-sm text-end"
+                                           id="f-qty-{{ $sectionKey }}" value="1" min="1" style="width:70px;margin-left:auto;"></td>
+                                <td><input type="number" class="form-control form-control-sm text-end"
+                                           id="f-price-{{ $sectionKey }}" step="0.01" min="0" readonly placeholder="—"
+                                           style="width:110px;margin-left:auto;"></td>
+                                <td class="text-end text-muted small fw-medium" id="f-preview-{{ $sectionKey }}">—</td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
+                                            data-section="{{ $sectionKey }}" data-prefix="f-"
+                                            data-url="{{ route('invoices.items.store', $invoice) }}">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                        @endcanany
+                        @endif
+                    </table>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        {{-- ── Individual section tabs ── --}}
         @foreach ($sections as $sectionKey => $meta)
         @php $items = $grouped[$sectionKey] ?? collect(); @endphp
-        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }} p-0"
-             id="tab-{{ $sectionKey }}" role="tabpanel">
+        <div class="tab-pane fade p-0" id="tab-{{ $sectionKey }}" role="tabpanel">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
@@ -227,8 +326,6 @@
                         </tr>
                         @endforelse
                     </tbody>
-
-                    {{-- Subtotal footer (hidden when empty) --}}
                     <tfoot class="table-light {{ $items->isEmpty() ? 'd-none' : '' }}" id="tfoot-{{ $sectionKey }}">
                         <tr>
                             <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
@@ -236,34 +333,24 @@
                             @if($isDraft) <td></td> @endif
                         </tr>
                     </tfoot>
-
-                    {{-- Inline add row (draft only) --}}
                     @if($isDraft)
                     @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
                     <tfoot>
-                        <tr class="table-warning">
+                        <tr class="table-light">
                             <td>
                                 <select class="form-select form-select-sm"
-                                        id="select-{{ $sectionKey }}"
-                                        data-section="{{ $sectionKey }}">
+                                        id="select-{{ $sectionKey }}" data-section="{{ $sectionKey }}" data-prefix="">
                                     <option value="">— {{ __('Select item —') }} —</option>
                                 </select>
                             </td>
-                            <td>
-                                <input type="number" class="form-control form-control-sm text-end"
-                                       id="qty-{{ $sectionKey }}"
-                                       value="1" min="1">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control form-control-sm text-end"
-                                       id="price-{{ $sectionKey }}"
-                                       step="0.01" min="0" readonly placeholder="—">
-                            </td>
+                            <td><input type="number" class="form-control form-control-sm text-end"
+                                       id="qty-{{ $sectionKey }}" value="1" min="1"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end"
+                                       id="price-{{ $sectionKey }}" step="0.01" min="0" readonly placeholder="—"></td>
                             <td class="text-end text-muted small fw-medium" id="preview-{{ $sectionKey }}">—</td>
                             <td class="text-end">
-                                <button type="button"
-                                        class="btn btn-sm btn-primary add-item-btn"
-                                        data-section="{{ $sectionKey }}"
+                                <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
+                                        data-section="{{ $sectionKey }}" data-prefix=""
                                         data-url="{{ route('invoices.items.store', $invoice) }}">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
@@ -332,69 +419,85 @@
 (function () {
     const CATALOG = {!! $catalogJson !!};
     const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-    const SECTION_TYPE = {
-        local_med: 'medication', imported_med: 'medication',
-        lab: 'lab', radiology: 'radiology'
-    };
-    const CONFIRM_MSG = '{{ __('Remove this item?') }}';
+    const SECTION_TYPE  = { local_med: 'medication', imported_med: 'medication', lab: 'lab', radiology: 'radiology' };
+    const WITH_UNIT     = { local_med: true, imported_med: true };
+    const CONFIRM_MSG   = '{{ __('Remove this item?') }}';
 
-    // Populate selects from catalog
-    Object.keys(SECTION_TYPE).forEach(function (section) {
-        const select = document.getElementById('select-' + section);
-        if (!select) return;
-        (CATALOG[section] || []).forEach(function (item) {
-            const label = item.unit ? item.name + ' (' + item.unit + ')' : item.name;
-            select.insertAdjacentHTML('beforeend',
-                '<option value="' + item.id + '" data-price="' + item.price + '">' + label + '</option>'
-            );
-        });
-    });
-
-    // Select change → auto-fill price + preview
-    document.querySelectorAll('[id^="select-"]').forEach(function (sel) {
-        sel.addEventListener('change', function () {
-            const section = this.id.replace('select-', '');
-            const price   = this.options[this.selectedIndex]?.dataset?.price;
-            const priceEl = document.getElementById('price-' + section);
-            const qty     = parseFloat(document.getElementById('qty-' + section).value) || 1;
-            if (price) {
-                priceEl.value    = parseFloat(price).toFixed(2);
-                priceEl.readOnly = false;
-                document.getElementById('preview-' + section).textContent = (qty * parseFloat(price)).toFixed(2);
-            } else {
-                priceEl.value    = '';
-                priceEl.readOnly = true;
-                document.getElementById('preview-' + section).textContent = '—';
-            }
-        });
-    });
-
-    // Qty / price change → update preview
-    ['qty-', 'price-'].forEach(function (prefix) {
-        document.querySelectorAll('[id^="' + prefix + '"]').forEach(function (inp) {
-            inp.addEventListener('input', function () {
-                const section = this.id.replace(prefix, '');
-                const qty   = parseFloat(document.getElementById('qty-'   + section).value) || 0;
-                const price = parseFloat(document.getElementById('price-' + section).value) || 0;
-                document.getElementById('preview-' + section).textContent =
-                    (qty > 0 && price > 0) ? (qty * price).toFixed(2) : '—';
+    // Populate all selects (both prefixes: '' and 'f-')
+    ['', 'f-'].forEach(function (p) {
+        Object.keys(SECTION_TYPE).forEach(function (section) {
+            const sel = document.getElementById(p + 'select-' + section);
+            if (!sel) return;
+            (CATALOG[section] || []).forEach(function (item) {
+                const label = item.unit ? item.name + ' (' + item.unit + ')' : item.name;
+                sel.insertAdjacentHTML('beforeend',
+                    '<option value="' + item.id + '" data-price="' + item.price + '">' + label + '</option>');
             });
         });
     });
 
+    // Wire select / qty / price → preview (generic, works for any id pattern ending in -{section})
+    function wirePreview(selEl) {
+        const id      = selEl.id;                        // e.g. "f-select-lab"
+        const section = id.replace(/^(f-)?select-/, '');
+        const prefix  = id.startsWith('f-') ? 'f-' : '';
+        const priceEl = document.getElementById(prefix + 'price-' + section);
+        const preEl   = document.getElementById(prefix + 'preview-' + section);
+        const qtyEl   = document.getElementById(prefix + 'qty-' + section);
+
+        selEl.addEventListener('change', function () {
+            const price = this.options[this.selectedIndex]?.dataset?.price;
+            if (price) {
+                priceEl.value    = parseFloat(price).toFixed(2);
+                priceEl.readOnly = false;
+                preEl.textContent = ((parseFloat(qtyEl.value) || 1) * parseFloat(price)).toFixed(2);
+            } else {
+                priceEl.value = ''; priceEl.readOnly = true; preEl.textContent = '—';
+            }
+        });
+        [qtyEl, priceEl].forEach(function (el) {
+            if (!el) return;
+            el.addEventListener('input', function () {
+                const q = parseFloat(qtyEl.value) || 0, p = parseFloat(priceEl.value) || 0;
+                preEl.textContent = (q > 0 && p > 0) ? (q * p).toFixed(2) : '—';
+            });
+        });
+    }
+    document.querySelectorAll('[id$="-select-local_med"],[id$="-select-imported_med"],[id$="-select-lab"],[id$="-select-radiology"],[id="select-local_med"],[id="select-imported_med"],[id="select-lab"],[id="select-radiology"]')
+        .forEach(wirePreview);
+
+    function buildRow(d, section) {
+        const nameHtml = WITH_UNIT[section] && d.unit
+            ? d.name + ' <span class="text-muted small ms-1">' + d.unit + '</span>' : d.name;
+        return '<td><span class="fw-medium">' + nameHtml + '</span></td>' +
+               '<td class="text-end">' + d.qty + '</td>' +
+               '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
+               '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
+               '<td class="text-end">' +
+                   '<button type="button" class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"' +
+                       ' data-bs-toggle="modal" data-bs-target="#editItemModal"' +
+                       ' data-item-id="' + d.id + '" data-item-name="' + d.name + '"' +
+                       ' data-item-qty="' + d.qty + '" data-item-price="' + d.unit_price + '"' +
+                       ' data-item-url="' + d.update_url + '"><i class="bi bi-pencil"></i></button>' +
+                   '<form method="POST" action="' + d.destroy_url + '" class="d-inline"' +
+                       ' onsubmit="return confirm(\'' + CONFIRM_MSG + '\')">' +
+                       '<input type="hidden" name="_token" value="' + CSRF + '">' +
+                       '<input type="hidden" name="_method" value="DELETE">' +
+                       '<button class="btn btn-xs btn-outline-danger border-0 p-0 px-1"><i class="bi bi-x-lg"></i></button>' +
+                   '</form></td>';
+    }
+
     // Add button → AJAX POST
     document.querySelectorAll('.add-item-btn').forEach(function (btn) {
         btn.addEventListener('click', async function () {
-            const section  = this.dataset.section;
-            const url      = this.dataset.url;
-            const select   = document.getElementById('select-'  + section);
-            const qtyEl    = document.getElementById('qty-'     + section);
-            const priceEl  = document.getElementById('price-'   + section);
-            const itemableId = select.value;
-            const qty        = parseInt(qtyEl.value);
-            const unitPrice  = parseFloat(priceEl.value);
+            const section = this.dataset.section;
+            const prefix  = this.dataset.prefix;          // '' or 'f-'
+            const url     = this.dataset.url;
+            const selEl   = document.getElementById(prefix + 'select-' + section);
+            const qtyEl   = document.getElementById(prefix + 'qty-'    + section);
+            const priceEl = document.getElementById(prefix + 'price-'  + section);
 
-            if (!itemableId || !qty || !unitPrice) return;
+            if (!selEl.value || !parseFloat(qtyEl.value) || !parseFloat(priceEl.value)) return;
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
@@ -403,78 +506,58 @@
                 const res  = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                    body: JSON.stringify({ item_type: SECTION_TYPE[section], itemable_id: itemableId, qty, unit_price: unitPrice })
+                    body: JSON.stringify({ item_type: SECTION_TYPE[section], itemable_id: selEl.value,
+                                          qty: parseInt(qtyEl.value), unit_price: parseFloat(priceEl.value) })
                 });
                 const data = await res.json();
                 if (!res.ok) { alert(data.error || 'Error'); return; }
-
                 const d = data.item;
 
-                // Remove empty-state row
-                const emptyRow = document.getElementById('empty-' + section);
-                if (emptyRow) emptyRow.remove();
+                // Append to BOTH individual tab tbody AND full-tab tbody
+                [['tbody-', 'empty-', 'tfoot-', 'subtotal-'],
+                 ['f-tbody-', 'f-empty-', null, null]].forEach(function (ids) {
+                    const tbody = document.getElementById(ids[0] + section);
+                    if (!tbody) return;
+                    const emptyRow = document.getElementById(ids[1] + section);
+                    if (emptyRow) emptyRow.remove();
+                    tbody.insertAdjacentHTML('beforeend', '<tr id="' + ids[0] + d.id + '">' + buildRow(d, section) + '</tr>');
+                    if (ids[2]) {
+                        const tf = document.getElementById(ids[2] + section);
+                        if (tf) tf.classList.remove('d-none');
+                    }
+                    if (ids[3]) {
+                        const sub = document.getElementById(ids[3] + section);
+                        if (sub) {
+                            const prev = parseFloat(sub.textContent.replace(/,/g, '')) || 0;
+                            sub.textContent = (prev + parseFloat(d.total))
+                                .toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+                        }
+                    }
+                });
 
-                // Show subtotal footer
-                const tfoot = document.getElementById('tfoot-' + section);
-                if (tfoot) tfoot.classList.remove('d-none');
-
-                // Append new item row
-                const nameHtml = (section === 'local_med' || section === 'imported_med') && d.unit
-                    ? d.name + ' <span class="text-muted small ms-1">' + d.unit + '</span>'
-                    : d.name;
-
-                document.getElementById('tbody-' + section).insertAdjacentHTML('beforeend',
-                    '<tr id="item-' + d.id + '">' +
-                    '<td><span class="fw-medium">' + nameHtml + '</span></td>' +
-                    '<td class="text-end">' + d.qty + '</td>' +
-                    '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
-                    '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
-                    '<td class="text-end">' +
-                        '<button type="button" class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"' +
-                            ' data-bs-toggle="modal" data-bs-target="#editItemModal"' +
-                            ' data-item-id="' + d.id + '" data-item-name="' + d.name + '"' +
-                            ' data-item-qty="' + d.qty + '" data-item-price="' + d.unit_price + '"' +
-                            ' data-item-url="' + d.update_url + '"><i class="bi bi-pencil"></i></button>' +
-                        '<form method="POST" action="' + d.destroy_url + '" class="d-inline"' +
-                            ' onsubmit="return confirm(\'' + CONFIRM_MSG + '\')">' +
-                            '<input type="hidden" name="_token" value="' + CSRF + '">' +
-                            '<input type="hidden" name="_method" value="DELETE">' +
-                            '<button class="btn btn-xs btn-outline-danger border-0 p-0 px-1"><i class="bi bi-x-lg"></i></button>' +
-                        '</form>' +
-                    '</td></tr>'
-                );
-
-                // Update section subtotal
-                const subtotalEl = document.getElementById('subtotal-' + section);
-                if (subtotalEl) {
-                    const prev = parseFloat(subtotalEl.textContent.replace(/,/g, '')) || 0;
-                    subtotalEl.textContent = (prev + parseFloat(d.total)).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
-                }
-
-                // Update badge count
+                // Badge
                 const badge = document.getElementById('badge-' + section);
-                if (badge) {
-                    badge.textContent = (parseInt(badge.textContent) || 0) + 1;
-                    badge.classList.remove('d-none');
-                }
+                if (badge) { badge.textContent = (parseInt(badge.textContent)||0)+1; badge.classList.remove('d-none'); }
 
-                // Update grand total
+                // Grand total
                 const gt = document.getElementById('grand-total-display');
-                if (gt) gt.textContent = parseFloat(data.invoice_total).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+                if (gt) gt.textContent = parseFloat(data.invoice_total)
+                    .toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-                // Reset add row
-                select.value     = '';
-                qtyEl.value      = 1;
-                priceEl.value    = '';
-                priceEl.readOnly = true;
-                document.getElementById('preview-' + section).textContent = '—';
+                // Reset both add rows for this section
+                ['', 'f-'].forEach(function (p) {
+                    const s = document.getElementById(p + 'select-' + section);
+                    const q = document.getElementById(p + 'qty-'    + section);
+                    const pr = document.getElementById(p + 'price-'  + section);
+                    const pv = document.getElementById(p + 'preview-'+ section);
+                    if (s)  s.value = '';
+                    if (q)  q.value = 1;
+                    if (pr) { pr.value = ''; pr.readOnly = true; }
+                    if (pv) pv.textContent = '—';
+                });
 
-            } catch (e) {
-                alert('Error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-plus-lg"></i>';
-            }
+            } catch (e) { alert('Error'); }
+            finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-lg"></i>'; }
         });
     });
 }());
