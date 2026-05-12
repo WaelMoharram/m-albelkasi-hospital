@@ -15,10 +15,11 @@
 
     $grouped = $invoice->items->groupBy('section');
 
-    // Group daily items by invoice_category for the tab display
-    $dailyFlat = $grouped['daily'] ?? collect();
+    // Group ALL service items by invoice_category for the الفاتورة tab
+    $dailyFlat   = $grouped['daily'] ?? collect();
+    $allSvcItems = $invoice->items->where('itemable_type', \App\Models\Service::class);
     $dailyCategoryGroups = collect();
-    foreach ($dailyFlat as $_item) {
+    foreach ($allSvcItems as $_item) {
         $_svc = $_item->itemable;
         if (!$_svc) continue;
         $_cat = $_svc->invoiceCategory ?? null;
@@ -173,14 +174,13 @@
     <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
         <ul class="nav nav-tabs card-header-tabs" id="invoiceSectionTabs" role="tablist">
 
-            {{-- الفاتورة tab (first, active) — daily services --}}
-            @php $dailyTabItems = $grouped['daily'] ?? collect(); @endphp
+            {{-- الفاتورة tab (first, active) — all services grouped by category --}}
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-daily"
                         type="button" role="tab">
                     {{ __('Invoice') }}
-                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $dailyTabItems->isEmpty() ? 'd-none' : '' }}"
-                          id="badge-daily">{{ $dailyTabItems->count() }}</span>
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $allSvcItems->isEmpty() ? 'd-none' : '' }}"
+                          id="badge-daily">{{ $allSvcItems->count() }}</span>
                 </button>
             </li>
 
@@ -280,10 +280,10 @@
                         </tr>
                         @endforelse
                     </tbody>
-                    <tfoot class="table-light {{ $dailyFlat->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
+                    <tfoot class="table-light {{ $allSvcItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
                         <tr>
                             <td colspan="4" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
-                            <td class="text-end fw-bold" id="subtotal-daily">{{ number_format($dailyFlat->sum('total'), 2) }}</td>
+                            <td class="text-end fw-bold" id="subtotal-daily">{{ number_format($allSvcItems->sum('total'), 2) }}</td>
                             <td colspan="{{ $isDraft ? 2 : 1 }}"></td>
                         </tr>
                     </tfoot>
