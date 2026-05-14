@@ -506,6 +506,19 @@ document.addEventListener('DOMContentLoaded', function () {
             maxOptions: null,
             highlight: true,
             dropdownParent: document.body,
+            onDropdownOpen: function (dropdown) {
+                var self = this;
+                requestAnimationFrame(function () {
+                    var dropRect    = dropdown.getBoundingClientRect();
+                    var ctrlRect    = self.control.getBoundingClientRect();
+                    var scrollY     = window.scrollY || document.documentElement.scrollTop;
+                    var overflowsBy = dropRect.bottom - (window.innerHeight - 8);
+                    if (overflowsBy > 0) {
+                        // Flip above the control
+                        dropdown.style.top = (ctrlRect.top + scrollY - dropdown.offsetHeight) + 'px';
+                    }
+                });
+            },
         });
     });
 });
