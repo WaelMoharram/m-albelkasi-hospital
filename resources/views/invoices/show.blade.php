@@ -505,6 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: el.options[0]?.text || '',
             maxOptions: null,
             highlight: true,
+            dropdownParent: document.body,
         });
     });
 });
