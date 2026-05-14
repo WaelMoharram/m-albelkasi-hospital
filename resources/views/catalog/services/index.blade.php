@@ -17,33 +17,33 @@
                    placeholder="{{ __('Search by name…') }}"
                    style="max-width: 240px;">
 
-            <div class="btn-group btn-group-sm" role="group">
+            <div class="d-flex gap-2 flex-wrap">
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), [])) }}"
-                   class="btn {{ !request('category') && !request('is_daily') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                   class="btn btn-sm {{ !request('category') && !request('is_daily') ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('All') }}
                 </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['category' => 'supplies'])) }}"
-                   class="btn {{ request('category') === 'supplies' ? 'btn-warning' : 'btn-outline-warning' }}">
+                   class="btn btn-sm {{ request('category') === 'supplies' ? 'btn-warning' : 'btn-outline-warning' }}">
                     {{ __('Supplies') }}
                 </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['category' => 'lab'])) }}"
-                   class="btn {{ request('category') === 'lab' ? 'btn-info text-white' : 'btn-outline-info' }}">
+                   class="btn btn-sm {{ request('category') === 'lab' ? 'btn-info text-white' : 'btn-outline-info' }}">
                     {{ __('Lab') }}
                 </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily'), ['category' => 'radiology'])) }}"
-                   class="btn {{ request('category') === 'radiology' ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                   class="btn btn-sm {{ request('category') === 'radiology' ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('Radiology') }}
                 </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily','is_once'), ['category' => 'other'])) }}"
-                   class="btn {{ request('category') === 'other' ? 'btn-dark' : 'btn-outline-dark' }}">
+                   class="btn btn-sm {{ request('category') === 'other' ? 'btn-dark' : 'btn-outline-dark' }}">
                     {{ __('Other') }}
                 </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily','is_once'), ['is_daily' => '1'])) }}"
-                   class="btn {{ request('is_daily') === '1' ? 'btn-primary' : 'btn-outline-primary' }}">
+                   class="btn btn-sm {{ request('is_daily') === '1' ? 'btn-primary' : 'btn-outline-primary' }}">
                     <i class="bi bi-arrow-repeat"></i> {{ __('Auto-daily') }}
                 </a>
                 <a href="{{ route('catalog.services.index', array_merge(request()->except('category','is_daily','is_once'), ['is_once' => '1'])) }}"
-                   class="btn {{ request('is_once') === '1' ? 'btn-success' : 'btn-outline-success' }}">
+                   class="btn btn-sm {{ request('is_once') === '1' ? 'btn-success' : 'btn-outline-success' }}">
                     <i class="bi bi-1-circle"></i> {{ __('Once') }}
                 </a>
             </div>
@@ -68,6 +68,7 @@
                     <th>{{ __('Item Code') }}</th>
                     <th>{{ __('Price') }}</th>
                     <th>{{ __('Category') }}</th>
+                    <th>{{ __('Linked Services') }}</th>
                     <th class="text-start">{{ __('Actions') }}</th>
                 </tr>
             </thead>
@@ -100,6 +101,13 @@
                             </span>
                         @endif
                     </td>
+                    <td>
+                        @forelse ($service->triggers as $trigger)
+                            <span class="badge bg-light text-dark border me-1">{{ $trigger->name }}</span>
+                        @empty
+                            <span class="text-muted small">—</span>
+                        @endforelse
+                    </td>
                     <td class="text-start">
                         <a href="{{ route('catalog.services.edit', $service) }}"
                            class="btn btn-sm btn-outline-primary">
@@ -118,7 +126,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">{{ __('No services found.') }}</td>
+                    <td colspan="7" class="text-center text-muted py-4">{{ __('No services found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>
