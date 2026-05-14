@@ -620,16 +620,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 // الفاتورة tab uses rowspan grouping — reload to rebuild correctly
                 if (section === 'other') { window.location.reload(); return; }
 
+                // Use server-determined section (e.g. medication type decides local_med vs imported_med)
+                const targetSection = d.section || section;
+
                 // Update tbody
-                const tbody = document.getElementById('tbody-' + section);
+                const tbody = document.getElementById('tbody-' + targetSection);
                 if (tbody) {
-                    const emptyRow = document.getElementById('empty-' + section);
+                    const emptyRow = document.getElementById('empty-' + targetSection);
                     if (emptyRow) emptyRow.remove();
                     tbody.insertAdjacentHTML('beforeend',
-                        '<tr id="item-' + section + '-' + d.id + '">' + buildRow(d, section) + '</tr>');
-                    const tf = document.getElementById('tfoot-' + section);
+                        '<tr id="item-' + targetSection + '-' + d.id + '">' + buildRow(d, targetSection) + '</tr>');
+                    const tf = document.getElementById('tfoot-' + targetSection);
                     if (tf) tf.classList.remove('d-none');
-                    const sub = document.getElementById('subtotal-' + section);
+                    const sub = document.getElementById('subtotal-' + targetSection);
                     if (sub) {
                         const prev = parseFloat(sub.textContent.replace(/,/g, '')) || 0;
                         sub.textContent = (prev + parseFloat(d.total))
@@ -638,7 +641,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Badge
-                const badge = document.getElementById('badge-' + section);
+                const badge = document.getElementById('badge-' + targetSection);
                 if (badge) { badge.textContent = (parseInt(badge.textContent)||0)+1; badge.classList.remove('d-none'); }
 
                 // Grand total

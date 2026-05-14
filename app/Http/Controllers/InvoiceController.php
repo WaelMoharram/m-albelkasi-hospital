@@ -52,9 +52,13 @@ class InvoiceController extends Controller
             $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price, 'code' => $m->code ?? ''];
             $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price, 'code' => $s->code ?? ''];
 
+            // All medications appear in both tabs; the server determines the correct
+            // section (local_med / imported_med) from the medication's type field.
+            $allMeds = $medications->map($toMed)->values();
+
             $catalogJson = json_encode([
-                'local_med'    => $medications->where('type', 'local')->map($toMed)->values(),
-                'imported_med' => $medications->where('type', 'imported')->map($toMed)->values(),
+                'local_med'    => $allMeds,
+                'imported_med' => $allMeds,
                 'lab'          => $labServices->map($toSvc)->values(),
                 'radiology'    => $radiologyServices->map($toSvc)->values(),
                 'other'        => $otherServices->map($toSvc)->values(),
