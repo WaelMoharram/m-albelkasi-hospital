@@ -1,5 +1,5 @@
 <div class="row g-3 mb-3">
-    <div class="col-md-8">
+    <div class="col-md-5">
         <label class="form-label" for="name">{{ __('Full Name') }} <span class="text-danger">*</span></label>
         <input id="name" type="text" name="name"
                value="{{ old('name', $medication->name ?? '') }}"
@@ -7,7 +7,7 @@
                required autofocus>
         @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <label class="form-label" for="code">{{ __('Item Code') }}</label>
         <input id="code" type="text" name="code"
                value="{{ old('code', $medication->code ?? '') }}"
@@ -15,30 +15,29 @@
                placeholder="{{ __('Optional') }}">
         @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
-</div>
-
-<div class="mb-3">
-    <label class="form-label" for="unit">{{ __('Unit') }}</label>
-    <select id="unit" name="unit"
-            class="form-select @error('unit') is-invalid @enderror">
-        <option value="">— {{ __('Optional') }} —</option>
-        @foreach ($units as $u)
-            <option value="{{ $u->name }}"
-                {{ old('unit', $medication->unit ?? '') === $u->name ? 'selected' : '' }}>
-                {{ $u->name }}
-            </option>
-        @endforeach
-    </select>
-    @error('unit') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    <div class="form-text">
-        <a href="{{ route('catalog.units.index') }}" target="_blank" class="small">
-            <i class="bi bi-plus-circle"></i> {{ __('Manage Units') }}
-        </a>
+    <div class="col-md-4">
+        <label class="form-label" for="unit">{{ __('Unit') }}</label>
+        <select id="unit" name="unit"
+                class="form-select @error('unit') is-invalid @enderror">
+            <option value="">— {{ __('Optional') }} —</option>
+            @foreach ($units as $u)
+                <option value="{{ $u->name }}"
+                    {{ old('unit', $medication->unit ?? '') === $u->name ? 'selected' : '' }}>
+                    {{ $u->name }}
+                </option>
+            @endforeach
+        </select>
+        @error('unit') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="form-text">
+            <a href="{{ route('catalog.units.index') }}" target="_blank" class="small">
+                <i class="bi bi-plus-circle"></i> {{ __('Manage Units') }}
+            </a>
+        </div>
     </div>
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label" for="price">{{ __('Price') }} <span class="text-danger">*</span></label>
         <div class="input-group">
             <input id="price" type="number" name="price"
@@ -49,7 +48,7 @@
             @error('price') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-3">
         <label class="form-label" for="daily_qty">{{ __('Times per day') }}</label>
         <div class="input-group">
             <input id="daily_qty" type="number" name="daily_qty"
@@ -59,25 +58,26 @@
             <span class="input-group-text">×</span>
             @error('daily_qty') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
-        <div class="form-text">{{ __('How many times per day this medication is charged on the invoice.') }}</div>
+        <div class="form-text">{{ __('Times/day charged on invoice.') }}</div>
     </div>
-</div>
-
-<div class="mb-3">
-    <label class="form-label">{{ __('Type') }} <span class="text-danger">*</span></label>
-    <div class="d-flex gap-4">
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="type" id="type_local" value="local"
-                   {{ old('type', $medication->type ?? '') === 'local' ? 'checked' : '' }} required>
-            <label class="form-check-label" for="type_local">{{ __('Local') }}</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="type" id="type_imported" value="imported"
-                   {{ old('type', $medication->type ?? '') === 'imported' ? 'checked' : '' }}>
-            <label class="form-check-label" for="type_imported">{{ __('Imported') }}</label>
+    <div class="col-md-5 d-flex align-items-start pt-4">
+        <div>
+            <label class="form-label d-block">{{ __('Type') }} <span class="text-danger">*</span></label>
+            <div class="d-flex gap-4 mt-1">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="type" id="type_local" value="local"
+                           {{ old('type', $medication->type ?? '') === 'local' ? 'checked' : '' }} required>
+                    <label class="form-check-label" for="type_local">{{ __('Local') }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="type" id="type_imported" value="imported"
+                           {{ old('type', $medication->type ?? '') === 'imported' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="type_imported">{{ __('Imported') }}</label>
+                </div>
+            </div>
+            @error('type') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
         </div>
     </div>
-    @error('type') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
 </div>
 
 {{-- Linked services --}}

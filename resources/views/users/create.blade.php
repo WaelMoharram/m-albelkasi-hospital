@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-<div class="card border-0 shadow-sm" style="max-width:700px;">
+<div class="card border-0 shadow-sm">
     <div class="card-body p-4">
         <form method="POST" action="{{ route('users.store') }}" autocomplete="off">
             @csrf

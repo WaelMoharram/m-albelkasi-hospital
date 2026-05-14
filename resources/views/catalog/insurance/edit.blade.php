@@ -9,24 +9,20 @@
 @endsection
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                <form method="POST" action="{{ route('catalog.insurance.update', $insuranceCompany) }}">
-                    @csrf @method('PUT')
-                    @include('catalog.insurance._form')
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg ms-1"></i> {{ __('Update') }}
-                        </button>
-                        <a href="{{ route('catalog.insurance.index') }}" class="btn btn-outline-secondary">
-                            {{ __('Cancel') }}
-                        </a>
-                    </div>
-                </form>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST" action="{{ route('catalog.insurance.update', $insuranceCompany) }}">
+            @csrf @method('PUT')
+            @include('catalog.insurance._form')
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg ms-1"></i> {{ __('Update') }}
+                </button>
+                <a href="{{ route('catalog.insurance.index') }}" class="btn btn-outline-secondary">
+                    {{ __('Cancel') }}
+                </a>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 @endsection

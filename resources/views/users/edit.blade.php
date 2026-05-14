@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-<div class="card border-0 shadow-sm" style="max-width:700px;">
+<div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
         <div class="d-flex align-items-center gap-2">
             <div class="rounded-circle bg-primary bg-opacity-10 p-2">

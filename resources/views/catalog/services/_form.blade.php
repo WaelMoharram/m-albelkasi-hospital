@@ -1,5 +1,5 @@
 <div class="row g-3 mb-3">
-    <div class="col-md-8">
+    <div class="col-md-5">
         <label class="form-label" for="name">{{ __('Full Name') }} <span class="text-danger">*</span></label>
         <input id="name" type="text" name="name"
                value="{{ old('name', $service->name ?? '') }}"
@@ -7,7 +7,7 @@
                required autofocus>
         @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <label class="form-label" for="code">{{ __('Item Code') }}</label>
         <input id="code" type="text" name="code"
                value="{{ old('code', $service->code ?? '') }}"
@@ -15,22 +15,21 @@
                placeholder="{{ __('Optional') }}">
         @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
-</div>
-
-<div class="mb-3">
-    <label class="form-label" for="price">{{ __('Price') }} <span class="text-danger">*</span></label>
-    <div class="input-group">
-        <input id="price" type="number" name="price"
-               value="{{ old('price', $service->price ?? '') }}"
-               class="form-control @error('price') is-invalid @enderror"
-               step="0.01" min="0" required>
-        <span class="input-group-text">ج.م</span>
-        @error('price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+    <div class="col-md-4">
+        <label class="form-label" for="price">{{ __('Price') }} <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <input id="price" type="number" name="price"
+                   value="{{ old('price', $service->price ?? '') }}"
+                   class="form-control @error('price') is-invalid @enderror"
+                   step="0.01" min="0" required>
+            <span class="input-group-text">ج.م</span>
+            @error('price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        </div>
     </div>
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label" for="category">{{ __('Category') }} <span class="text-danger">*</span></label>
         <select id="category" name="category"
                 class="form-select @error('category') is-invalid @enderror" required>
@@ -48,10 +47,9 @@
             @endforeach
         </select>
         @error('category') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-text">{{ __('Which section this service appears in on the printed invoice.') }}</div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-8">
         <label class="form-label" for="invoice_category_id">{{ __('Invoice Section') }}</label>
         <select id="invoice_category_id" name="invoice_category_id"
                 class="form-select @error('invoice_category_id') is-invalid @enderror">
@@ -64,7 +62,6 @@
             @endforeach
         </select>
         @error('invoice_category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-        <div class="form-text">{{ __('Which section this service appears in on the printed invoice.') }}</div>
     </div>
 </div>
 
