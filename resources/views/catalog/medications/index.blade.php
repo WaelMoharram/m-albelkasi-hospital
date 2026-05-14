@@ -17,17 +17,17 @@
                    placeholder="{{ __('Search by name or unit…') }}"
                    style="max-width: 260px;">
 
-            <div class="btn-group btn-group-sm" role="group">
+            <div class="d-flex gap-2 flex-wrap">
                 <a href="{{ route('catalog.medications.index', array_merge(request()->except('type'), [])) }}"
-                   class="btn {{ !request('type') ? 'btn-secondary' : 'btn-outline-secondary' }}">
+                   class="btn btn-sm {{ !request('type') ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     {{ __('All') }}
                 </a>
                 <a href="{{ route('catalog.medications.index', array_merge(request()->except('type'), ['type' => 'local'])) }}"
-                   class="btn {{ request('type') === 'local' ? 'btn-success' : 'btn-outline-success' }}">
+                   class="btn btn-sm {{ request('type') === 'local' ? 'btn-success' : 'btn-outline-success' }}">
                     {{ __('Local') }}
                 </a>
                 <a href="{{ route('catalog.medications.index', array_merge(request()->except('type'), ['type' => 'imported'])) }}"
-                   class="btn {{ request('type') === 'imported' ? 'btn-warning' : 'btn-outline-warning' }}">
+                   class="btn btn-sm {{ request('type') === 'imported' ? 'btn-warning' : 'btn-outline-warning' }}">
                     {{ __('Imported') }}
                 </a>
             </div>
