@@ -10,6 +10,7 @@ class MedicationService
     public function paginate(?string $search, ?string $type = null, int $perPage = 30): LengthAwarePaginator
     {
         return Medication::query()
+            ->with('triggeredServices')
             ->search($search)
             ->when($type, fn($q) => $q->where('type', $type))
             ->orderBy('name')
@@ -32,5 +33,17 @@ class MedicationService
     public function delete(Medication $medication): void
     {
         $medication->delete();
+    }
+
+    /**
+     * Sync which services are auto-triggered when this medication is added to an invoice.
+     *
+     * @param array<int> $serviceIds
+     */
+    public function syncTriggers(Medication $medication, array $serviceIds): void
+    {
+        $medication->triggeredServices()->sync(
+            collect($serviceIds)->map(fn ($id) => (int) $id)->filter()->all()
+        );
     }
 }

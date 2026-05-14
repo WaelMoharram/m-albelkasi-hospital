@@ -52,7 +52,9 @@
                     <th>{{ __('Item Code') }}</th>
                     <th>{{ __('Unit') }}</th>
                     <th>{{ __('Price') }}</th>
+                    <th>{{ __('Times/Day') }}</th>
                     <th>{{ __('Type') }}</th>
+                    <th>{{ __('Linked Services') }}</th>
                     <th class="text-start">{{ __('Actions') }}</th>
                 </tr>
             </thead>
@@ -64,12 +66,26 @@
                     <td class="text-muted small">{{ $medication->code ?? '—' }}</td>
                     <td>{{ $medication->unit }}</td>
                     <td>{{ number_format($medication->price, 2) }}</td>
+                    <td class="text-center">
+                        @if($medication->daily_qty > 1)
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $medication->daily_qty }}×</span>
+                        @else
+                            <span class="text-muted small">1×</span>
+                        @endif
+                    </td>
                     <td>
                         @if ($medication->type === 'local')
                             <span class="badge bg-success-subtle text-success border border-success-subtle">{{ __('Local') }}</span>
                         @else
                             <span class="badge bg-warning-subtle text-warning border border-warning-subtle">{{ __('Imported') }}</span>
                         @endif
+                    </td>
+                    <td>
+                        @forelse ($medication->triggeredServices as $svc)
+                            <span class="badge bg-light text-dark border me-1">{{ $svc->name }}</span>
+                        @empty
+                            <span class="text-muted small">—</span>
+                        @endforelse
                     </td>
                     <td class="text-start">
                         <a href="{{ route('catalog.medications.edit', $medication) }}"
@@ -89,7 +105,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">{{ __('No medications found.') }}</td>
+                    <td colspan="9" class="text-center text-muted py-4">{{ __('No medications found.') }}</td>
                 </tr>
                 @endforelse
             </tbody>

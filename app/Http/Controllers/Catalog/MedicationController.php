@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Models\Medication;
+use App\Models\Service;
 use App\Models\Unit;
 use App\Services\MedicationService;
 use Illuminate\Http\RedirectResponse;
@@ -24,21 +25,27 @@ class MedicationController extends Controller
 
     public function create(): View
     {
-        $units = Unit::orderBy('name')->get();
-        return view('catalog.medications.create', compact('units'));
+        $units       = Unit::orderBy('name')->get();
+        $allServices = Service::orderBy('name')->get();
+
+        return view('catalog.medications.create', compact('units', 'allServices'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
-            'code'  => ['nullable', 'string', 'max:50'],
-            'unit'  => ['nullable', 'string', 'max:100'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'type'  => ['required', 'in:local,imported'],
+            'name'      => ['required', 'string', 'max:255'],
+            'code'      => ['nullable', 'string', 'max:50'],
+            'unit'      => ['nullable', 'string', 'max:100'],
+            'price'     => ['required', 'numeric', 'min:0'],
+            'type'      => ['required', 'in:local,imported'],
+            'daily_qty' => ['nullable', 'integer', 'min:1', 'max:99'],
         ]);
 
-        $this->service->create($data);
+        $data['daily_qty'] = max(1, (int) $request->input('daily_qty', 1));
+
+        $medication = $this->service->create($data);
+        $this->service->syncTriggers($medication, $request->input('triggers', []));
 
         alert()->success(__('Created'), __('Medication added successfully.'));
 
@@ -47,21 +54,28 @@ class MedicationController extends Controller
 
     public function edit(Medication $medication): View
     {
-        $units = Unit::orderBy('name')->get();
-        return view('catalog.medications.edit', compact('medication', 'units'));
+        $units       = Unit::orderBy('name')->get();
+        $allServices = Service::orderBy('name')->get();
+        $medication->load('triggeredServices');
+
+        return view('catalog.medications.edit', compact('medication', 'units', 'allServices'));
     }
 
     public function update(Request $request, Medication $medication): RedirectResponse
     {
         $data = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
-            'code'  => ['nullable', 'string', 'max:50'],
-            'unit'  => ['nullable', 'string', 'max:100'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'type'  => ['required', 'in:local,imported'],
+            'name'      => ['required', 'string', 'max:255'],
+            'code'      => ['nullable', 'string', 'max:50'],
+            'unit'      => ['nullable', 'string', 'max:100'],
+            'price'     => ['required', 'numeric', 'min:0'],
+            'type'      => ['required', 'in:local,imported'],
+            'daily_qty' => ['nullable', 'integer', 'min:1', 'max:99'],
         ]);
 
+        $data['daily_qty'] = max(1, (int) $request->input('daily_qty', 1));
+
         $this->service->update($medication, $data);
+        $this->service->syncTriggers($medication, $request->input('triggers', []));
 
         alert()->success(__('Updated'), __('Medication updated successfully.'));
 
