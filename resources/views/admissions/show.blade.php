@@ -53,7 +53,7 @@
                 @else
                     <span class="badge fs-6 bg-secondary mb-2">{{ __('Discharged') }}</span><br>
                     <div class="small text-muted">{{ $admission->admission_date->format('d/m/Y') }} ← {{ $admission->discharge_date->format('d/m/Y') }}</div>
-                    <div class="small text-muted">{{ $admission->admission_date->diffInDays($admission->discharge_date) + 1 }} يوم</div>
+                    <div class="small text-muted">{{ $admission->admission_date->diffInDays($admission->discharge_date) }} يوم</div>
                 @endif
                 @if($admission->invoice)
                 <a href="{{ route('invoices.show', $admission->invoice) }}"

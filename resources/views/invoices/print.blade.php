@@ -169,7 +169,10 @@
 
     $admDate  = Carbon::parse($admission->admission_date);
     $disDate  = $admission->discharge_date ? Carbon::parse($admission->discharge_date) : Carbon::today();
-    $days     = $admDate->diffInDays($disDate) + 1;
+    // Discharge day is not billed; active patients include today.
+    $days = $admission->discharge_date
+        ? max(1, (int) $admDate->diffInDays($disDate))
+        : $admDate->diffInDays(Carbon::today()) + 1;
 
     $serviceItems = $invoice->items->where('itemable_type', \App\Models\Service::class);
     $medItems     = $invoice->items->where('itemable_type', \App\Models\Medication::class);

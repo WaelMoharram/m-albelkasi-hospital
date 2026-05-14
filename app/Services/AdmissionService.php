@@ -71,10 +71,16 @@ class AdmissionService
         $invoice->items()->where('section', 'daily')->delete();
 
         $observer = new AdmissionObserver();
+        // Discharge day is not billed; bill admission_date up to the day before discharge.
+        $endDate = Carbon::parse($dischargeDate)->subDay();
+        if ($endDate->lt(Carbon::parse($admission->admission_date))) {
+            $endDate = Carbon::parse($admission->admission_date);
+        }
+
         $observer->seedDailyItems(
             invoice:       $invoice,
             admissionDate: Carbon::parse($admission->admission_date),
-            endDate:       Carbon::parse($dischargeDate),
+            endDate:       $endDate,
         );
 
         return $admission;
