@@ -38,6 +38,12 @@ class InvoiceController extends Controller
             'items.itemable.invoiceCategory',
         ]);
 
+        // Sort all items alphabetically by their itemable name.
+        $invoice->setRelation(
+            'items',
+            $invoice->items->sortBy(fn ($item) => $item->itemable?->name ?? '')->values()
+        );
+
         // Pre-encode catalog as JSON for the add-item modal JS (draft only).
         // Encoding is done here — never use @json() with arrow functions in Blade,
         // as the Blade compiler misreads the closing ) inside fn($x) =>.
