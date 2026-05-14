@@ -67,38 +67,46 @@
 
 {{-- Auto-charge toggles --}}
 <div class="card border-0 bg-light rounded mb-3 p-3">
-    <div class="fw-semibold small text-muted mb-2">{{ __('Auto-add to Invoice') }}</div>
+    <div class="fw-semibold small text-muted mb-3">{{ __('Auto-add to Invoice') }}</div>
 
-    <div class="d-flex align-items-start gap-3 mb-2">
-        <div class="form-check form-switch flex-grow-1 mb-0">
-            <input class="form-check-input" type="checkbox" role="switch"
-                   id="is_daily" name="is_daily" value="1"
-                   {{ old('is_daily', $service->is_daily ?? false) ? 'checked' : '' }}>
-            <label class="form-check-label" for="is_daily">
-                <span class="fw-semibold">{{ __('Auto-charge daily') }}</span>
-                <span class="text-muted small d-block">{{ __('If enabled, this service is added automatically for every day of admission.') }}</span>
-            </label>
-        </div>
-        <div id="daily-qty-wrap" style="{{ old('is_daily', $service->is_daily ?? false) ? '' : 'display:none;' }} min-width:130px;">
-            <label class="form-label small text-muted mb-1" for="daily_qty">{{ __('Times per day') }}</label>
-            <div class="input-group input-group-sm" style="width:120px;">
-                <input id="daily_qty" type="number" name="daily_qty"
-                       value="{{ old('daily_qty', $service->daily_qty ?? 1) }}"
-                       class="form-control text-center"
-                       min="1" max="99" step="1">
-                <span class="input-group-text">×</span>
+    <div class="row g-3">
+        {{-- Auto-daily --}}
+        <div class="col-md-6">
+            <div class="d-flex align-items-start gap-3">
+                <div class="form-check form-switch mb-0 flex-grow-1">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           id="is_daily" name="is_daily" value="1"
+                           {{ old('is_daily', $service->is_daily ?? false) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="is_daily">
+                        <span class="fw-semibold">{{ __('Auto-charge daily') }}</span>
+                        <span class="text-muted small d-block">{{ __('Added automatically for every day of admission.') }}</span>
+                    </label>
+                </div>
+                <div id="daily-qty-wrap" style="{{ old('is_daily', $service->is_daily ?? false) ? '' : 'display:none;' }}">
+                    <label class="form-label small text-muted mb-1" for="daily_qty">{{ __('Times/day') }}</label>
+                    <div class="input-group input-group-sm" style="width:100px;">
+                        <input id="daily_qty" type="number" name="daily_qty"
+                               value="{{ old('daily_qty', $service->daily_qty ?? 1) }}"
+                               class="form-control text-center"
+                               min="1" max="99" step="1">
+                        <span class="input-group-text">×</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" role="switch"
-               id="is_once" name="is_once" value="1"
-               {{ old('is_once', $service->is_once ?? false) ? 'checked' : '' }}>
-        <label class="form-check-label" for="is_once">
-            <span class="fw-semibold">{{ __('Add once at admission') }}</span>
-            <span class="text-muted small d-block">{{ __('If enabled, this service is added once automatically when the admission is created.') }}</span>
-        </label>
+        {{-- Once at admission --}}
+        <div class="col-md-6">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="is_once" name="is_once" value="1"
+                       {{ old('is_once', $service->is_once ?? false) ? 'checked' : '' }}>
+                <label class="form-check-label" for="is_once">
+                    <span class="fw-semibold">{{ __('Add once at admission') }}</span>
+                    <span class="text-muted small d-block">{{ __('Added once automatically when the admission is created.') }}</span>
+                </label>
+            </div>
+        </div>
     </div>
 </div>
 
