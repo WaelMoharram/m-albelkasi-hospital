@@ -97,6 +97,9 @@ Route::middleware('auth')->group(function () {
 
     // Add / remove items — data_entry and above
     Route::middleware('role:super_admin|admin|data_entry')->group(function () {
+        // Fixed paths must come before {item} wildcard
+        Route::post('invoices/{invoice}/items/bulk', [InvoiceController::class, 'bulkAddItems'])
+            ->name('invoices.items.bulk');
         Route::post('invoices/{invoice}/items', [InvoiceController::class, 'addItem'])
             ->name('invoices.items.store');
         Route::put('invoices/{invoice}/items/{item}', [InvoiceController::class, 'updateItem'])

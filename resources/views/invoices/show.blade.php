@@ -192,6 +192,36 @@
 
 <div class="card border-0 shadow-sm">
 
+    {{-- Bulk import panel --}}
+    @if($isDraft)
+    @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
+    <div class="card-body border-bottom py-2 px-3 bg-light bg-opacity-50">
+        <button class="btn btn-sm btn-outline-success" type="button"
+                data-bs-toggle="collapse" data-bs-target="#bulkImportPanel">
+            <i class="bi bi-table ms-1"></i> {{ __('Bulk import from Excel') }}
+        </button>
+        <div class="collapse mt-2" id="bulkImportPanel">
+            <p class="text-muted small mb-2">
+                {{ __('Paste directly from Excel — columns: Item Name, Item Code, Qty (tab-separated). The system matches by code first, then by name.') }}
+            </p>
+            <textarea id="bulkPasteArea" class="form-control form-control-sm font-monospace mb-2"
+                      rows="6" dir="rtl"
+                      placeholder="{{ __('اتروفنت 500mcg/2ml امبول') }}&#9;40&#9;11&#10;{{ __('الدوميت 250مجم اقراص') }}&#9;1140&#9;2"></textarea>
+            <div class="d-flex gap-2 align-items-center">
+                <button id="bulkImportBtn" type="button" class="btn btn-sm btn-success">
+                    <i class="bi bi-check2-all ms-1"></i> {{ __('Add to Invoice') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        onclick="document.getElementById('bulkPasteArea').value='';document.getElementById('bulkResult').innerHTML=''">
+                    {{ __('Clear') }}
+                </button>
+            </div>
+            <div id="bulkResult" class="mt-2"></div>
+        </div>
+    </div>
+    @endcanany
+    @endif
+
     {{-- Tab nav --}}
     <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
         <ul class="nav nav-tabs card-header-tabs" id="invoiceSectionTabs" role="tablist">
@@ -673,6 +703,114 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (e) { alert('Error'); }
             finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-lg"></i>'; }
         });
+    });
+}());
+</script>
+
+{{-- ── Bulk import JS ───────────────────────────────────────────────────── --}}
+<script>
+(function () {
+    const bulkBtn    = document.getElementById('bulkImportBtn');
+    const pasteArea  = document.getElementById('bulkPasteArea');
+    const resultDiv  = document.getElementById('bulkResult');
+    if (!bulkBtn) return;
+
+    const BULK_URL = '{{ route('invoices.items.bulk', $invoice) }}';
+    const CSRF     = document.querySelector('meta[name="csrf-token"]').content;
+
+    function parseRows(text) {
+        return text.trim().split('\n')
+            .map(function (line) {
+                var cols = line.split('\t').map(function (c) { return c.trim(); });
+                return { name: cols[0] || '', code: cols[1] || '', qty: parseInt(cols[2]) || 1 };
+            })
+            .filter(function (r) { return r.name || r.code; });
+    }
+
+    bulkBtn.addEventListener('click', async function () {
+        const rows = parseRows(pasteArea.value);
+        if (!rows.length) return;
+
+        bulkBtn.disabled  = true;
+        bulkBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        resultDiv.innerHTML = '';
+
+        try {
+            const res  = await fetch(BULK_URL, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body:    JSON.stringify({ rows }),
+            });
+            const data = await res.json();
+            if (!res.ok) { resultDiv.innerHTML = '<div class="alert alert-danger py-1 small">' + (data.error || 'Error') + '</div>'; return; }
+
+            // Inject added rows into the correct tbodies
+            (data.added || []).forEach(function (d) {
+                var sec   = d.section;
+                var tbody = document.getElementById('tbody-' + sec);
+                if (!tbody) return;
+
+                var empty = document.getElementById('empty-' + sec);
+                if (empty) empty.remove();
+
+                var nameHtml = d.name + (d.unit ? ' <span class="text-muted small ms-1">' + d.unit + '</span>' : '');
+                var editBtn  = '<button type="button" class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"'
+                    + ' data-bs-toggle="modal" data-bs-target="#editItemModal"'
+                    + ' data-item-id="' + d.id + '" data-item-name="' + d.name + '"'
+                    + ' data-item-qty="' + d.qty + '" data-item-price="' + d.unit_price + '"'
+                    + ' data-item-url="' + d.update_url + '"><i class="bi bi-pencil"></i></button>';
+                var delForm  = '<form method="POST" action="' + d.destroy_url + '" class="d-inline"'
+                    + ' onsubmit="return confirm(\'{{ __("Remove this item?") }}\')"><input type="hidden" name="_token" value="' + CSRF + '">'
+                    + '<input type="hidden" name="_method" value="DELETE">'
+                    + '<button class="btn btn-xs btn-outline-danger border-0 p-0 px-1"><i class="bi bi-x-lg"></i></button></form>';
+
+                tbody.insertAdjacentHTML('beforeend',
+                    '<tr id="item-' + sec + '-' + d.id + '">'
+                    + '<td><span class="fw-medium">' + nameHtml + '</span></td>'
+                    + '<td class="text-end">' + d.qty + '</td>'
+                    + '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>'
+                    + '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>'
+                    + '<td class="text-end">' + editBtn + delForm + '</td>'
+                    + '</tr>');
+
+                var tf = document.getElementById('tfoot-' + sec);
+                if (tf) tf.classList.remove('d-none');
+
+                var sub = document.getElementById('subtotal-' + sec);
+                if (sub) {
+                    var prev = parseFloat(sub.textContent.replace(/,/g, '')) || 0;
+                    sub.textContent = (prev + parseFloat(d.total)).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+                }
+
+                var badge = document.getElementById('badge-' + sec);
+                if (badge) { badge.textContent = (parseInt(badge.textContent) || 0) + 1; badge.classList.remove('d-none'); }
+            });
+
+            // Grand total
+            var gt = document.getElementById('grand-total-display');
+            if (gt) gt.textContent = parseFloat(data.invoice_total).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+            // Summary
+            var html = '';
+            if (data.added.length) {
+                html += '<div class="alert alert-success py-2 small mb-1">'
+                    + '<i class="bi bi-check-circle ms-1"></i> '
+                    + '{{ __("Added") }}: <strong>' + data.added.length + '</strong> '
+                    + data.added.map(function (d) { return d.name + ' ×' + d.qty; }).join(' — ')
+                    + '</div>';
+            }
+            if (data.not_found.length) {
+                html += '<div class="alert alert-warning py-2 small mb-0">'
+                    + '<i class="bi bi-exclamation-triangle ms-1"></i> '
+                    + '{{ __("Not found") }}: '
+                    + data.not_found.map(function (r) { return r.name || r.code; }).join(' — ')
+                    + '</div>';
+            }
+            resultDiv.innerHTML = html;
+            if (data.added.length) pasteArea.value = '';
+
+        } catch (e) { resultDiv.innerHTML = '<div class="alert alert-danger py-1 small">Error</div>'; }
+        finally { bulkBtn.disabled = false; bulkBtn.innerHTML = '<i class="bi bi-check2-all ms-1"></i> {{ __("Add to Invoice") }}'; }
     });
 }());
 </script>

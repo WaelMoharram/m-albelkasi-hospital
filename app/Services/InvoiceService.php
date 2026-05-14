@@ -85,6 +85,74 @@ class InvoiceService
     }
 
     /**
+     * Bulk-add medications from a pasted Excel list.
+     *
+     * Each row: ['name' => string, 'code' => string, 'qty' => int]
+     * Match priority: exact code → partial name (case-insensitive).
+     *
+     * Returns ['added' => [...], 'not_found' => [...], 'invoice_total' => float]
+     */
+    public function bulkAdd(Invoice $invoice, array $rows): array
+    {
+        if ($invoice->status === 'final') {
+            throw new LogicException('Cannot add items to a finalised invoice.');
+        }
+
+        $added     = [];
+        $notFound  = [];
+
+        foreach ($rows as $row) {
+            $code = trim((string) ($row['code'] ?? ''));
+            $name = trim((string) ($row['name'] ?? ''));
+            $qty  = max(1, (int) ($row['qty'] ?? 1));
+
+            $med = null;
+
+            if ($code !== '') {
+                $med = Medication::where('code', $code)->first();
+            }
+
+            if (!$med && $name !== '') {
+                $med = Medication::whereRaw('TRIM(name) LIKE ?', ['%' . $name . '%'])->first();
+            }
+
+            if (!$med) {
+                $notFound[] = ['code' => $code, 'name' => $name, 'qty' => $qty];
+                continue;
+            }
+
+            $item = $this->createItem($invoice, [
+                'item_type'   => 'medication',
+                'itemable_id' => $med->id,
+                'qty'         => $qty,
+                'unit_price'  => (float) $med->price,
+            ]);
+
+            $added[] = [
+                'id'          => $item->id,
+                'name'        => $med->name,
+                'unit'        => $med->unit ?? '',
+                'qty'         => $item->qty,
+                'unit_price'  => (float) $item->unit_price,
+                'total'       => (float) $item->total,
+                'section'     => $item->section,
+                'update_url'  => route('invoices.items.update',  [$invoice, $item]),
+                'destroy_url' => route('invoices.items.destroy', [$invoice, $item]),
+            ];
+        }
+
+        if (!empty($added)) {
+            $invoice->recalculateTotal();
+        }
+
+        return [
+            'added'         => $added,
+            'not_found'     => $notFound,
+            'invoice_total' => (float) $invoice->fresh()->total_amount,
+        ];
+    }
+
+    /**
      * Delete an invoice and all its items.
      */
     public function delete(Invoice $invoice): void
