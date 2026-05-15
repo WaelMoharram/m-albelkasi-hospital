@@ -53,8 +53,7 @@ class InvoiceController extends Controller
             $medications       = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type', 'code']);
             $labServices       = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price', 'code']);
             $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price', 'code']);
-            $suppliesServices  = Service::where('category', 'supplies')->whereNotNull('invoice_category_id')->orderBy('name')->get(['id', 'name', 'price', 'code']);
-            $otherServices     = Service::where('category', 'other')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $suppliesServices  = Service::where('category', 'supplies')->orderBy('name')->get(['id', 'name', 'price', 'code']);
 
             $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price, 'code' => $m->code ?? ''];
             $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price, 'code' => $s->code ?? ''];
@@ -69,7 +68,6 @@ class InvoiceController extends Controller
                 'supplies'     => $suppliesServices->map($toSvc)->values(),
                 'lab'          => $labServices->map($toSvc)->values(),
                 'radiology'    => $radiologyServices->map($toSvc)->values(),
-                'other'        => $otherServices->map($toSvc)->values(),
             ]);
         }
 
@@ -96,7 +94,7 @@ class InvoiceController extends Controller
     public function addItem(Request $request, Invoice $invoice): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
-            'item_type'  => ['required', 'in:medication,lab,radiology,supplies,other'],
+            'item_type'  => ['required', 'in:medication,lab,radiology,supplies'],
             'itemable_id'=> ['required', 'integer', 'min:1'],
             'qty'        => ['required', 'integer', 'min:1'],
             'unit_price' => ['required', 'numeric', 'min:0'],

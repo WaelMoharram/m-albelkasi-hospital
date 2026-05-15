@@ -15,10 +15,9 @@
 
     $grouped = $invoice->items->groupBy('section');
 
-    // Group daily + other items by invoice_category for the الفاتورة tab
+    // Group daily items by invoice_category for the الفاتورة tab
     $dailyFlat   = $grouped['daily'] ?? collect();
-    $otherFlat   = $grouped['other'] ?? collect();
-    $allSvcItems = $dailyFlat->merge($otherFlat);
+    $allSvcItems = $dailyFlat;
     $dailyCategoryGroups = collect();
     foreach ($allSvcItems as $_item) {
         $_svc = $_item->itemable;
@@ -339,33 +338,6 @@
                             <td colspan="{{ $isDraft ? 2 : 1 }}"></td>
                         </tr>
                     </tfoot>
-                    @if($isDraft)
-                    @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
-                    <tfoot>
-                        <tr class="table-light">
-                            <td colspan="2">
-                                <select class="form-select form-select-sm" id="select-other"
-                                        data-section="other">
-                                    <option value="">— {{ __('Select item —') }} —</option>
-                                </select>
-                            </td>
-                            <td><input type="number" class="form-control form-control-sm text-end"
-                                       id="qty-other" value="1" min="1"></td>
-                            <td><input type="number" class="form-control form-control-sm text-end"
-                                       id="price-other" step="0.01" min="0" readonly placeholder="—"></td>
-                            <td class="text-end text-muted small fw-medium" id="preview-other">—</td>
-                            <td></td>
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
-                                        data-section="other"
-                                        data-url="{{ route('invoices.items.store', $invoice) }}">
-                                    <i class="bi bi-plus-lg"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tfoot>
-                    @endcanany
-                    @endif
                 </table>
             </div>
         </div>
@@ -559,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
 (function () {
     const CATALOG = {!! $catalogJson !!};
     const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', supplies: 'supplies', lab: 'lab', radiology: 'radiology', other: 'other' };
+    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', supplies: 'supplies', lab: 'lab', radiology: 'radiology' };
     const WITH_UNIT    = { local_med: true, imported_med: true };
     const CONFIRM_MSG  = '{{ __('Remove this item?') }}';
 
@@ -660,9 +632,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 const data = await res.json();
                 if (!res.ok) { alert(data.error || 'Error'); return; }
-
-                // الفاتورة tab uses rowspan grouping — reload to rebuild correctly
-                if (section === 'other') { window.location.reload(); return; }
 
                 // Insert one item into its section tbody and update subtotal + badge
                 function insertItem(d) {
