@@ -15,19 +15,27 @@
 
     $grouped = $invoice->items->groupBy('section');
 
-    // Group daily items by invoice_category for the الفاتورة tab
+    // Group daily items by invoice_category for the الفاتورة tab.
+    // Supplies (section='supplies') always go to their own tab — never here.
+    // Items without invoice_category_id are also excluded (no "أخرى" fallback).
     $dailyFlat   = $grouped['daily'] ?? collect();
-    $allSvcItems = $dailyFlat;
+    $allSvcItems = $dailyFlat->filter(function ($_item) {
+        $_svc = $_item->itemable;
+        return $_svc
+            && ($_svc instanceof \App\Models\Service)
+            && $_svc->category !== 'supplies'
+            && $_svc->invoice_category_id !== null;
+    });
     $dailyCategoryGroups = collect();
     foreach ($allSvcItems as $_item) {
         $_svc = $_item->itemable;
-        if (!$_svc) continue;
         $_cat = $_svc->invoiceCategory ?? null;
-        $_key = $_cat ? 'c' . $_cat->id : 'none';
+        if (!$_cat) continue;
+        $_key = 'c' . $_cat->id;
         if (!$dailyCategoryGroups->has($_key)) {
             $dailyCategoryGroups->put($_key, [
-                'name'       => $_cat?->name ?? __('Other'),
-                'sort_order' => $_cat?->sort_order ?? 999,
+                'name'       => $_cat->name,
+                'sort_order' => $_cat->sort_order,
                 'items'      => collect(),
             ]);
         }
