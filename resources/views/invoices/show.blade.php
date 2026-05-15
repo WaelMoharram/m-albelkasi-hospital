@@ -34,6 +34,7 @@
         $_key = 'c' . $_cat->id;
         if (!$dailyCategoryGroups->has($_key)) {
             $dailyCategoryGroups->put($_key, [
+                'id'         => $_cat->id,
                 'name'       => $_cat->name,
                 'sort_order' => $_cat->sort_order,
                 'items'      => collect(),
@@ -283,7 +284,7 @@
                         @forelse ($dailyCategoryGroups as $group)
                         @php $count = $group['items']->count(); $isFirst = true; @endphp
                         @foreach ($group['items'] as $item)
-                        <tr id="item-daily-{{ $item->id }}">
+                        <tr id="item-daily-{{ $item->id }}" data-cat-id="{{ $group['id'] }}">
                             @if($isFirst)
                             <td rowspan="{{ $count }}"
                                 class="text-center fw-bold align-middle"
@@ -683,10 +684,10 @@ document.addEventListener('DOMContentLoaded', function () {
             '</form>';
 
         // Daily table: م | Category | Qty | Unit Price | Total | Notes | Actions
+        // Category cells are handled by insertItem (extends existing rowspan or creates new group).
+        // buildRow only returns the data cells (no м/category cols).
         if (section === 'daily') {
-            return '<td></td>' +
-                '<td class="fw-semibold align-middle small" style="color:#1a3c6e;">' + (d.category_name || '—') + '</td>' +
-                '<td class="text-end">' + d.qty + '</td>' +
+            return '<td class="text-end">' + d.qty + '</td>' +
                 '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
                 '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
                 '<td class="small">' + nameHtml + '</td>' +
@@ -739,13 +740,37 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!tbody) return;
                     const emptyRow = document.getElementById('empty-' + ts);
                     if (emptyRow) emptyRow.remove();
-                    // Show the "أخرى" header row when the first other item is added
-                    if (ts === 'other') {
-                        const hdr = document.getElementById('tbody-other-header');
-                        if (hdr) hdr.style.display = '';
+
+                    if (ts === 'daily' && d.category_id) {
+                        // Find existing rows for this category group
+                        const catRows = tbody.querySelectorAll('tr[data-cat-id="' + d.category_id + '"]');
+                        if (catRows.length > 0) {
+                            // Extend the rowspan of the category header cells (first row)
+                            catRows[0].querySelectorAll('td[rowspan]').forEach(function (cell) {
+                                cell.rowSpan = (parseInt(cell.rowSpan) || 1) + 1;
+                            });
+                            // Insert after the last row in this group (no category cells)
+                            catRows[catRows.length - 1].insertAdjacentHTML('afterend',
+                                '<tr id="item-daily-' + d.id + '" data-cat-id="' + d.category_id + '">' +
+                                buildRow(d, 'daily') + '</tr>');
+                        } else {
+                            // Category doesn't exist yet — create a new group with category cells
+                            tbody.insertAdjacentHTML('beforeend',
+                                '<tr id="item-daily-' + d.id + '" data-cat-id="' + d.category_id + '">' +
+                                '<td class="text-center fw-bold align-middle" style="background:#f0f4fa;border-right:3px solid #1a3c6e;color:#1a3c6e;">—</td>' +
+                                '<td class="fw-semibold align-middle small" style="color:#1a3c6e;">' + (d.category_name || '—') + '</td>' +
+                                buildRow(d, 'daily') + '</tr>');
+                        }
+                    } else {
+                        // Show the "أخرى" header row when the first other item is added
+                        if (ts === 'other') {
+                            const hdr = document.getElementById('tbody-other-header');
+                            if (hdr) hdr.style.display = '';
+                        }
+                        tbody.insertAdjacentHTML('beforeend',
+                            '<tr id="item-' + ts + '-' + d.id + '">' + buildRow(d, ts) + '</tr>');
                     }
-                    tbody.insertAdjacentHTML('beforeend',
-                        '<tr id="item-' + ts + '-' + d.id + '">' + buildRow(d, ts) + '</tr>');
+
                     const tf = document.getElementById('tfoot-' + ts);
                     if (tf) tf.classList.remove('d-none');
                     const sub = document.getElementById('subtotal-' + ts);

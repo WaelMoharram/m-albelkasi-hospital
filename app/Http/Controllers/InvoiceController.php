@@ -113,9 +113,11 @@ class InvoiceController extends Controller
                     $i->loadMissing('itemable');
                     $unit = $i->itemable instanceof Medication ? ($i->itemable->unit ?? '') : '';
                     $categoryName = '';
+                    $categoryId   = null;
                     if ($i->section === 'daily' && $i->itemable instanceof Service) {
                         $i->itemable->loadMissing('invoiceCategory');
                         $categoryName = $i->itemable->invoiceCategory?->name ?? '';
+                        $categoryId   = $i->itemable->invoice_category_id;
                     }
                     return [
                         'id'            => $i->id,
@@ -126,6 +128,7 @@ class InvoiceController extends Controller
                         'total'         => (float) $i->total,
                         'section'       => $i->section,
                         'category_name' => $categoryName,
+                        'category_id'   => $categoryId,
                         'update_url'    => route('invoices.items.update', [$invoice, $i]),
                         'destroy_url'   => route('invoices.items.destroy', [$invoice, $i]),
                     ];
