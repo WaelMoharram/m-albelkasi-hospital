@@ -1,7 +1,9 @@
 <div class="row g-3">
 
+    {{-- Row 1: Name · National ID · DOB --}}
+
     {{-- Name --}}
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label" for="name">{{ __('Full Name') }} <span class="text-danger">*</span></label>
         <input id="name" type="text" name="name"
                value="{{ old('name', $patient->name ?? '') }}"
@@ -11,39 +13,28 @@
     </div>
 
     {{-- National ID — auto-extracts DOB, gender, governorate --}}
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label" for="national_id">
             {{ __('National ID') }} <span class="text-danger">*</span>
-            <span id="nid-spinner" class="ms-1 d-none">
-                <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-            </span>
         </label>
         <input id="national_id" type="text" name="national_id"
                value="{{ old('national_id', $patient->national_id ?? '') }}"
                class="form-control font-monospace @error('national_id') is-invalid @enderror"
-               maxlength="14"
-               inputmode="numeric"
-               pattern="\d{14}"
-               placeholder="{{ __('14-digit Egyptian National ID') }}"
-               required>
+               maxlength="14" inputmode="numeric" pattern="\d{14}"
+               placeholder="14 رقم" required>
         @error('national_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-
-        {{-- Extracted governorate pill --}}
         <div id="nid-gov-wrap" class="mt-1 d-none">
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
                 <i class="bi bi-geo-alt-fill ms-1"></i>
                 <span id="nid-gov-label"></span>
             </span>
-            <span class="text-muted small me-1">{{ __('extracted from ID') }}</span>
         </div>
-
-        {{-- Validation hint --}}
         <div id="nid-invalid-hint" class="text-danger small mt-1 d-none">
             <i class="bi bi-exclamation-circle ms-1"></i>{{ __('Invalid ID format.') }}
         </div>
     </div>
 
-    {{-- DOB --}}
+    {{-- DOB + live age --}}
     <div class="col-md-4">
         <label class="form-label" for="dob">
             {{ __('Date of Birth') }} <span class="text-danger">*</span>
@@ -55,10 +46,16 @@
                class="form-control @error('dob') is-invalid @enderror"
                required>
         @error('dob') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div id="age-display" class="text-muted small mt-1 d-none">
+            <i class="bi bi-person-fill ms-1"></i>
+            <span id="age-text"></span>
+        </div>
     </div>
 
+    {{-- Row 2: Gender · Governorate · Insurance --}}
+
     {{-- Gender --}}
-    <div class="col-md-4">
+    <div class="col-md-3">
         <label class="form-label">
             {{ __('Gender') }} <span class="text-danger">*</span>
             <span id="gender-auto-badge" class="badge bg-success-subtle text-success border border-success-subtle ms-1 d-none">تلقائي</span>
@@ -78,8 +75,8 @@
         @error('gender') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
     </div>
 
-    {{-- Governorate (read-only text, populated by JS) --}}
-    <div class="col-md-4">
+    {{-- Governorate (read-only, populated by JS) --}}
+    <div class="col-md-3">
         <label class="form-label text-muted">{{ __('Governorate') }}</label>
         <input id="governorate_text" type="text"
                class="form-control bg-light text-muted"
@@ -88,7 +85,7 @@
     </div>
 
     {{-- Insurance company --}}
-    <div class="col-md-8">
+    <div class="col-md-6">
         <label class="form-label" for="insurance_company_id">{{ __('Insurance Company') }} <span class="text-danger">*</span></label>
         <select id="insurance_company_id" name="insurance_company_id"
                 class="form-select @error('insurance_company_id') is-invalid @enderror" required>
@@ -102,7 +99,6 @@
         </select>
         @error('insurance_company_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
-
 
 </div>
 
@@ -134,6 +130,32 @@
     const invalidHint     = document.getElementById('nid-invalid-hint');
     const dobAutoBadge    = document.getElementById('dob-auto-badge');
     const genderAutoBadge = document.getElementById('gender-auto-badge');
+    const ageDisplay      = document.getElementById('age-display');
+    const ageText         = document.getElementById('age-text');
+
+    // ── Age calculator ────────────────────────────────────────────────────────
+    function updateAge(dobValue) {
+        if (!dobValue || !ageDisplay || !ageText) return;
+        const today = new Date();
+        const dob   = new Date(dobValue);
+        if (isNaN(dob.getTime()) || dob >= today) { ageDisplay.classList.add('d-none'); return; }
+        let years  = today.getFullYear() - dob.getFullYear();
+        let months = today.getMonth()    - dob.getMonth();
+        if (months < 0 || (months === 0 && today.getDate() < dob.getDate())) { years--; months += 12; }
+        if (today.getDate() < dob.getDate()) months--;
+        if (months < 0) months += 12;
+        let label = '';
+        if (years > 0)  label += years  + ' سنة ';
+        if (months > 0) label += months + ' شهر';
+        if (!label)     label = 'أقل من شهر';
+        ageText.textContent = label.trim();
+        ageDisplay.classList.remove('d-none');
+    }
+
+    if (dobInput) {
+        dobInput.addEventListener('change', () => updateAge(dobInput.value));
+        updateAge(dobInput.value);
+    }
 
     if (!nidInput) return;
 
@@ -156,6 +178,7 @@
         hideBadge(dobAutoBadge);
         hideBadge(genderAutoBadge);
         nidInput.classList.remove('is-valid', 'border-danger');
+        if (ageDisplay) ageDisplay.classList.add('d-none');
     }
 
     function showError() {
@@ -210,6 +233,7 @@
             dobInput.value = dobValue;
             flashFilled(dobInput);
         }
+        updateAge(dobValue);
         showBadge(dobAutoBadge);
 
         const genderRadio = document.getElementById(`gender_${gender}`);
