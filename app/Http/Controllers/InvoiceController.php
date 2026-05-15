@@ -112,16 +112,22 @@ class InvoiceController extends Controller
                 $formatItem = function (InvoiceItem $i) use ($invoice): array {
                     $i->loadMissing('itemable');
                     $unit = $i->itemable instanceof Medication ? ($i->itemable->unit ?? '') : '';
+                    $categoryName = '';
+                    if ($i->section === 'daily' && $i->itemable instanceof Service) {
+                        $i->itemable->loadMissing('invoiceCategory');
+                        $categoryName = $i->itemable->invoiceCategory?->name ?? '';
+                    }
                     return [
-                        'id'          => $i->id,
-                        'name'        => $i->itemable->name ?? '—',
-                        'unit'        => $unit,
-                        'qty'         => $i->qty,
-                        'unit_price'  => (float) $i->unit_price,
-                        'total'       => (float) $i->total,
-                        'section'     => $i->section,
-                        'update_url'  => route('invoices.items.update', [$invoice, $i]),
-                        'destroy_url' => route('invoices.items.destroy', [$invoice, $i]),
+                        'id'            => $i->id,
+                        'name'          => $i->itemable->name ?? '—',
+                        'unit'          => $unit,
+                        'qty'           => $i->qty,
+                        'unit_price'    => (float) $i->unit_price,
+                        'total'         => (float) $i->total,
+                        'section'       => $i->section,
+                        'category_name' => $categoryName,
+                        'update_url'    => route('invoices.items.update', [$invoice, $i]),
+                        'destroy_url'   => route('invoices.items.destroy', [$invoice, $i]),
                     ];
                 };
 

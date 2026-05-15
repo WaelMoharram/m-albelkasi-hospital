@@ -282,6 +282,10 @@ class InvoiceService
             );
         }
 
-        return [$service, 'other'];
+        // Route to daily tab if the service belongs to an invoice category;
+        // otherwise land in the "other" (أخرى) group.
+        $section = $service->invoice_category_id ? 'daily' : 'other';
+
+        return [$service, $section];
     }
 }

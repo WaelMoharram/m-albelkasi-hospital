@@ -682,6 +682,16 @@ document.addEventListener('DOMContentLoaded', function () {
             '<button class="btn btn-xs btn-outline-danger border-0 p-0 px-1"><i class="bi bi-x-lg"></i></button>' +
             '</form>';
 
+        // Daily table: م | Category | Qty | Unit Price | Total | Notes | Actions
+        if (section === 'daily') {
+            return '<td></td>' +
+                '<td class="fw-semibold align-middle small" style="color:#1a3c6e;">' + (d.category_name || '—') + '</td>' +
+                '<td class="text-end">' + d.qty + '</td>' +
+                '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
+                '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
+                '<td class="small">' + nameHtml + '</td>' +
+                '<td class="text-end">' + editBtn + delForm + '</td>';
+        }
         if (section === 'other') {
             return '<td></td><td></td>' +
                 '<td class="text-end">' + d.qty + '</td>' +
@@ -691,14 +701,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<td class="text-end">' + editBtn + delForm + '</td>';
         }
         const cells = '<td><span class="fw-medium">' + nameHtml + '</span></td>';
-        if (section === 'daily') {
-            return cells +
-                '<td class="text-end text-muted small">—</td>' +
-                '<td class="text-end">' + d.qty + '</td>' +
-                '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
-                '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
-                '<td class="text-end">' + editBtn + delForm + '</td>';
-        }
         return cells +
             '<td class="text-end">' + d.qty + '</td>' +
             '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
