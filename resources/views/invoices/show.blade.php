@@ -70,6 +70,7 @@
         'supplies'     => ['label' => __('Supplies'),             'icon' => 'bi-box-seam',        'color' => 'secondary'],
         'lab'          => ['label' => __('Lab'),                   'icon' => 'bi-eyedropper',      'color' => 'info'],
         'radiology'    => ['label' => __('Radiology'),             'icon' => 'bi-radioactive',     'color' => 'purple'],
+        'other'        => ['label' => __('Other'),                 'icon' => 'bi-grid',            'color' => 'dark'],
     ];
 
     $billableTotal = $invoice->items
@@ -539,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function () {
 (function () {
     const CATALOG = {!! $catalogJson !!};
     const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', supplies: 'supplies', lab: 'lab', radiology: 'radiology' };
+    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', supplies: 'supplies', lab: 'lab', radiology: 'radiology', other: 'other' };
     const WITH_UNIT    = { local_med: true, imported_med: true };
     const CONFIRM_MSG  = '{{ __('Remove this item?') }}';
 
