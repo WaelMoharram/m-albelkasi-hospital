@@ -196,6 +196,9 @@
     }
     $categoryGroups = $categoryGroups->sortBy('sort_order');
 
+    $suppliesItems = $serviceItems->filter(fn($i) => $i->section === 'supplies');
+    $suppliesTotal = $suppliesItems->sum('total');
+
     $labItems    = $serviceItems->filter(fn($i) => $i->section === 'lab');
     $labTotal    = $labItems->sum('total');
 
@@ -331,8 +334,31 @@
 {{-- ── SUMMARY ─────────────────────────────────────────────────── --}}
 <div class="summary-wrap">
 
-    {{-- Lab items detail (left side) --}}
+    {{-- Supplies + Lab items detail (left side) --}}
     <div class="summary-left">
+        @if($suppliesItems->count())
+        <table class="items-table" style="margin-bottom:6pt;">
+            <thead>
+                <tr><th colspan="4" style="background:#6c757d;">تفاصيل المستلزمات</th></tr>
+                <tr>
+                    <th>الاسم</th>
+                    <th class="qty-col">عدد</th>
+                    <th class="price-col">سعر</th>
+                    <th class="total-col">إجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($suppliesItems as $item)
+                <tr>
+                    <td>{{ $item->itemable->name ?? '—' }}</td>
+                    <td class="qty-col">{{ $item->qty }}</td>
+                    <td class="price-col">{{ number_format($item->unit_price, 2) }}</td>
+                    <td class="total-col">{{ number_format($item->total, 2) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
         @if($labItems->count())
         <table class="items-table" style="margin-bottom:0;">
             <thead>
@@ -366,16 +392,23 @@
                 <td class="sum-label">إجمالي الإقامة</td>
                 <td class="sum-amt">{{ number_format($accommodationTotal, 2) }}</td>
             </tr>
-            @if($labTotal > 0)
+            @if($suppliesTotal > 0)
             <tr>
                 <td class="sum-no">9</td>
+                <td class="sum-label">مستلزمات</td>
+                <td class="sum-amt">{{ number_format($suppliesTotal, 2) }}</td>
+            </tr>
+            @endif
+            @if($labTotal > 0)
+            <tr>
+                <td class="sum-no">10</td>
                 <td class="sum-label">تحاليل</td>
                 <td class="sum-amt">{{ number_format($labTotal, 2) }}</td>
             </tr>
             @endif
             @if($localRaw > 0)
             <tr>
-                <td class="sum-no">10</td>
+                <td class="sum-no">11</td>
                 <td class="sum-label">
                     أدوية محلية
                     @if($localDisc > 0)<br><span class="disc-note">بعد خصم {{ $localDisc }}%</span>@endif
@@ -385,7 +418,7 @@
             @endif
             @if($importedRaw > 0)
             <tr>
-                <td class="sum-no">11</td>
+                <td class="sum-no">12</td>
                 <td class="sum-label">
                     أدوية مستوردة
                     @if($importedDisc > 0)<br><span class="disc-note">بعد خصم {{ $importedDisc }}%</span>@endif

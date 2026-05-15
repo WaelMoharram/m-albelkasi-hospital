@@ -60,6 +60,7 @@
     $sections = [
         'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',        'color' => 'success'],
         'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill',    'color' => 'warning'],
+        'supplies'     => ['label' => __('Supplies'),             'icon' => 'bi-box-seam',        'color' => 'secondary'],
         'lab'          => ['label' => __('Lab'),                   'icon' => 'bi-eyedropper',      'color' => 'info'],
         'radiology'    => ['label' => __('Radiology'),             'icon' => 'bi-radioactive',     'color' => 'purple'],
     ];
@@ -558,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function () {
 (function () {
     const CATALOG = {!! $catalogJson !!};
     const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', lab: 'lab', radiology: 'radiology', other: 'other' };
+    const SECTION_TYPE = { local_med: 'medication', imported_med: 'medication', supplies: 'supplies', lab: 'lab', radiology: 'radiology', other: 'other' };
     const WITH_UNIT    = { local_med: true, imported_med: true };
     const CONFIRM_MSG  = '{{ __('Remove this item?') }}';
 

@@ -228,6 +228,7 @@ class InvoiceService
             'medication' => $this->resolveMedication($id),
             'lab'        => $this->resolveService($id, 'lab'),
             'radiology'  => $this->resolveService($id, 'radiology'),
+            'supplies'   => $this->resolveSuppliesService($id),
             'other'      => $this->resolveOtherService($id),
             default      => throw new \InvalidArgumentException("Unknown item type: {$itemType}"),
         };
@@ -254,13 +255,26 @@ class InvoiceService
         return [$service, $expectedCategory];
     }
 
+    private function resolveSuppliesService(int $id): array
+    {
+        $service = Service::findOrFail($id);
+
+        if ($service->category !== 'supplies') {
+            throw new \InvalidArgumentException(
+                "Service #{$id} is not a supplies service."
+            );
+        }
+
+        return [$service, 'supplies'];
+    }
+
     private function resolveOtherService(int $id): array
     {
         $service = Service::findOrFail($id);
 
-        if (! in_array($service->category, ['other', 'supplies'])) {
+        if ($service->category !== 'other') {
             throw new \InvalidArgumentException(
-                "Service #{$id} is not an other/supplies service."
+                "Service #{$id} is not an other service."
             );
         }
 
