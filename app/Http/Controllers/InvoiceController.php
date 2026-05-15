@@ -35,7 +35,7 @@ class InvoiceController extends Controller
     {
         $invoice->load(['admission.patient.insuranceCompany', 'items.itemable']);
         $invoice->items->loadMorph('itemable', [
-            Service::class => ['invoiceCategory'],
+            Service::class => ['invoiceCategory', 'triggers'],
         ]);
 
         // Sort all items alphabetically by their itemable name.
