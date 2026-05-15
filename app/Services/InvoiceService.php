@@ -157,6 +157,29 @@ class InvoiceService
     }
 
     /**
+     * Update unit_price for ALL invoice_items that belong to the given service
+     * in this invoice (e.g. all daily charges for one service across many days).
+     */
+    public function updateServiceItems(Invoice $invoice, Service $service, float $unitPrice): void
+    {
+        if ($invoice->status === 'final') {
+            throw new LogicException('Cannot edit items on a finalised invoice.');
+        }
+
+        $invoice->items()
+            ->where('itemable_type', Service::class)
+            ->where('itemable_id', $service->id)
+            ->each(function (InvoiceItem $item) use ($unitPrice) {
+                $item->update([
+                    'unit_price' => $unitPrice,
+                    'total'      => round($item->qty * $unitPrice, 2),
+                ]);
+            });
+
+        $invoice->recalculateTotal();
+    }
+
+    /**
      * Delete an invoice and all its items.
      */
     public function delete(Invoice $invoice): void

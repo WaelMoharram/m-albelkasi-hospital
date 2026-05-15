@@ -311,7 +311,6 @@
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
-                                        data-item-id="{{ $item->singleItem->id }}"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
                                         data-item-qty="{{ $item->qty }}"
                                         data-item-price="{{ $item->unit_price }}"
@@ -325,6 +324,18 @@
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </form>
+                                @else
+                                {{-- Aggregated (multi-day) item: edit unit_price across all daily records --}}
+                                <button type="button"
+                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1"
+                                        data-bs-toggle="modal" data-bs-target="#editItemModal"
+                                        data-item-bulk="1"
+                                        data-item-name="{{ $item->itemable->name ?? '' }}"
+                                        data-item-qty="{{ $item->qty }}"
+                                        data-item-price="{{ $item->unit_price }}"
+                                        data-item-url="{{ route('invoices.service-items.update', [$invoice, $item->itemable->id]) }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
                                 @endif
                                 @endcanany
                             </td>
@@ -958,11 +969,16 @@ document.getElementById('editItemModal').addEventListener('show.bs.modal', funct
     const qty   = document.getElementById('edit_qty');
     const price = document.getElementById('edit_unit_price');
     const total = document.getElementById('edit-line-total');
+    const isBulk = btn.dataset.itemBulk === '1';
 
-    form.action = btn.dataset.itemUrl;
+    form.action     = btn.dataset.itemUrl;
     document.getElementById('editItemName').textContent = btn.dataset.itemName;
-    qty.value   = btn.dataset.itemQty;
-    price.value = parseFloat(btn.dataset.itemPrice).toFixed(2);
+    qty.value       = btn.dataset.itemQty;
+    price.value     = parseFloat(btn.dataset.itemPrice).toFixed(2);
+    qty.readOnly    = isBulk;
+    qty.closest('.col-6').querySelector('.form-label').textContent =
+        isBulk ? '{{ __('Qty') }} ({{ __('total — price edit only') }})'
+                : '{{ __('Qty') }} *';
 
     function updateTotal() {
         const q = parseFloat(qty.value) || 0;
