@@ -460,29 +460,11 @@
                     </thead>
                     <tbody id="tbody-{{ $sectionKey }}">
                         @forelse ($items as $item)
-                        @php $_isService = $item->itemable instanceof \App\Models\Service; @endphp
                         <tr id="item-{{ $item->id }}">
                             <td>
-                                @if($_isService)
-                                    <a href="{{ route('catalog.services.edit', $item->itemable) }}"
-                                       class="fw-medium text-decoration-none text-body"
-                                       target="_blank">{{ $item->itemable->name ?? '—' }}</a>
-                                @else
-                                    <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
-                                    @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
-                                        <span class="text-muted small ms-1">{{ $item->itemable->unit ?? '' }}</span>
-                                    @endif
-                                @endif
-                                @if($_isService && $item->itemable->triggers->isNotEmpty())
-                                    <div class="d-flex flex-wrap gap-1 mt-1">
-                                        @foreach($item->itemable->triggers as $_trig)
-                                        <a href="{{ route('catalog.services.edit', $_trig) }}"
-                                           class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-decoration-none"
-                                           style="font-weight:500;" target="_blank">
-                                            <i class="bi bi-link-45deg"></i> {{ $_trig->name }}
-                                        </a>
-                                        @endforeach
-                                    </div>
+                                <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
+                                @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
+                                    <span class="text-muted small ms-1">{{ $item->itemable->unit ?? '' }}</span>
                                 @endif
                             </td>
                             <td class="text-end">{{ $item->qty }}</td>

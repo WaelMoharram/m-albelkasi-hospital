@@ -9,7 +9,7 @@ class InvoiceCategoryService
 {
     public function all(): Collection
     {
-        return InvoiceCategory::ordered()->get();
+        return InvoiceCategory::ordered()->with('services.triggers')->get();
     }
 
     public function create(array $data): InvoiceCategory

@@ -21,20 +21,43 @@
             <thead class="table-light">
                 <tr>
                     <th style="width:60px;">{{ __('Order') }}</th>
-                    <th>{{ __('Category Name') }}</th>
+                    <th style="width:200px;">{{ __('Category Name') }}</th>
                     <th>{{ __('Services') }}</th>
                     <th style="width:120px;"></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($categories as $cat)
-                <tr>
-                    <td><span class="badge bg-secondary">{{ $cat->sort_order }}</span></td>
-                    <td class="fw-semibold">{{ $cat->name }}</td>
-                    <td>
-                        <span class="text-muted small">{{ $cat->services_count ?? $cat->services()->count() }} {{ __('services') }}</span>
+                <tr class="align-top">
+                    <td class="pt-3"><span class="badge bg-secondary">{{ $cat->sort_order }}</span></td>
+                    <td class="fw-semibold pt-3">{{ $cat->name }}</td>
+                    <td class="py-2">
+                        @forelse($cat->services->sortBy('name') as $svc)
+                        <div class="py-1 border-bottom border-light">
+                            <a href="{{ route('catalog.services.edit', $svc) }}"
+                               class="fw-medium text-decoration-none text-body">
+                                {{ $svc->name }}
+                            </a>
+                            @if($svc->code)
+                                <span class="font-monospace text-muted small ms-2">{{ $svc->code }}</span>
+                            @endif
+                            @if($svc->triggers->isNotEmpty())
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    @foreach($svc->triggers as $trig)
+                                    <a href="{{ route('catalog.services.edit', $trig) }}"
+                                       class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-decoration-none"
+                                       style="font-weight:500;">
+                                        <i class="bi bi-link-45deg"></i> {{ $trig->name }}
+                                    </a>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                        @empty
+                        <span class="text-muted small fst-italic">{{ __('No services assigned.') }}</span>
+                        @endforelse
                     </td>
-                    <td class="text-end">
+                    <td class="text-end pt-2">
                         <a href="{{ route('catalog.invoice-categories.edit', $cat) }}"
                            class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-pencil"></i>
