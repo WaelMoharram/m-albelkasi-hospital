@@ -339,6 +339,60 @@
                         </tr>
                         @endforelse
                     </tbody>
+                    {{-- ── أخرى — last group inside the same table ── --}}
+                    @php $otherItems = $grouped['other'] ?? collect(); @endphp
+                    <tbody id="tbody-other-header" style="{{ $otherItems->isEmpty() ? 'display:none' : '' }}">
+                        <tr>
+                            <td class="text-center fw-bold align-middle"
+                                style="background:#f0f4fa; border-right:3px solid #6c757d; color:#6c757d;"
+                                id="other-cat-num">{{ $catNo }}</td>
+                            <td class="fw-semibold align-middle small" style="color:#6c757d;"
+                                colspan="{{ $isDraft ? 5 : 4 }}">{{ __('Other') }}</td>
+                        </tr>
+                    </tbody>
+                    <tbody id="tbody-other">
+                        @foreach($otherItems as $item)
+                        <tr id="item-other-{{ $item->id }}">
+                            <td></td>
+                            <td></td>
+                            <td class="text-end">{{ $item->qty }}</td>
+                            <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
+                            <td class="text-end fw-medium">{{ number_format($item->total, 2) }}</td>
+                            <td class="small">
+                                @if($item->itemable?->code)
+                                    <span class="font-monospace text-muted fw-semibold">{{ $item->itemable->code }}</span>
+                                    <span class="text-muted mx-1">—</span>
+                                @endif
+                                {{ $item->itemable->name ?? '—' }}
+                            </td>
+                            @if($isDraft)
+                            <td class="text-end">
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <button type="button"
+                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
+                                        data-bs-toggle="modal" data-bs-target="#editItemModal"
+                                        data-item-id="{{ $item->id }}"
+                                        data-item-name="{{ $item->itemable->name ?? '' }}"
+                                        data-item-qty="{{ $item->qty }}"
+                                        data-item-price="{{ $item->unit_price }}"
+                                        data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="POST"
+                                      action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('{{ __('Remove this item?') }}')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
+                                @endcanany
+                            </td>
+                            @endif
+                        </tr>
+                        @endforeach
+                    </tbody>
                     <tfoot class="table-light {{ $allSvcItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
                         <tr>
                             <td colspan="4" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
@@ -346,106 +400,35 @@
                             <td colspan="{{ $isDraft ? 2 : 1 }}"></td>
                         </tr>
                     </tfoot>
+                    @if($isDraft)
+                    @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
+                    <tfoot>
+                        <tr class="table-light">
+                            <td></td>
+                            <td></td>
+                            <td><input type="number" class="form-control form-control-sm text-end"
+                                       id="qty-other" value="1" min="1"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end"
+                                       id="price-other" step="0.01" min="0" readonly placeholder="—"></td>
+                            <td class="text-muted small fw-medium" id="preview-other">—</td>
+                            <td>
+                                <select class="form-select form-select-sm" id="select-other" data-section="other">
+                                    <option value="">— {{ __('أخرى — اختر صنف') }} —</option>
+                                </select>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
+                                        data-section="other"
+                                        data-url="{{ route('invoices.items.store', $invoice) }}">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                    @endcanany
+                    @endif
                 </table>
             </div>
-
-            {{-- ── أخرى (Other) — inline at bottom of الفاتورة tab ── --}}
-            @php $otherItems = $grouped['other'] ?? collect(); @endphp
-            @if($otherItems->isNotEmpty() || $isDraft)
-            <div class="border-top">
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="small text-muted fw-semibold py-2 ps-3" colspan="{{ $isDraft ? 5 : 4 }}">
-                                    <i class="bi bi-grid ms-1"></i> {{ __('Other') }}
-                                </th>
-                            </tr>
-                            <tr>
-                                <th>{{ __('Item') }}</th>
-                                <th class="text-end" style="width:80px;">{{ __('Qty') }}</th>
-                                <th class="text-end" style="width:120px;">{{ __('Unit Price') }}</th>
-                                <th class="text-end" style="width:120px;">{{ __('Total') }}</th>
-                                @if($isDraft) <th style="width:60px;"></th> @endif
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-other">
-                            @forelse($otherItems as $item)
-                            <tr id="item-{{ $item->id }}">
-                                <td><span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span></td>
-                                <td class="text-end">{{ $item->qty }}</td>
-                                <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
-                                <td class="text-end fw-medium">{{ number_format($item->total, 2) }}</td>
-                                @if($isDraft)
-                                <td class="text-end">
-                                    @canany(['add_invoice_items', 'edit_invoices'])
-                                    <button type="button"
-                                            class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
-                                            data-bs-toggle="modal" data-bs-target="#editItemModal"
-                                            data-item-id="{{ $item->id }}"
-                                            data-item-name="{{ $item->itemable->name ?? '' }}"
-                                            data-item-qty="{{ $item->qty }}"
-                                            data-item-price="{{ $item->unit_price }}"
-                                            data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <form method="POST"
-                                          action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
-                                          class="d-inline"
-                                          onsubmit="return confirm('{{ __('Remove this item?') }}')">
-                                        @csrf @method('DELETE')
-                                        <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    </form>
-                                    @endcanany
-                                </td>
-                                @endif
-                            </tr>
-                            @empty
-                            <tr id="empty-other">
-                                <td colspan="{{ $isDraft ? 5 : 4 }}" class="text-muted small fst-italic py-3 text-center">
-                                    {{ __('No items in this section.') }}
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                        <tfoot class="table-light {{ $otherItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-other">
-                            <tr>
-                                <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
-                                <td class="text-end fw-bold" id="subtotal-other">{{ number_format($otherItems->sum('total'), 2) }}</td>
-                                @if($isDraft) <td></td> @endif
-                            </tr>
-                        </tfoot>
-                        @if($isDraft)
-                        @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
-                        <tfoot>
-                            <tr class="table-light">
-                                <td>
-                                    <select class="form-select form-select-sm" id="select-other" data-section="other">
-                                        <option value="">— {{ __('Select item —') }} —</option>
-                                    </select>
-                                </td>
-                                <td><input type="number" class="form-control form-control-sm text-end"
-                                           id="qty-other" value="1" min="1"></td>
-                                <td><input type="number" class="form-control form-control-sm text-end"
-                                           id="price-other" step="0.01" min="0" readonly placeholder="—"></td>
-                                <td class="text-end text-muted small fw-medium" id="preview-other">—</td>
-                                <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary add-item-btn"
-                                            data-section="other"
-                                            data-url="{{ route('invoices.items.store', $invoice) }}">
-                                        <i class="bi bi-plus-lg"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tfoot>
-                        @endcanany
-                        @endif
-                    </table>
-                </div>
-            </div>
-            @endif
         </div>
 
         {{-- ── Individual section tabs ── --}}
@@ -699,6 +682,14 @@ document.addEventListener('DOMContentLoaded', function () {
             '<button class="btn btn-xs btn-outline-danger border-0 p-0 px-1"><i class="bi bi-x-lg"></i></button>' +
             '</form>';
 
+        if (section === 'other') {
+            return '<td></td><td></td>' +
+                '<td class="text-end">' + d.qty + '</td>' +
+                '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
+                '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
+                '<td class="small">' + nameHtml + '</td>' +
+                '<td class="text-end">' + editBtn + delForm + '</td>';
+        }
         const cells = '<td><span class="fw-medium">' + nameHtml + '</span></td>';
         if (section === 'daily') {
             return cells +
@@ -746,6 +737,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!tbody) return;
                     const emptyRow = document.getElementById('empty-' + ts);
                     if (emptyRow) emptyRow.remove();
+                    // Show the "أخرى" header row when the first other item is added
+                    if (ts === 'other') {
+                        const hdr = document.getElementById('tbody-other-header');
+                        if (hdr) hdr.style.display = '';
+                    }
                     tbody.insertAdjacentHTML('beforeend',
                         '<tr id="item-' + ts + '-' + d.id + '">' + buildRow(d, ts) + '</tr>');
                     const tf = document.getElementById('tfoot-' + ts);
