@@ -660,34 +660,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 const data = await res.json();
                 if (!res.ok) { alert(data.error || 'Error'); return; }
-                const d = data.item;
 
                 // الفاتورة tab uses rowspan grouping — reload to rebuild correctly
                 if (section === 'other') { window.location.reload(); return; }
 
-                // Use server-determined section (e.g. medication type decides local_med vs imported_med)
-                const targetSection = d.section || section;
-
-                // Update tbody
-                const tbody = document.getElementById('tbody-' + targetSection);
-                if (tbody) {
-                    const emptyRow = document.getElementById('empty-' + targetSection);
+                // Insert one item into its section tbody and update subtotal + badge
+                function insertItem(d) {
+                    const ts = d.section || section;
+                    const tbody = document.getElementById('tbody-' + ts);
+                    if (!tbody) return;
+                    const emptyRow = document.getElementById('empty-' + ts);
                     if (emptyRow) emptyRow.remove();
                     tbody.insertAdjacentHTML('beforeend',
-                        '<tr id="item-' + targetSection + '-' + d.id + '">' + buildRow(d, targetSection) + '</tr>');
-                    const tf = document.getElementById('tfoot-' + targetSection);
+                        '<tr id="item-' + ts + '-' + d.id + '">' + buildRow(d, ts) + '</tr>');
+                    const tf = document.getElementById('tfoot-' + ts);
                     if (tf) tf.classList.remove('d-none');
-                    const sub = document.getElementById('subtotal-' + targetSection);
+                    const sub = document.getElementById('subtotal-' + ts);
                     if (sub) {
                         const prev = parseFloat(sub.textContent.replace(/,/g, '')) || 0;
                         sub.textContent = (prev + parseFloat(d.total))
                             .toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
                     }
+                    const badge = document.getElementById('badge-' + ts);
+                    if (badge) { badge.textContent = (parseInt(badge.textContent)||0)+1; badge.classList.remove('d-none'); }
                 }
 
-                // Badge
-                const badge = document.getElementById('badge-' + targetSection);
-                if (badge) { badge.textContent = (parseInt(badge.textContent)||0)+1; badge.classList.remove('d-none'); }
+                insertItem(data.item);
+                (data.triggered_items || []).forEach(insertItem);
 
                 // Grand total
                 const gt = document.getElementById('grand-total-display');

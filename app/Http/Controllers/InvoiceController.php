@@ -53,7 +53,7 @@ class InvoiceController extends Controller
             $medications       = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type', 'code']);
             $labServices       = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price', 'code']);
             $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price', 'code']);
-            $suppliesServices  = Service::where('category', 'supplies')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $suppliesServices  = Service::where('category', 'supplies')->whereNotNull('invoice_category_id')->orderBy('name')->get(['id', 'name', 'price', 'code']);
             $otherServices     = Service::where('category', 'other')->orderBy('name')->get(['id', 'name', 'price', 'code']);
 
             $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price, 'code' => $m->code ?? ''];
@@ -103,24 +103,32 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $item = $this->service->addItem($invoice, $data);
+            ['main' => $item, 'triggered' => $triggeredItems] = $this->service->addItem($invoice, $data);
 
             if ($request->expectsJson()) {
                 $item->load('itemable');
                 $unit = $item->itemable instanceof Medication ? ($item->itemable->unit ?? '') : '';
-                return response()->json([
-                    'item' => [
-                        'id'          => $item->id,
-                        'name'        => $item->itemable->name ?? '—',
+
+                $formatItem = function (InvoiceItem $i) use ($invoice): array {
+                    $i->loadMissing('itemable');
+                    $unit = $i->itemable instanceof Medication ? ($i->itemable->unit ?? '') : '';
+                    return [
+                        'id'          => $i->id,
+                        'name'        => $i->itemable->name ?? '—',
                         'unit'        => $unit,
-                        'qty'         => $item->qty,
-                        'unit_price'  => (float) $item->unit_price,
-                        'total'       => (float) $item->total,
-                        'section'     => $item->section,
-                        'update_url'  => route('invoices.items.update', [$invoice, $item]),
-                        'destroy_url' => route('invoices.items.destroy', [$invoice, $item]),
-                    ],
-                    'invoice_total' => (float) $invoice->fresh()->total_amount,
+                        'qty'         => $i->qty,
+                        'unit_price'  => (float) $i->unit_price,
+                        'total'       => (float) $i->total,
+                        'section'     => $i->section,
+                        'update_url'  => route('invoices.items.update', [$invoice, $i]),
+                        'destroy_url' => route('invoices.items.destroy', [$invoice, $i]),
+                    ];
+                };
+
+                return response()->json([
+                    'item'            => $formatItem($item),
+                    'triggered_items' => array_map($formatItem, $triggeredItems),
+                    'invoice_total'   => (float) $invoice->fresh()->total_amount,
                 ]);
             }
 

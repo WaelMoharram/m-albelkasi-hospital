@@ -36,24 +36,28 @@ class InvoiceService
      *   qty         → positive integer
      *   unit_price  → decimal (pre-filled from catalog, user may override)
      */
-    public function addItem(Invoice $invoice, array $data): InvoiceItem
+    /**
+     * Returns ['main' => InvoiceItem, 'triggered' => InvoiceItem[]]
+     */
+    public function addItem(Invoice $invoice, array $data): array
     {
         if ($invoice->status === 'final') {
             throw new LogicException('Cannot add items to a finalised invoice.');
         }
 
-        $item = $this->createItem($invoice, $data);
+        $main      = $this->createItem($invoice, $data);
+        $triggered = [];
 
         // Auto-add triggered services (one level deep, no chains)
         if ($data['item_type'] !== 'medication') {
             $service = Service::find((int) $data['itemable_id']);
             if ($service) {
-                foreach ($service->triggers as $triggered) {
-                    $this->createItem($invoice, [
-                        'item_type'   => $triggered->category,
-                        'itemable_id' => $triggered->id,
+                foreach ($service->triggers as $triggeredSvc) {
+                    $triggered[] = $this->createItem($invoice, [
+                        'item_type'   => $triggeredSvc->category,
+                        'itemable_id' => $triggeredSvc->id,
                         'qty'         => $data['qty'],
-                        'unit_price'  => $triggered->price,
+                        'unit_price'  => $triggeredSvc->price,
                     ]);
                 }
             }
@@ -61,7 +65,7 @@ class InvoiceService
 
         $invoice->recalculateTotal();
 
-        return $item;
+        return ['main' => $main, 'triggered' => $triggered];
     }
 
     private function createItem(Invoice $invoice, array $data): InvoiceItem
