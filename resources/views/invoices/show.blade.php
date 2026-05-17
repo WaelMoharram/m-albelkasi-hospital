@@ -331,7 +331,7 @@
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
                                         data-item-bulk="1"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
-                                        data-item-qty="{{ $item->perDayQty }}"
+                                        data-item-qty="{{ $item->qty }}"
                                         data-item-price="{{ $item->unit_price }}"
                                         data-item-url="{{ route('invoices.service-items.update', [$invoice, $item->itemable->id]) }}">
                                     <i class="bi bi-pencil"></i>
@@ -1011,7 +1011,7 @@ document.getElementById('editItemModal').addEventListener('show.bs.modal', funct
     price.value     = parseFloat(btn.dataset.itemPrice).toFixed(2);
     qty.readOnly    = false;
     qty.closest('.col-6').querySelector('.form-label').textContent =
-        isBulk ? '{{ __('Qty') }} ({{ __('per day') }})'
+        isBulk ? 'الكمية الإجمالية'
                 : '{{ __('Qty') }} *';
 
     function updateTotal() {

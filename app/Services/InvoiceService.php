@@ -160,21 +160,57 @@ class InvoiceService
      * Update unit_price for ALL invoice_items that belong to the given service
      * in this invoice (e.g. all daily charges for one service across many days).
      */
-    public function updateServiceItems(Invoice $invoice, Service $service, float $unitPrice, int $qty = 0): void
+    public function updateServiceItems(Invoice $invoice, Service $service, float $unitPrice, int $newTotalQty = 0): void
     {
         if ($invoice->status === 'final') {
             throw new LogicException('Cannot edit items on a finalised invoice.');
         }
 
+        $items = $invoice->items()
+            ->where('itemable_type', Service::class)
+            ->where('itemable_id', $service->id)
+            ->orderBy('service_date')
+            ->orderBy('id')
+            ->get();
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        // ── Adjust total qty (for multi-record / daily services) ──────────
+        if ($newTotalQty > 0) {
+            $currentTotal = (int) $items->sum('qty');
+
+            if ($newTotalQty < $currentTotal) {
+                // Delete records from the end; partially reduce last survivor if needed
+                $toRemove = $currentTotal - $newTotalQty;
+                foreach ($items->reverse()->values() as $item) {
+                    if ($toRemove <= 0) break;
+                    if ($item->qty <= $toRemove) {
+                        $toRemove -= $item->qty;
+                        $item->delete();
+                    } else {
+                        $item->qty -= $toRemove;
+                        $item->save();
+                        $toRemove = 0;
+                    }
+                }
+            } elseif ($newTotalQty > $currentTotal) {
+                // Add the difference to the last record
+                $last       = $items->last();
+                $last->qty += ($newTotalQty - $currentTotal);
+                $last->save();
+            }
+        }
+
+        // ── Update unit_price and recalculate total on all surviving records ─
         $invoice->items()
             ->where('itemable_type', Service::class)
             ->where('itemable_id', $service->id)
-            ->each(function (InvoiceItem $item) use ($unitPrice, $qty) {
-                $newQty = $qty > 0 ? $qty : $item->qty;
+            ->each(function (InvoiceItem $item) use ($unitPrice) {
                 $item->update([
-                    'qty'        => $newQty,
                     'unit_price' => $unitPrice,
-                    'total'      => round($newQty * $unitPrice, 2),
+                    'total'      => round($item->qty * $unitPrice, 2),
                 ]);
             });
 
