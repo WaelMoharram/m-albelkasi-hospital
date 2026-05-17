@@ -279,7 +279,10 @@ class InvoiceService
             );
         }
 
-        return [$service, $expectedCategory];
+        // Any service with an invoice category appears in الفاتورة tab.
+        $section = $service->invoice_category_id ? 'daily' : $expectedCategory;
+
+        return [$service, $section];
     }
 
     private function resolveRadiologyService(int $id): array
@@ -309,7 +312,10 @@ class InvoiceService
             );
         }
 
-        return [$service, 'supplies'];
+        // Any service with an invoice category appears in الفاتورة tab.
+        $section = $service->invoice_category_id ? 'daily' : 'supplies';
+
+        return [$service, $section];
     }
 
     private function resolveOtherService(int $id): array

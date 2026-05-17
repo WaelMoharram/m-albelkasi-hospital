@@ -34,7 +34,7 @@ return new class extends Migration
 
             $rows = [];
             foreach ($missing as $service) {
-                $section = $service->category === 'supplies' ? 'supplies' : 'daily';
+                $section = ($service->category === 'supplies' && ! $service->invoice_category_id) ? 'supplies' : 'daily';
 
                 $rows[] = [
                     'invoice_id'    => $invoice->id,
