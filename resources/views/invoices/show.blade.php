@@ -266,7 +266,7 @@
         {{-- ── "الفاتورة" tab — daily services grouped by invoice category ── --}}
         <div class="tab-pane fade show active p-0" id="tab-daily" role="tabpanel">
             <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
+                <table class="table table-sm table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th class="text-center" style="width:36px;">م</th>
@@ -304,7 +304,7 @@
                                 {{ $item->itemable->name ?? '—' }}
                             </td>
                             @if($isDraft)
-                            <td class="text-end">
+                            <td class="text-end" style="white-space:nowrap;">
                                 @canany(['add_invoice_items', 'edit_invoices'])
                                 @if($item->isSingle)
                                 <button type="button"
@@ -377,7 +377,7 @@
                                 {{ $item->itemable->name ?? '—' }}
                             </td>
                             @if($isDraft)
-                            <td class="text-end">
+                            <td class="text-end" style="white-space:nowrap;">
                                 @canany(['add_invoice_items', 'edit_invoices'])
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
@@ -467,7 +467,7 @@
         @endphp
         <div class="tab-pane fade p-0" id="tab-{{ $sectionKey }}" role="tabpanel">
             <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
+                <table class="table table-sm table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>{{ __('Item') }}</th>
@@ -490,7 +490,7 @@
                             <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
                             <td class="text-end fw-medium">{{ number_format($item->total, 2) }}</td>
                             @if($isDraft)
-                            <td class="text-end">
+                            <td class="text-end" style="white-space:nowrap;">
                                 @canany(['add_invoice_items', 'edit_invoices'])
                                 @if($item->isSingle)
                                 <button type="button"
@@ -734,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
                 '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
                 '<td class="small">' + nameHtml + '</td>' +
-                '<td class="text-end">' + editBtn + delForm + '</td>';
+                '<td class="text-end" style="white-space:nowrap;">' + editBtn + delForm + '</td>';
         }
         if (section === 'other') {
             return '<td></td><td></td>' +
@@ -742,14 +742,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
                 '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
                 '<td class="small">' + nameHtml + '</td>' +
-                '<td class="text-end">' + editBtn + delForm + '</td>';
+                '<td class="text-end" style="white-space:nowrap;">' + editBtn + delForm + '</td>';
         }
         const cells = '<td><span class="fw-medium">' + nameHtml + '</span></td>';
         return cells +
             '<td class="text-end">' + d.qty + '</td>' +
             '<td class="text-end">' + parseFloat(d.unit_price).toFixed(2) + '</td>' +
             '<td class="text-end fw-medium">' + parseFloat(d.total).toFixed(2) + '</td>' +
-            '<td class="text-end">' + editBtn + delForm + '</td>';
+            '<td class="text-end" style="white-space:nowrap;">' + editBtn + delForm + '</td>';
     }
 
     // Add button → AJAX POST
