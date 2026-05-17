@@ -29,11 +29,21 @@ class AdmissionObserver
         // 2. Seed once-per-admission items
         $this->seedOnceItems($invoice, $admission->admission_date);
 
-        // 3. Seed daily service items — up to yesterday (completed days only).
+        // 3. Seed daily service items — up to yesterday OR discharge_date-1,
+        //    whichever comes first (so retroactively-entered discharges don't
+        //    bleed past the actual discharge day).
+        $endDate = Carbon::yesterday();
+        if ($admission->discharge_date) {
+            $lastChargedDay = Carbon::parse($admission->discharge_date)->subDay();
+            if ($lastChargedDay->lt($endDate)) {
+                $endDate = $lastChargedDay;
+            }
+        }
+
         $this->seedDailyItems(
-            invoice:        $invoice,
-            admissionDate:  Carbon::parse($admission->admission_date),
-            endDate:        Carbon::yesterday(),
+            invoice:       $invoice,
+            admissionDate: Carbon::parse($admission->admission_date),
+            endDate:       $endDate,
         );
     }
 
