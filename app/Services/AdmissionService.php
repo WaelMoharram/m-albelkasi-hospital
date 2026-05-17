@@ -67,8 +67,14 @@ class AdmissionService
             return $admission;
         }
 
-        // Remove all daily items, then reseed for the finalised date range
-        $invoice->items()->where('section', 'daily')->delete();
+        // Remove only is_daily service items (per-day recurring charges) then
+        // re-seed for the finalised date range.
+        // is_once items (e.g. radiology, one-time fees) must NOT be deleted —
+        // they are charged once per admission regardless of discharge date.
+        $invoice->items()
+            ->where('section', 'daily')
+            ->whereHasMorph('itemable', [\App\Models\Service::class], fn ($q) => $q->where('is_daily', true))
+            ->delete();
 
         $observer = new AdmissionObserver();
         // Discharge day is not billed; bill admission_date up to the day before discharge.
