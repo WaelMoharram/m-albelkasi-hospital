@@ -103,6 +103,7 @@ class InvoiceService
         }
 
         $added     = [];
+        $updated   = [];
         $notFound  = [];
 
         foreach ($rows as $row) {
@@ -125,32 +126,56 @@ class InvoiceService
                 continue;
             }
 
-            $item = $this->createItem($invoice, [
-                'item_type'   => 'medication',
-                'itemable_id' => $med->id,
-                'qty'         => $qty,
-                'unit_price'  => (float) $med->price,
-            ]);
+            // If this medication already has a line in the invoice, add to it.
+            $existing = $invoice->items()
+                ->where('itemable_type', Medication::class)
+                ->where('itemable_id', $med->id)
+                ->first();
 
-            $added[] = [
-                'id'          => $item->id,
-                'name'        => $med->name,
-                'unit'        => $med->unit ?? '',
-                'qty'         => $item->qty,
-                'unit_price'  => (float) $item->unit_price,
-                'total'       => (float) $item->total,
-                'section'     => $item->section,
-                'update_url'  => route('invoices.items.update',  [$invoice, $item]),
-                'destroy_url' => route('invoices.items.destroy', [$invoice, $item]),
-            ];
+            if ($existing) {
+                $oldTotal      = (float) $existing->total;
+                $existing->qty += $qty;
+                $existing->total = round($existing->qty * (float) $existing->unit_price, 2);
+                $existing->save();
+
+                $updated[] = [
+                    'id'          => $existing->id,
+                    'name'        => $med->name,
+                    'qty'         => $existing->qty,
+                    'unit_price'  => (float) $existing->unit_price,
+                    'total'       => (float) $existing->total,
+                    'delta_total' => (float) $existing->total - $oldTotal,
+                    'section'     => $existing->section,
+                ];
+            } else {
+                $item = $this->createItem($invoice, [
+                    'item_type'   => 'medication',
+                    'itemable_id' => $med->id,
+                    'qty'         => $qty,
+                    'unit_price'  => (float) $med->price,
+                ]);
+
+                $added[] = [
+                    'id'          => $item->id,
+                    'name'        => $med->name,
+                    'unit'        => $med->unit ?? '',
+                    'qty'         => $item->qty,
+                    'unit_price'  => (float) $item->unit_price,
+                    'total'       => (float) $item->total,
+                    'section'     => $item->section,
+                    'update_url'  => route('invoices.items.update',  [$invoice, $item]),
+                    'destroy_url' => route('invoices.items.destroy', [$invoice, $item]),
+                ];
+            }
         }
 
-        if (!empty($added)) {
+        if (!empty($added) || !empty($updated)) {
             $invoice->recalculateTotal();
         }
 
         return [
             'added'         => $added,
+            'updated'       => $updated,
             'not_found'     => $notFound,
             'invoice_total' => (float) $invoice->fresh()->total_amount,
         ];

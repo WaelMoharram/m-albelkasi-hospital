@@ -929,17 +929,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (badge) { badge.textContent = (parseInt(badge.textContent) || 0) + 1; badge.classList.remove('d-none'); }
             });
 
+            // Update existing rows (qty bumped on server — patch qty + total cells in-place)
+            (data.updated || []).forEach(function (d) {
+                // Row id pattern for section tabs: "item-{id}" (first item id in the group)
+                var row = document.getElementById('item-' + d.id);
+                if (row) {
+                    // Section tab columns: 0=name, 1=qty, 2=unit_price, 3=total, 4=actions
+                    var cells = row.querySelectorAll('td');
+                    if (cells[1]) cells[1].textContent = d.qty;
+                    if (cells[3]) cells[3].textContent = parseFloat(d.total).toFixed(2);
+                    // Sync edit-button data so the modal opens with the new qty
+                    var editBtn = row.querySelector('[data-item-qty]');
+                    if (editBtn) editBtn.dataset.itemQty = d.qty;
+                }
+                // Update subtotal by the delta
+                var sub = document.getElementById('subtotal-' + d.section);
+                if (sub && d.delta_total) {
+                    var prev = parseFloat(sub.textContent.replace(/,/g, '')) || 0;
+                    sub.textContent = (prev + d.delta_total).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+                }
+            });
+
             // Grand total
             var gt = document.getElementById('grand-total-display');
             if (gt) gt.textContent = parseFloat(data.invoice_total).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
 
             // Summary
             var html = '';
-            if (data.added.length) {
+            if (data.added.length || (data.updated && data.updated.length)) {
+                var allDone = (data.added || []).concat(data.updated || []);
                 html += '<div class="alert alert-success py-2 small mb-1">'
                     + '<i class="bi bi-check-circle ms-1"></i> '
-                    + '{{ __("Added") }}: <strong>' + data.added.length + '</strong> '
-                    + data.added.map(function (d) { return d.name + ' ×' + d.qty; }).join(' — ')
+                    + '{{ __("Added") }}: <strong>' + allDone.length + '</strong> '
+                    + allDone.map(function (d) { return d.name + ' ×' + d.qty; }).join(' — ')
                     + '</div>';
             }
             if (data.not_found.length) {
@@ -950,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     + '</div>';
             }
             resultDiv.innerHTML = html;
-            if (data.added.length) pasteArea.value = '';
+            if (data.added.length || (data.updated && data.updated.length)) pasteArea.value = '';
 
         } catch (e) { resultDiv.innerHTML = '<div class="alert alert-danger py-1 small">Error</div>'; }
         finally { bulkBtn.disabled = false; bulkBtn.innerHTML = '<i class="bi bi-check2-all ms-1"></i> {{ __("Add to Invoice") }}'; }
