@@ -445,7 +445,27 @@
 
         {{-- ── Individual section tabs ── --}}
         @foreach ($sections as $sectionKey => $meta)
-        @php $items = $grouped[$sectionKey] ?? collect(); @endphp
+        @php
+            $rawItems = $grouped[$sectionKey] ?? collect();
+            // Aggregate duplicate entries for the same item into one row
+            $items = $rawItems
+                ->groupBy('itemable_id')
+                ->map(function ($rows) {
+                    $first           = $rows->first();
+                    $agg             = new \stdClass;
+                    $agg->id         = $first->id;
+                    $agg->itemable   = $first->itemable;
+                    $agg->qty        = $rows->sum('qty');
+                    $agg->unit_price = (float) $first->unit_price;
+                    $agg->total      = (float) $rows->sum('total');
+                    $agg->section    = $first->section;
+                    $agg->isSingle   = $rows->count() === 1;
+                    $agg->singleItem = $rows->count() === 1 ? $first : null;
+                    return $agg;
+                })
+                ->sortBy(fn ($agg) => $agg->itemable?->name ?? '')
+                ->values();
+        @endphp
         <div class="tab-pane fade p-0" id="tab-{{ $sectionKey }}" role="tabpanel">
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
@@ -473,18 +493,18 @@
                             @if($isDraft)
                             <td class="text-end">
                                 @canany(['add_invoice_items', 'edit_invoices'])
+                                @if($item->isSingle)
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
-                                        data-item-id="{{ $item->id }}"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
                                         data-item-qty="{{ $item->qty }}"
                                         data-item-price="{{ $item->unit_price }}"
-                                        data-item-url="{{ route('invoices.items.update', [$invoice, $item]) }}">
+                                        data-item-url="{{ route('invoices.items.update', [$invoice, $item->singleItem]) }}">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <form method="POST"
-                                      action="{{ route('invoices.items.destroy', [$invoice, $item]) }}"
+                                      action="{{ route('invoices.items.destroy', [$invoice, $item->singleItem]) }}"
                                       class="d-inline"
                                       onsubmit="return confirm('{{ __('Remove this item?') }}')">
                                     @csrf @method('DELETE')
@@ -492,6 +512,19 @@
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </form>
+                                @else
+                                {{-- Aggregated (multiple records): edit unit_price across all --}}
+                                <button type="button"
+                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1"
+                                        data-bs-toggle="modal" data-bs-target="#editItemModal"
+                                        data-item-bulk="1"
+                                        data-item-name="{{ $item->itemable->name ?? '' }}"
+                                        data-item-qty="{{ $item->qty }}"
+                                        data-item-price="{{ $item->unit_price }}"
+                                        data-item-url="{{ route('invoices.service-items.update', [$invoice, $item->itemable]) }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                @endif
                                 @endcanany
                             </td>
                             @endif
@@ -504,10 +537,10 @@
                         </tr>
                         @endforelse
                     </tbody>
-                    <tfoot class="table-light {{ $items->isEmpty() ? 'd-none' : '' }}" id="tfoot-{{ $sectionKey }}">
+                    <tfoot class="table-light {{ $rawItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-{{ $sectionKey }}">
                         <tr>
                             <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
-                            <td class="text-end fw-bold" id="subtotal-{{ $sectionKey }}">{{ number_format($items->sum('total'), 2) }}</td>
+                            <td class="text-end fw-bold" id="subtotal-{{ $sectionKey }}">{{ number_format($rawItems->sum('total'), 2) }}</td>
                             @if($isDraft) <td></td> @endif
                         </tr>
                     </tfoot>
