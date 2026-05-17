@@ -865,7 +865,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return text.trim().split('\n')
             .map(function (line) {
                 var cols = line.split('\t').map(function (c) { return c.trim(); });
-                return { name: cols[0] || '', code: cols[1] || '', qty: parseInt(cols[2]) || 1 };
+                var name, code, qty;
+                if (cols.length >= 3) {
+                    // name | code | qty
+                    name = cols[0] || '';
+                    code = cols[1] || '';
+                    qty  = parseInt(cols[2]) || 1;
+                } else if (cols.length === 2) {
+                    // name | qty  (no code column)
+                    name = cols[0] || '';
+                    code = '';
+                    qty  = parseInt(cols[1]) || 1;
+                } else {
+                    name = cols[0] || '';
+                    code = '';
+                    qty  = 1;
+                }
+                return { name: name, code: code, qty: qty };
             })
             .filter(function (r) { return r.name || r.code; });
     }
