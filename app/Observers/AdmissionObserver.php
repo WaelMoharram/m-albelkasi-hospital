@@ -29,11 +29,11 @@ class AdmissionObserver
         // 2. Seed once-per-admission items
         $this->seedOnceItems($invoice, $admission->admission_date);
 
-        // 3. Seed daily service items
+        // 3. Seed daily service items — up to yesterday (completed days only).
         $this->seedDailyItems(
             invoice:        $invoice,
             admissionDate:  Carbon::parse($admission->admission_date),
-            endDate:        Carbon::today(),
+            endDate:        Carbon::yesterday(),
         );
     }
 
