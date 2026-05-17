@@ -166,11 +166,12 @@ class InvoiceController extends Controller
     public function updateServiceItems(Request $request, Invoice $invoice, Service $service): RedirectResponse
     {
         $data = $request->validate([
+            'qty'        => ['required', 'integer', 'min:1'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ]);
 
         try {
-            $this->service->updateServiceItems($invoice, $service, (float) $data['unit_price']);
+            $this->service->updateServiceItems($invoice, $service, (float) $data['unit_price'], (int) $data['qty']);
             alert()->success(__('Updated'), __('Items updated successfully.'));
         } catch (LogicException $e) {
             alert()->error(__('Error'), $e->getMessage());

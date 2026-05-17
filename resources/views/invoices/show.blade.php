@@ -54,6 +54,7 @@
                 $agg->id         = $first->id;
                 $agg->itemable   = $first->itemable;
                 $agg->qty        = $rows->sum('qty');
+                $agg->perDayQty  = (int) $first->qty;   // qty per single record (per day)
                 $agg->unit_price = (float) $first->unit_price;
                 $agg->total      = (float) $rows->sum('total');
                 $agg->section    = $first->section;
@@ -330,7 +331,7 @@
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
                                         data-item-bulk="1"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
-                                        data-item-qty="{{ $item->qty }}"
+                                        data-item-qty="{{ $item->perDayQty }}"
                                         data-item-price="{{ $item->unit_price }}"
                                         data-item-url="{{ route('invoices.service-items.update', [$invoice, $item->itemable->id]) }}">
                                     <i class="bi bi-pencil"></i>
@@ -455,6 +456,7 @@
                     $agg->id         = $first->id;
                     $agg->itemable   = $first->itemable;
                     $agg->qty        = $rows->sum('qty');
+                    $agg->perDayQty  = (int) $first->qty;
                     $agg->unit_price = (float) $first->unit_price;
                     $agg->total      = (float) $rows->sum('total');
                     $agg->section    = $first->section;
@@ -1007,9 +1009,9 @@ document.getElementById('editItemModal').addEventListener('show.bs.modal', funct
     document.getElementById('editItemName').textContent = btn.dataset.itemName;
     qty.value       = btn.dataset.itemQty;
     price.value     = parseFloat(btn.dataset.itemPrice).toFixed(2);
-    qty.readOnly    = isBulk;
+    qty.readOnly    = false;
     qty.closest('.col-6').querySelector('.form-label').textContent =
-        isBulk ? '{{ __('Qty') }} ({{ __('total — price edit only') }})'
+        isBulk ? '{{ __('Qty') }} ({{ __('per day') }})'
                 : '{{ __('Qty') }} *';
 
     function updateTotal() {
