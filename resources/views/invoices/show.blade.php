@@ -66,11 +66,10 @@
     });
 
     $sections = [
-        'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',        'color' => 'success'],
-        'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill',    'color' => 'warning'],
-        'supplies'     => ['label' => __('Supplies'),             'icon' => 'bi-box-seam',        'color' => 'secondary'],
-        'lab'          => ['label' => __('Lab'),                   'icon' => 'bi-eyedropper',      'color' => 'info'],
-        'radiology'    => ['label' => __('Radiology'),             'icon' => 'bi-radioactive',     'color' => 'purple'],
+        'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',      'color' => 'success'],
+        'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill', 'color' => 'warning'],
+        'supplies'     => ['label' => __('Supplies'),             'icon' => 'bi-box-seam',     'color' => 'secondary'],
+        'lab'          => ['label' => __('Lab'),                  'icon' => 'bi-eyedropper',   'color' => 'info'],
     ];
 
     $billableTotal = $invoice->items

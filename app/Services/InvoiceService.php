@@ -254,7 +254,7 @@ class InvoiceService
         return match ($itemType) {
             'medication' => $this->resolveMedication($id),
             'lab'        => $this->resolveService($id, 'lab'),
-            'radiology'  => $this->resolveService($id, 'radiology'),
+            'radiology'  => $this->resolveRadiologyService($id),
             'supplies'   => $this->resolveSuppliesService($id),
             'other'      => $this->resolveOtherService($id),
             default      => throw new \InvalidArgumentException("Unknown item type: {$itemType}"),
@@ -280,6 +280,23 @@ class InvoiceService
         }
 
         return [$service, $expectedCategory];
+    }
+
+    private function resolveRadiologyService(int $id): array
+    {
+        $service = Service::findOrFail($id);
+
+        if ($service->category !== 'radiology') {
+            throw new \InvalidArgumentException(
+                "Service #{$id} is not a radiology service."
+            );
+        }
+
+        // Route to الفاتورة tab when the service belongs to an invoice category;
+        // otherwise fall back to the legacy 'radiology' section.
+        $section = $service->invoice_category_id ? 'daily' : 'radiology';
+
+        return [$service, $section];
     }
 
     private function resolveSuppliesService(int $id): array
