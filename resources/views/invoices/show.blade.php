@@ -211,17 +211,16 @@
         </button>
         <div class="collapse mt-2" id="bulkImportPanel">
             <p class="text-muted small mb-2">
-                {{ __('Paste directly from Excel — columns: Item Name, Item Code, Qty (tab-separated). The system matches by code first, then by name.') }}
+                {{ __('Upload an Excel sheet — columns in order: Item Name, Qty, Item Code. The system matches by code first, then by name. If the code column is empty or not found, the row is added to the warning list.') }}
             </p>
-            <textarea id="bulkPasteArea" class="form-control form-control-sm font-monospace mb-2"
-                      rows="6" dir="rtl"
-                      placeholder="{{ __('اتروفنت 500mcg/2ml امبول') }}&#9;40&#9;11&#10;{{ __('الدوميت 250مجم اقراص') }}&#9;1140&#9;2"></textarea>
+            <input type="file" id="bulkFileInput" class="form-control form-control-sm mb-2"
+                   accept=".xlsx,.xls,.csv">
             <div class="d-flex gap-2 align-items-center">
                 <button id="bulkImportBtn" type="button" class="btn btn-sm btn-success">
                     <i class="bi bi-check2-all ms-1"></i> {{ __('Add to Invoice') }}
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary"
-                        onclick="document.getElementById('bulkPasteArea').value='';document.getElementById('bulkResult').innerHTML=''">
+                        onclick="document.getElementById('bulkFileInput').value='';document.getElementById('bulkResult').innerHTML=''">
                     {{ __('Clear') }}
                 </button>
             </div>
@@ -854,51 +853,29 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 (function () {
     const bulkBtn    = document.getElementById('bulkImportBtn');
-    const pasteArea  = document.getElementById('bulkPasteArea');
+    const fileInput  = document.getElementById('bulkFileInput');
     const resultDiv  = document.getElementById('bulkResult');
     if (!bulkBtn) return;
 
     const BULK_URL = '{{ route('invoices.items.bulk', $invoice) }}';
     const CSRF     = document.querySelector('meta[name="csrf-token"]').content;
 
-    function parseRows(text) {
-        return text.trim().split('\n')
-            .map(function (line) {
-                var cols = line.split('\t').map(function (c) { return c.trim(); });
-                var name, code, qty;
-                if (cols.length >= 3) {
-                    // name | code | qty
-                    name = cols[0] || '';
-                    code = cols[1] || '';
-                    qty  = parseInt(cols[2]) || 1;
-                } else if (cols.length === 2) {
-                    // name | qty  (no code column)
-                    name = cols[0] || '';
-                    code = '';
-                    qty  = parseInt(cols[1]) || 1;
-                } else {
-                    name = cols[0] || '';
-                    code = '';
-                    qty  = 1;
-                }
-                return { name: name, code: code, qty: qty };
-            })
-            .filter(function (r) { return r.name || r.code; });
-    }
-
     bulkBtn.addEventListener('click', async function () {
-        const rows = parseRows(pasteArea.value);
-        if (!rows.length) return;
+        const file = fileInput.files[0];
+        if (!file) return;
 
         bulkBtn.disabled  = true;
         bulkBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
         resultDiv.innerHTML = '';
 
         try {
+            const formData = new FormData();
+            formData.append('file', file);
+
             const res  = await fetch(BULK_URL, {
                 method:  'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body:    JSON.stringify({ rows }),
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body:    formData,
             });
             const data = await res.json();
             if (!res.ok) { resultDiv.innerHTML = '<div class="alert alert-danger py-1 small">' + (data.error || 'Error') + '</div>'; return; }
@@ -988,7 +965,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     + '</div>';
             }
             resultDiv.innerHTML = html;
-            if (data.added.length || (data.updated && data.updated.length)) pasteArea.value = '';
+            if (data.added.length || (data.updated && data.updated.length)) fileInput.value = '';
 
         } catch (e) { resultDiv.innerHTML = '<div class="alert alert-danger py-1 small">Error</div>'; }
         finally { bulkBtn.disabled = false; bulkBtn.innerHTML = '<i class="bi bi-check2-all ms-1"></i> {{ __("Add to Invoice") }}'; }

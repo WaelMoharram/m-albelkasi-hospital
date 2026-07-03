@@ -8,7 +8,9 @@ use App\Models\Medication;
 use App\Models\Service;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\UploadedFile;
 use LogicException;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class InvoiceService
 {
@@ -89,7 +91,48 @@ class InvoiceService
     }
 
     /**
-     * Bulk-add medications from a pasted Excel list.
+     * Parse an uploaded Excel/CSV sheet (columns: Name, Qty, Code) and bulk-add
+     * the matched medications via bulkAdd().
+     *
+     * A row is only treated as data if its Qty column is numeric — this
+     * transparently skips a header row and any blank lines.
+     */
+    public function bulkAddFromFile(Invoice $invoice, UploadedFile $file): array
+    {
+        $sheet = IOFactory::load($file->getRealPath())->getActiveSheet();
+
+        $rows = [];
+
+        foreach ($sheet->getRowIterator() as $row) {
+            $cells = [];
+            foreach ($row->getCellIterator() as $cell) {
+                $cells[] = trim((string) $cell->getFormattedValue());
+            }
+            [$name, $qty, $code] = array_pad($cells, 3, '');
+
+            if (! is_numeric($qty)) {
+                continue;
+            }
+
+            $name = trim($name);
+            $code = trim($code);
+
+            if ($name === '' && $code === '') {
+                continue;
+            }
+
+            $rows[] = ['name' => $name, 'code' => $code, 'qty' => max(1, (int) round((float) $qty))];
+        }
+
+        if (empty($rows)) {
+            throw new LogicException('No valid rows found in the uploaded file.');
+        }
+
+        return $this->bulkAdd($invoice, $rows);
+    }
+
+    /**
+     * Bulk-add medications from parsed Excel rows.
      *
      * Each row: ['name' => string, 'code' => string, 'qty' => int]
      * Match priority: exact code → partial name (case-insensitive).

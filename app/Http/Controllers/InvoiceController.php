@@ -79,14 +79,11 @@ class InvoiceController extends Controller
     public function bulkAddItems(Request $request, Invoice $invoice): JsonResponse
     {
         $data = $request->validate([
-            'rows'        => ['required', 'array', 'min:1', 'max:300'],
-            'rows.*.code' => ['nullable', 'string', 'max:100'],
-            'rows.*.name' => ['nullable', 'string', 'max:500'],
-            'rows.*.qty'  => ['required', 'integer', 'min:1'],
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
         ]);
 
         try {
-            $result = $this->service->bulkAdd($invoice, $data['rows']);
+            $result = $this->service->bulkAddFromFile($invoice, $data['file']);
             return response()->json($result);
         } catch (LogicException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
