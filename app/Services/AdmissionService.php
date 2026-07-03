@@ -69,10 +69,13 @@ class AdmissionService
 
         // Remove only is_daily service items (per-day recurring charges) then
         // re-seed for the finalised date range.
+        // Daily supply services are stored under section = 'supplies' (see
+        // AdmissionObserver::seedDailyItems), not 'daily', so both must be
+        // cleared or discharge leaves stale supply rows and duplicates them.
         // is_once items (e.g. radiology, one-time fees) must NOT be deleted —
         // they are charged once per admission regardless of discharge date.
         $invoice->items()
-            ->where('section', 'daily')
+            ->whereIn('section', ['daily', 'supplies'])
             ->whereHasMorph('itemable', [\App\Models\Service::class], fn ($q) => $q->where('is_daily', true))
             ->delete();
 
