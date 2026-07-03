@@ -7,7 +7,6 @@
     "Email address": "البريد الإلكتروني",
     "Password": "كلمة المرور",
     "Remember me": "تذكرني",
-
     "Patients": "المرضى",
     "Admissions": "الإدخالات",
     "Invoice": "فاتورة",
@@ -19,7 +18,6 @@
     "Insurance Companies": "شركات التأمين",
     "Administration": "الإدارة",
     "Users": "المستخدمون",
-
     "Total Patients": "إجمالي المرضى",
     "Active Admissions": "الإدخالات النشطة",
     "Draft Invoices": "الفواتير المسودة",
@@ -27,7 +25,6 @@
     "View": "عرض",
     "Welcome back,": "مرحباً بعودتك،",
     "You are signed in as": "أنت مسجل الدخول كـ",
-
     "Register Patient": "تسجيل مريض",
     "Edit Patient": "تعديل بيانات مريض",
     "Full Name": "الاسم الكامل",
@@ -53,7 +50,6 @@
     "14-digit Egyptian National ID": "الرقم القومي المصري (14 رقماً)",
     "Select —": "— اختر —",
     "Showing :from–:to of :total": "عرض :from–:to من :total",
-
     "New Admission": "إدخال جديد",
     "Edit Admission": "تعديل الإدخال",
     "Patient": "المريض",
@@ -94,7 +90,6 @@
     "View Invoice": "عرض الفاتورة",
     "No invoice found for this admission.": "لا توجد فاتورة لهذا الإدخال.",
     "Admit Patient": "إدخال المريض",
-
     "Daily Services": "الخدمات اليومية",
     "Lab Tests": "تحاليل مخبرية",
     "Radiology": "أشعة",
@@ -121,7 +116,7 @@
     "Lab Test": "تحليل مخبري",
     "No items in this section.": "لا يوجد بنود في هذا القسم.",
     "Medications & Services Subtotal": "مجموع الأدوية والخدمات",
-    "Daily Charges": "رسوم يومية",
+    "Daily Charges": "اجمالى الاقامة ",
     "Daily Hospital Charges": "رسوم المستشفى اليومية",
     "No invoices found.": "لا توجد فواتير.",
     "Remove this item?": "حذف هذا البند؟",
@@ -148,7 +143,6 @@
     "Unit": "الوحدة",
     "All statuses ": "جميع الحالات",
     "entries": "بنود",
-
     "Monthly Report": "التقرير الشهري",
     "Month": "الشهر",
     "Admissions count": "الإدخالات",
@@ -160,7 +154,6 @@
     "Generate": "عرض",
     "MONTHLY BILLING REPORT": "التقرير الشهري للفوترة",
     "ACTIVE": "نشط",
-
     "Add Medication": "إضافة دواء",
     "Edit Medication": "تعديل دواء",
     "Add": "إضافة",
@@ -171,7 +164,6 @@
     "Search by name or unit…": "ابحث بالاسم أو الوحدة...",
     "No medications found.": "لا يوجد أدوية.",
     "Delete this medication?": "حذف هذا الدواء؟",
-
     "Add Service": "إضافة خدمة",
     "Edit Service": "تعديل خدمة",
     "Daily": "يومي",
@@ -179,7 +171,6 @@
     "Search by name…": "ابحث بالاسم...",
     "No services found.": "لا يوجد خدمات.",
     "Delete this service?": "حذف هذه الخدمة؟",
-
     "Add Insurance Company": "إضافة شركة تأمين",
     "Edit Insurance Company": "تعديل شركة تأمين",
     "Add Company": "إضافة شركة",
@@ -189,7 +180,6 @@
     "Delete this insurance company?": "حذف شركة التأمين هذه؟",
     "Company Name": "اسم الشركة",
     "Phone, email, address…": "الهاتف، البريد الإلكتروني، العنوان...",
-
     "User Management": "إدارة المستخدمين",
     "New User": "مستخدم جديد",
     "Create User": "إنشاء مستخدم",
@@ -213,7 +203,6 @@
     "Search": "بحث",
     "Clear": "مسح",
     "New": "جديد",
-
     "Description": "الوصف",
     "No items": "لا يوجد بنود",
     "Patient": "المريض",
@@ -224,7 +213,6 @@
     "Authorised by": "اعتمده",
     "Medications & Services": "الأدوية والخدمات",
     "Daily Hospital Charges": "الرسوم اليومية",
-
     "Registered": "تم التسجيل",
     "Patient registered successfully.": "تم تسجيل المريض بنجاح.",
     "Updated": "تم التحديث",
@@ -264,7 +252,6 @@
     "deactivated": "مُعطَّل",
     "Activated": "تم التفعيل",
     "Deactivated": "تم إلغاء التفعيل",
-
     "Settings": "الإعدادات",
     "Save Settings": "حفظ الإعدادات",
     "Settings saved successfully.": "تم حفظ الإعدادات بنجاح.",
@@ -274,16 +261,13 @@
     "Applied to the local medications subtotal on every invoice.": "يُطبَّق على إجمالي الأدوية المحلية في كل فاتورة.",
     "Applied to the imported medications subtotal on every invoice.": "يُطبَّق على إجمالي الأدوية المستوردة في كل فاتورة.",
     "Discounts affect the invoice grand total. Existing draft invoices will be recalculated automatically on next view.": "الخصومات تؤثر على الإجمالي الكلي للفاتورة. سيتم إعادة حساب الفواتير المسودة تلقائياً عند عرضها.",
-
     "Linked Services": "الخدمات المرتبطة",
     "Select linked services": "اختر الخدمات المرتبطة",
     "These services will be added automatically when this service is added to an invoice.": "سيتم إضافة هذه الخدمات تلقائياً عند إضافة هذه الخدمة إلى الفاتورة.",
     "Daily services are auto-charged per day from admission to discharge.": "الخدمات اليومية تُحسب تلقائياً عن كل يوم من تاريخ الدخول حتى الخروج.",
-
     "Daily": "يومي",
     "Lab": "تحاليل",
     "Radiology": "أشعة",
-
     "Invoice Sections": "أقسام الفاتورة",
     "Invoice Categories": "أقسام الفاتورة",
     "Invoice Section": "قسم الفاتورة",
@@ -301,7 +285,6 @@
     "Category updated successfully.": "تم تعديل القسم بنجاح.",
     "Delete this category?": "هل تريد حذف هذا القسم؟",
     "No categories yet.": "لا توجد أقسام بعد.",
-
     "Hospital Information": "بيانات المستشفى",
     "Hospital Name": "اسم المستشفى",
     "P.O. Box": "صندوق البريد",
@@ -320,7 +303,6 @@
     "PNG or JPG, max 2MB. Appears in the invoice header.": "PNG أو JPG، الحد الأقصى 2MB. يظهر في رأس الفاتورة.",
     "The logo is embedded in PDF invoices. For best results use a PNG with transparent background (max 300×100px).": "الشعار يُدمج في فواتير PDF. للحصول على أفضل نتيجة استخدم PNG بخلفية شفافة (300×100 بكسل).",
     "services": "خدمة",
-
     "Claim Sheet": "كشف المطالبة",
     "Patient List": "قائمة الحالات",
     "Summary": "المجمع",
@@ -356,7 +338,7 @@
     "cases": "حالة",
     "Local Meds": "أدوية محلية",
     "Imported Meds": "أدوية مستوردة",
-    "Subtotal": "المجموع الجزئي",
+    "Subtotal": " اجمالى الاقامة",
     "Qty": "الكمية",
     "Unit Price": "سعر الوحدة",
     "Date": "التاريخ",
