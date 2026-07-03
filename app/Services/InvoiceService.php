@@ -92,7 +92,7 @@ class InvoiceService
 
     /**
      * Parse an uploaded Excel/CSV sheet (columns: Name, Qty, Code) and bulk-add
-     * the matched medications via bulkAdd().
+     * the matched medications/supplies via bulkAdd().
      *
      * A row is only treated as data if its Qty column is numeric — this
      * transparently skips a header row and any blank lines.
@@ -132,10 +132,10 @@ class InvoiceService
     }
 
     /**
-     * Bulk-add medications from parsed Excel rows.
+     * Bulk-add medications and supplies from parsed Excel rows.
      *
      * Each row: ['name' => string, 'code' => string, 'qty' => int]
-     * Match priority: exact code → partial name (case-insensitive).
+     * Match priority: exact code → partial name (case-insensitive), medications first, then supplies.
      *
      * Returns ['added' => [...], 'not_found' => [...], 'invoice_total' => float]
      */
@@ -154,25 +154,35 @@ class InvoiceService
             $name = trim((string) ($row['name'] ?? ''));
             $qty  = max(1, (int) ($row['qty'] ?? 1));
 
-            $med = null;
+            $itemType = 'medication';
+            $match    = null;
 
             if ($code !== '') {
-                $med = Medication::where('code', $code)->first();
+                $match = Medication::where('code', $code)->first();
+            }
+            if (!$match && $name !== '') {
+                $match = Medication::whereRaw('TRIM(name) LIKE ?', ['%' . $name . '%'])->first();
             }
 
-            if (!$med && $name !== '') {
-                $med = Medication::whereRaw('TRIM(name) LIKE ?', ['%' . $name . '%'])->first();
+            if (!$match) {
+                $itemType = 'supplies';
+                if ($code !== '') {
+                    $match = Service::where('category', 'supplies')->where('code', $code)->first();
+                }
+                if (!$match && $name !== '') {
+                    $match = Service::where('category', 'supplies')->whereRaw('TRIM(name) LIKE ?', ['%' . $name . '%'])->first();
+                }
             }
 
-            if (!$med) {
+            if (!$match) {
                 $notFound[] = ['code' => $code, 'name' => $name, 'qty' => $qty];
                 continue;
             }
 
-            // If this medication already has a line in the invoice, add to it.
+            // If this item already has a line in the invoice, add to it.
             $existing = $invoice->items()
-                ->where('itemable_type', Medication::class)
-                ->where('itemable_id', $med->id)
+                ->where('itemable_type', $match::class)
+                ->where('itemable_id', $match->id)
                 ->first();
 
             if ($existing) {
@@ -183,7 +193,7 @@ class InvoiceService
 
                 $updated[] = [
                     'id'          => $existing->id,
-                    'name'        => $med->name,
+                    'name'        => $match->name,
                     'qty'         => $existing->qty,
                     'unit_price'  => (float) $existing->unit_price,
                     'total'       => (float) $existing->total,
@@ -192,16 +202,16 @@ class InvoiceService
                 ];
             } else {
                 $item = $this->createItem($invoice, [
-                    'item_type'   => 'medication',
-                    'itemable_id' => $med->id,
+                    'item_type'   => $itemType,
+                    'itemable_id' => $match->id,
                     'qty'         => $qty,
-                    'unit_price'  => (float) $med->price,
+                    'unit_price'  => (float) $match->price,
                 ]);
 
                 $added[] = [
                     'id'          => $item->id,
-                    'name'        => $med->name,
-                    'unit'        => $med->unit ?? '',
+                    'name'        => $match->name,
+                    'unit'        => $match->unit ?? '',
                     'qty'         => $item->qty,
                     'unit_price'  => (float) $item->unit_price,
                     'total'       => (float) $item->total,

@@ -211,7 +211,7 @@
         </button>
         <div class="collapse mt-2" id="bulkImportPanel">
             <p class="text-muted small mb-2">
-                {{ __('Upload an Excel sheet — columns in order: Item Name, Qty, Item Code. The system matches by code first, then by name. If the code column is empty or not found, the row is added to the warning list.') }}
+                {{ __('Upload an Excel sheet — columns in order: Item Name, Qty, Item Code. Matches medications first, then supplies — by code, then by name. If neither is found, the row is added to the warning list.') }}
             </p>
             <input type="file" id="bulkFileInput" class="form-control form-control-sm mb-2"
                    accept=".xlsx,.xls,.csv">
