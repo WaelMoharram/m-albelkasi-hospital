@@ -406,7 +406,7 @@
                     </tbody>
                     <tfoot class="table-light {{ $allSvcItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
                         <tr>
-                            <td colspan="4" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
+                            <td colspan="4" class="text-end small fw-semibold">{{ __('Invoice Subtotal') }}</td>
                             <td class="text-end fw-bold" id="subtotal-daily">{{ number_format($allSvcItems->sum('total'), 2) }}</td>
                             <td colspan="{{ $isDraft ? 2 : 1 }}"></td>
                         </tr>
@@ -539,7 +539,7 @@
                     </tbody>
                     <tfoot class="table-light {{ $rawItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-{{ $sectionKey }}">
                         <tr>
-                            <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ __('Subtotal') }}</td>
+                            <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ $meta['subtotal_label'] }}</td>
                             <td class="text-end fw-bold" id="subtotal-{{ $sectionKey }}">{{ number_format($rawItems->sum('total'), 2) }}</td>
                             @if($isDraft) <td></td> @endif
                         </tr>
@@ -576,24 +576,7 @@
         @endforeach
     </div>
 
-    {{-- Daily + other services summary row --}}
     @php $dailyItems = $allSvcItems; @endphp
-    @if($dailyItems->isNotEmpty())
-    <div class="card-body border-bottom py-3 bg-light bg-opacity-50">
-        <div class="d-flex align-items-center justify-content-between">
-            <span class="small text-muted">
-                <i class="bi bi-calendar-check ms-1"></i>
-                {{ __('Daily Hospital Charges') }}
-                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1">
-                    {{ $dailyItems->count() }} {{ __('entries') }}
-                </span>
-            </span>
-            <span class="text-muted small">
-                {{ __('Subtotal') }}: <strong class="text-dark">{{ number_format($dailyItems->sum('total'), 2) }}</strong>
-            </span>
-        </div>
-    </div>
-    @endif
 
     {{-- Grand total --}}
     <div class="card-body py-3">
