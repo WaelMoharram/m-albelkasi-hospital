@@ -17,7 +17,8 @@ function renderData(data) {
     '<p><strong>' + data.patient_name + '</strong> — فاتورة #' + data.invoice_id + '</p>' +
     '<p class="muted">صُدِّرت: ' + new Date(data.exported_at).toLocaleString('ar-EG') + '</p>' +
     '<p>إجراءات/تحاليل: ' + data.procedures.length +
-    ' — أدوية: ' + data.medications.length +
+    ' — أدوية محلية: ' + data.local_medications.length +
+    ' — أدوية مستوردة: ' + data.imported_medications.length +
     ' — مستلزمات: ' + data.supplies.length + '</p>';
 }
 
