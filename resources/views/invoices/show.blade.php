@@ -76,9 +76,57 @@
     $billableTotal = $invoice->items
         ->whereIn('section', array_keys($sections))
         ->sum('total');
+
+    // ── HIO export payload — read by the browser extension that fills the ──
+    // government insurance portal. Bucket names map to that portal's two
+    // entry sections: "procedures" → اضافة اجراءات (invoice + lab items),
+    // "medications"/"supplies" → اضافة الأدوية والمستلزمات الطبية.
+    $hioBucket = function ($rawItems) {
+        return $rawItems->groupBy('itemable_id')->map(function ($rows) {
+            $first = $rows->first();
+            return [
+                'code'       => $first->itemable->code ?? null,
+                'name'       => $first->itemable->name ?? null,
+                'qty'        => (int) $rows->sum('qty'),
+                'unit_price' => (float) $first->unit_price,
+            ];
+        })->values();
+    };
+
+    $hioProcedures = collect();
+    foreach ($dailyCategoryGroups as $group) {
+        foreach ($group['items'] as $item) {
+            $hioProcedures->push([
+                'code'       => $item->itemable->code ?? null,
+                'name'       => $item->itemable->name ?? null,
+                'qty'        => (int) $item->qty,
+                'unit_price' => (float) $item->unit_price,
+            ]);
+        }
+    }
+    $hioProcedures = $hioProcedures
+        ->merge($hioBucket($grouped['lab'] ?? collect()))
+        ->merge($hioBucket($grouped['other'] ?? collect()))
+        ->values();
+
+    $hioExport = [
+        'invoice_id'   => $invoice->id,
+        'admission_id' => $admission->id,
+        'patient_name' => $patient->name,
+        'national_id'  => $patient->national_id,
+        'exported_at'  => now()->toIso8601String(),
+        'procedures'   => $hioProcedures,
+        'medications'  => $hioBucket($grouped['local_med'] ?? collect())
+            ->merge($hioBucket($grouped['imported_med'] ?? collect()))
+            ->values(),
+        'supplies'     => $hioBucket($grouped['supplies'] ?? collect())->values(),
+    ];
 @endphp
 
 @section('content')
+
+{{-- Read by the HIO autofill browser extension — see /hio-extension --}}
+<script type="application/json" id="hio-export-data">{!! json_encode($hioExport, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 
 {{-- ── Action bar ─────────────────────────────────────────────────────── --}}
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
