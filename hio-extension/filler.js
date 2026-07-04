@@ -126,8 +126,14 @@
   // click happen in the page context, exactly as if the user clicked it.
   function clickInPage(elementId) {
     const s = document.createElement('script');
+    // For an <a href="javascript:...postback..."> run its code directly (most
+    // reliable — a programmatic .click() doesn't always follow a javascript:
+    // href). For anything else, just click it in page context.
     s.textContent =
-      '(function(){var el=document.getElementById(' + JSON.stringify(elementId) + ');if(el)el.click();})();';
+      '(function(){var el=document.getElementById(' + JSON.stringify(elementId) + ');if(!el)return;' +
+      'var h=el.getAttribute&&el.getAttribute("href");' +
+      'if(h&&h.slice(0,11)==="javascript:"){try{eval(h.slice(11));return;}catch(e){}}' +
+      'el.click();})();';
     document.documentElement.appendChild(s);
     s.remove();
   }
