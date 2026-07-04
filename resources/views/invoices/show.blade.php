@@ -67,10 +67,10 @@
     });
 
     $sections = [
-        'local_med'    => ['label' => __('Local Medications'),    'icon' => 'bi-capsule',      'color' => 'success'],
-        'imported_med' => ['label' => __('Imported Medications'), 'icon' => 'bi-capsule-pill', 'color' => 'warning'],
-        'supplies'     => ['label' => __('Supplies'),             'icon' => 'bi-box-seam',     'color' => 'secondary'],
-        'lab'          => ['label' => __('Lab'),                  'icon' => 'bi-eyedropper',   'color' => 'info'],
+        'local_med'    => ['label' => __('Local Medications'),    'subtotal_label' => __('Local Medications Subtotal'),    'icon' => 'bi-capsule',      'color' => 'success'],
+        'imported_med' => ['label' => __('Imported Medications'), 'subtotal_label' => __('Imported Medications Subtotal'), 'icon' => 'bi-capsule-pill', 'color' => 'warning'],
+        'supplies'     => ['label' => __('Supplies'),             'subtotal_label' => __('Supplies Subtotal'),             'icon' => 'bi-box-seam',     'color' => 'secondary'],
+        'lab'          => ['label' => __('Lab'),                  'subtotal_label' => __('Lab Subtotal'),                  'icon' => 'bi-eyedropper',   'color' => 'info'],
     ];
 
     $billableTotal = $invoice->items
@@ -600,16 +600,21 @@
         <div class="row justify-content-start">
             <div class="col-md-5">
                 <table class="table table-sm mb-0">
-                    <tr>
-                        <td class="text-muted small border-0">{{ __('Medications & Services Subtotal') }}</td>
-                        <td class="text-end border-0 fw-medium">{{ number_format($billableTotal, 2) }}</td>
-                    </tr>
                     @if($dailyItems->isNotEmpty())
                     <tr>
                         <td class="text-muted small border-0">{{ __('Daily Charges') }}</td>
                         <td class="text-end border-0 fw-medium">{{ number_format($dailyItems->sum('total'), 2) }}</td>
                     </tr>
                     @endif
+                    @foreach ($sections as $sectionKey => $meta)
+                    @php $sectionTotal = ($grouped[$sectionKey] ?? collect())->sum('total'); @endphp
+                    @if($sectionTotal > 0)
+                    <tr>
+                        <td class="text-muted small border-0">{{ $meta['subtotal_label'] }}</td>
+                        <td class="text-end border-0 fw-medium">{{ number_format($sectionTotal, 2) }}</td>
+                    </tr>
+                    @endif
+                    @endforeach
                     <tr class="border-top">
                         <td class="fw-bold pt-2 border-0">{{ __('GRAND TOTAL') }}</td>
                         <td class="text-end fw-bold fs-5 pt-2 border-0" id="grand-total-display">
