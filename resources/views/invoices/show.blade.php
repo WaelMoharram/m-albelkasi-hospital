@@ -94,18 +94,18 @@
         })->values();
     };
 
-    $hioProcedures = collect();
-    foreach ($dailyCategoryGroups as $group) {
-        foreach ($group['items'] as $item) {
-            $hioProcedures->push([
-                'code'       => $item->itemable->code ?? null,
-                'name'       => $item->itemable->name ?? null,
-                'qty'        => (int) $item->qty,
-                'unit_price' => (float) $item->unit_price,
-            ]);
-        }
-    }
-    $hioProcedures = $hioProcedures
+    // Built from $dailyFlat directly (not $dailyCategoryGroups / $allSvcItems)
+    // because those are filtered to invoice_category_id !== null — that
+    // filter only exists for the الفاتورة tab's display grouping. Most daily
+    // services have no invoice_category_id assigned but still carry a real
+    // HIO code, so reusing that filter here silently dropped them from the
+    // export instead of sending them to HIO at all.
+    $hioDailyItems = $dailyFlat->filter(function ($_item) {
+        $_svc = $_item->itemable;
+        return $_svc && ($_svc instanceof \App\Models\Service) && $_svc->category !== 'supplies';
+    });
+
+    $hioProcedures = $hioBucket($hioDailyItems)
         ->merge($hioBucket($grouped['lab'] ?? collect()))
         ->merge($hioBucket($grouped['other'] ?? collect()))
         ->values();

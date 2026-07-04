@@ -265,7 +265,12 @@
     setSelectValue(select, item.code, cfg.useChosen);
 
     if (cfg.autoPrice) {
-      await waitForPriceOrTimeout(cfg.priceId, 2500);
+      const gotPrice = await waitForPriceOrTimeout(cfg.priceId, 4000);
+      if (!gotPrice) {
+        log.push({ status: 'err', item, message: 'السعر لم يُعبَّأ من HIO خلال 4 ثوانى — أضِفه يدويًا' });
+        idx++; persist(); renderLog(); updateProgress();
+        return;
+      }
     } else {
       // Medications/supplies never auto-fill — set from our own catalog data.
       await sleep(400);
