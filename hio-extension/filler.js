@@ -18,6 +18,7 @@
       priceId: 'ContentPlaceHolder1_txtservicePrice',
       addBtnId: 'ContentPlaceHolder1_btnAdd',
       msgId: 'ContentPlaceHolder1_lbmsg',
+      gridId: 'ContentPlaceHolder1_grdextraservice',
       autoPrice: true,
       label: 'إجراء / تحليل',
     },
@@ -29,6 +30,7 @@
       unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
       msgId: 'ContentPlaceHolder1_lbmsgDrug',
+      gridId: 'ContentPlaceHolder1_grdExtraDrug',
       autoPrice: false,
       mainClassValue: '1',
       discountValue: '15', // محلى
@@ -42,6 +44,7 @@
       unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
       msgId: 'ContentPlaceHolder1_lbmsgDrug',
+      gridId: 'ContentPlaceHolder1_grdExtraDrug',
       autoPrice: false,
       mainClassValue: '1',
       discountValue: '7', // مستورد
@@ -55,6 +58,7 @@
       unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
       msgId: 'ContentPlaceHolder1_lbmsgDrug',
+      gridId: 'ContentPlaceHolder1_grdExtraDrug',
       autoPrice: false,
       mainClassValue: '2',
       discountValue: '0', // لا يوجد
@@ -115,6 +119,34 @@
 
   function findOption(select, code) {
     return Array.from(select.options).some((o) => o.value === String(code));
+  }
+
+  function gridHasCode(gridId, code) {
+    const g = document.getElementById(gridId);
+    if (!g) return false;
+    return Array.from(g.rows).some((r) =>
+      Array.from(r.querySelectorAll('td')).some((td) => td.textContent.trim() === String(code))
+    );
+  }
+
+  // Confirm an add actually went through. Verified live: on success HIO both
+  // (a) sets the section's status label to "تم الاضافة" and clears the form's
+  // hidden id field, and (b) eventually shows the row in the result grid — BUT
+  // the grid re-renders on a delayed/batched postback that can land many
+  // seconds later (after the next item already started). So the label + the
+  // form reset is the immediate per-item signal; the grid is a slower backstop.
+  // We clear the label before clicking Add, so seeing it turn to "تم الاضافة"
+  // means THIS add succeeded, not a stale message from a previous one.
+  async function waitForAddConfirm(cfg, code, timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (isSessionExpired()) return false;
+      const msg = (document.getElementById(cfg.msgId)?.textContent || '').trim();
+      if (/تم\s*الا?ضافة/.test(msg)) return true;
+      if (gridHasCode(cfg.gridId, code)) return true;
+      await sleep(200);
+    }
+    return gridHasCode(cfg.gridId, code);
   }
 
   // Run an action that triggers AutoPostBack(s), then wait until the page fully
@@ -368,32 +400,33 @@
     const priceShown = document.getElementById(cfg.priceId)?.value || '—';
     setCurrent(`جارٍ الإضافة... السعر: ${priceShown}`);
 
-    // 5. Click Add — another postback. Clear the status message first so we can
-    //    tell it actually changed, then WAIT for the postback to complete.
+    // 5. Clear the status label first (so "تم الاضافة" can only mean THIS add),
+    //    click Add, wait for the postback chain to settle, then confirm the add
+    //    actually went through before moving on to the next item.
     const msgEl = document.getElementById(cfg.msgId);
     if (msgEl) msgEl.textContent = '';
-    const added = await actionAndSettle(() => {
+    await actionAndSettle(() => {
       const addBtn = document.getElementById(cfg.addBtnId);
       if (addBtn) addBtn.click();
     }, 15000);
     if (isSessionExpired()) return 'session_expired';
 
-    // 6. Confirm against HIO's own response message.
-    const resultMsg = (document.getElementById(cfg.msgId)?.textContent || '').trim();
-    const success = /تم\s*الا?ضافة/.test(resultMsg);
+    const success = await waitForAddConfirm(cfg, item.code, 12000);
 
+    // 6. Log the outcome.
+    const resultMsg = (document.getElementById(cfg.msgId)?.textContent || '').trim();
     log.push({
       status: success ? 'ok' : 'err',
       item,
       message: success
-        ? 'تمت الإضافة (تأكدنا من رسالة HIO)'
-        : (!added ? 'لم تكتمل استجابة HIO بعد الضغط على إضافة' : `فشلت الإضافة — رسالة HIO: "${resultMsg || 'بدون رسالة'}"`),
+        ? 'تمت الإضافة (ظهر البند فى الجدول)'
+        : `لم يظهر البند فى جدول HIO بعد الإضافة${resultMsg ? ' — رسالة: "' + resultMsg + '"' : ''}`,
     });
     idx++;
     persist();
     renderLog();
     updateProgress();
-    await sleep(400);
+    await sleep(500);
   }
 
   async function runLoop() {
