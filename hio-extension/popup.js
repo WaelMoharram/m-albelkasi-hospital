@@ -52,6 +52,17 @@ btnFill.addEventListener('click', async () => {
   setStatus('جارٍ فتح لوحة المساعدة فى صفحة HIO...');
   const tab = await getActiveTab();
   try {
+    // inpage.js runs in the page's MAIN world. Injecting it via executeScript
+    // with world:'MAIN' bypasses the page/extension CSP that blocks inline
+    // <script> injection — it's how we run code in page context (bridge +
+    // clicking the anchor "اضافة" button) without an inline script.
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      world: 'MAIN',
+      files: ['inpage.js'],
+    });
+    // filler.js runs in the isolated world (needs chrome.storage); it talks to
+    // inpage.js via window.postMessage / shared DOM attributes.
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: ['filler.js'],

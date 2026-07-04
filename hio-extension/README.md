@@ -73,4 +73,10 @@
 - `popup.html` / `popup.js` — واجهة الأيقونة (تصدير / بدء المساعدة / مسح)
 - `scraper.js` — بيتنفذ على صفحة الفاتورة عندنا، بيقرأ `#hio-export-data`
   (بيانات JSON مخفية بيحطها `resources/views/invoices/show.blade.php`)
-- `filler.js` — بيتنفذ على صفحة HIO، بيبني لوحة المساعدة ويملأ الحقول بند بند
+- `filler.js` — بيتنفذ على صفحة HIO فى العالم المعزول (بيقدر يوصل
+  `chrome.storage`)، بيبني لوحة المساعدة ويملأ الحقول بند بند
+- `inpage.js` — بيتحقن فى عالم الصفحة الأصلى (MAIN world) عبر
+  `executeScript({world:'MAIN'})` عشان يتخطّى الـ CSP اللى بيمنع حقن أى سكريبت
+  inline. مسؤول عن حاجتين: (1) مراقبة حالة الـ postback وكتابتها على
+  خصائص `<html>`، و(2) الضغط على زرار "اضافة" (اللى هو `<a href="javascript:">`)
+  فى سياق الصفحة لما `filler.js` يبعتله `postMessage`

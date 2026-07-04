@@ -88,54 +88,41 @@
   // ── ASP.NET async-postback bridge ────────────────────────────────────
   // The portal's item dropdowns (drpservice/drpdrug/radDrugMain/...) all have
   // AutoPostBack: selecting one fires a __doPostBack UpdatePanel round-trip
-  // that takes up to ~5 seconds. Clicking "Add" (itself another postback)
-  // while one is still in flight makes the add silently fail — this was the
-  // real cause of "everything fails to add".
+  // that takes up to ~5 seconds. Clicking "Add" while one is still in flight
+  // makes the add silently fail.
   //
   // filler.js runs in the isolated content-script world, so it can't read the
-  // page's Sys.WebForms.PageRequestManager directly. We inject a tiny MAIN-
-  // world <script> that mirrors postback state onto <html> data-attributes
-  // (which both worlds share): data-hio-pb = busy|idle, and data-hio-pbcount
-  // = number of completed postbacks. data-hio-bridge = ok means it hooked in.
+  // page's Sys.WebForms.PageRequestManager or click a javascript:-href anchor
+  // in page context — and the page/extension CSP blocks injecting an inline
+  // <script> to do it. Instead popup.js injects inpage.js into the MAIN world
+  // (via executeScript world:'MAIN', which bypasses CSP). inpage.js mirrors
+  // postback state onto <html> data-attributes (data-hio-pb = busy|idle) and,
+  // on window.postMessage({__hioClick: id}), clicks that element in page
+  // context. data-hio-bridge = ok means inpage.js is live.
   let bridgeOk = false;
-  function installPostbackBridge() {
-    const s = document.createElement('script');
-    s.textContent =
-      "(function(){try{var prm=Sys.WebForms.PageRequestManager.getInstance();" +
-      "var r=document.documentElement;r.setAttribute('data-hio-pb','idle');" +
-      "if(!r.getAttribute('data-hio-pbcount'))r.setAttribute('data-hio-pbcount','0');" +
-      "prm.add_beginRequest(function(){r.setAttribute('data-hio-pb','busy');});" +
-      "prm.add_endRequest(function(){r.setAttribute('data-hio-pbcount',String((parseInt(r.getAttribute('data-hio-pbcount'),10)||0)+1));r.setAttribute('data-hio-pb','idle');});" +
-      "r.setAttribute('data-hio-bridge','ok');}catch(e){document.documentElement.setAttribute('data-hio-bridge','err');}})();";
-    document.documentElement.appendChild(s);
-    s.remove();
-    bridgeOk = document.documentElement.getAttribute('data-hio-bridge') === 'ok';
-    return bridgeOk;
+  async function waitForInpageBridge(timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (document.documentElement.getAttribute('data-hio-bridge') === 'ok') {
+        bridgeOk = true;
+        return true;
+      }
+      await sleep(100);
+    }
+    return false; // inpage.js not ready — actionAndSettle falls back to delays
   }
 
   function pbState() {
     return document.documentElement.getAttribute('data-hio-pb') || 'idle';
   }
 
-  // Click a page element from the page's OWN (main-world) context. Needed for
-  // the procedures "اضافة" button, which is an <a href="javascript:WebForm_
-  // DoPostBackWithOptions(...)"> — a programmatic .click() from this isolated
-  // content-script world does NOT run a javascript: href, so the postback
-  // never fired and the procedure was never added (drugs worked because their
-  // button is a plain <input type=submit>). Injecting a <script> makes the
-  // click happen in the page context, exactly as if the user clicked it.
+  // Ask inpage.js (MAIN world) to click an element in page context. Needed for
+  // the procedures "اضافة" button, an <a href="javascript:...postback">: a
+  // .click() from this isolated world doesn't run the javascript: href, so the
+  // postback never fired and the procedure was never added (drugs worked
+  // because their button is a plain <input type=submit>).
   function clickInPage(elementId) {
-    const s = document.createElement('script');
-    // For an <a href="javascript:...postback..."> run its code directly (most
-    // reliable — a programmatic .click() doesn't always follow a javascript:
-    // href). For anything else, just click it in page context.
-    s.textContent =
-      '(function(){var el=document.getElementById(' + JSON.stringify(elementId) + ');if(!el)return;' +
-      'var h=el.getAttribute&&el.getAttribute("href");' +
-      'if(h&&h.slice(0,11)==="javascript:"){try{eval(h.slice(11));return;}catch(e){}}' +
-      'el.click();})();';
-    document.documentElement.appendChild(s);
-    s.remove();
+    window.postMessage({ __hioClick: elementId }, '*');
   }
 
   function findOption(select, code) {
@@ -496,7 +483,15 @@
       panel.remove();
       return;
     }
-    installPostbackBridge();
+    // inpage.js (MAIN world) is injected by popup.js just before us; it does
+    // the page-context work (postback bridge + clicking the Add button), so
+    // wait for it. Without it, the Add can't be clicked at all — bail clearly.
+    const bridgeReady = await waitForInpageBridge(6000);
+    if (!bridgeReady) {
+      document.getElementById('hioCurrent').innerHTML =
+        '<div class="hio-item hio-err">تعذّر تحميل مُساعد الصفحة (inpage.js). أعد تحميل الإكستنشن من chrome://extensions ثم صفحة HIO وجرّب تانى.</div>';
+      return;
+    }
     queue = buildQueue(stored.hioExportData);
     if (stored.hioFillProgress) {
       idx = stored.hioFillProgress.idx || 0;
