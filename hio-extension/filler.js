@@ -18,7 +18,6 @@
       priceId: 'ContentPlaceHolder1_txtservicePrice',
       addBtnId: 'ContentPlaceHolder1_btnAdd',
       msgId: 'ContentPlaceHolder1_lbmsg',
-      useChosen: false,
       autoPrice: true,
       label: 'إجراء / تحليل',
     },
@@ -30,7 +29,6 @@
       unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
       msgId: 'ContentPlaceHolder1_lbmsgDrug',
-      useChosen: true,
       autoPrice: false,
       mainClassValue: '1',
       discountValue: '15', // محلى
@@ -44,7 +42,6 @@
       unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
       msgId: 'ContentPlaceHolder1_lbmsgDrug',
-      useChosen: true,
       autoPrice: false,
       mainClassValue: '1',
       discountValue: '7', // مستورد
@@ -58,7 +55,6 @@
       unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
       msgId: 'ContentPlaceHolder1_lbmsgDrug',
-      useChosen: true,
       autoPrice: false,
       mainClassValue: '2',
       discountValue: '0', // لا يوجد
@@ -85,17 +81,87 @@
     return q;
   }
 
+  // ── ASP.NET async-postback bridge ────────────────────────────────────
+  // The portal's item dropdowns (drpservice/drpdrug/radDrugMain/...) all have
+  // AutoPostBack: selecting one fires a __doPostBack UpdatePanel round-trip
+  // that takes up to ~5 seconds. Clicking "Add" (itself another postback)
+  // while one is still in flight makes the add silently fail — this was the
+  // real cause of "everything fails to add".
+  //
+  // filler.js runs in the isolated content-script world, so it can't read the
+  // page's Sys.WebForms.PageRequestManager directly. We inject a tiny MAIN-
+  // world <script> that mirrors postback state onto <html> data-attributes
+  // (which both worlds share): data-hio-pb = busy|idle, and data-hio-pbcount
+  // = number of completed postbacks. data-hio-bridge = ok means it hooked in.
+  let bridgeOk = false;
+  function installPostbackBridge() {
+    const s = document.createElement('script');
+    s.textContent =
+      "(function(){try{var prm=Sys.WebForms.PageRequestManager.getInstance();" +
+      "var r=document.documentElement;r.setAttribute('data-hio-pb','idle');" +
+      "if(!r.getAttribute('data-hio-pbcount'))r.setAttribute('data-hio-pbcount','0');" +
+      "prm.add_beginRequest(function(){r.setAttribute('data-hio-pb','busy');});" +
+      "prm.add_endRequest(function(){r.setAttribute('data-hio-pbcount',String((parseInt(r.getAttribute('data-hio-pbcount'),10)||0)+1));r.setAttribute('data-hio-pb','idle');});" +
+      "r.setAttribute('data-hio-bridge','ok');}catch(e){document.documentElement.setAttribute('data-hio-bridge','err');}})();";
+    document.documentElement.appendChild(s);
+    s.remove();
+    bridgeOk = document.documentElement.getAttribute('data-hio-bridge') === 'ok';
+    return bridgeOk;
+  }
+
+  function pbState() {
+    return document.documentElement.getAttribute('data-hio-pb') || 'idle';
+  }
+
   function findOption(select, code) {
     return Array.from(select.options).some((o) => o.value === String(code));
   }
 
-  function setSelectValue(select, code, useChosen) {
-    select.value = String(code);
-    if (useChosen && window.jQuery) {
-      window.jQuery(select).trigger('chosen:updated').trigger('change');
-    } else {
-      select.dispatchEvent(new Event('change', { bubbles: true }));
+  // Run an action that triggers AutoPostBack(s), then wait until the page fully
+  // settles. Confirmed live: ONE dropdown selection fires ~2 chained postbacks
+  // and stays "busy" for ~6s, and the server-filled fields (e.g. price) are
+  // only correct after the WHOLE chain finishes. So we wait for "busy" to
+  // appear, then for "idle" to hold steady (past every chained postback) —
+  // not just the first one. Falls back to a fixed delay without the bridge.
+  async function actionAndSettle(fn, timeoutMs) {
+    if (!bridgeOk) {
+      fn();
+      await sleep(6000);
+      return true;
     }
+    fn();
+    const start = Date.now();
+    // 1. Wait for the first postback to start (page goes busy).
+    let sawBusy = false;
+    while (Date.now() - start < 2500) {
+      if (pbState() === 'busy') { sawBusy = true; break; }
+      if (isSessionExpired()) return false;
+      await sleep(80);
+    }
+    if (!sawBusy) return true; // no postback was triggered at all
+    // 2. Wait for idle to hold ~700ms straight (past all chained postbacks).
+    let idleSince = null;
+    while (Date.now() - start < timeoutMs) {
+      if (isSessionExpired()) return false;
+      if (pbState() === 'idle') {
+        if (idleSince === null) idleSince = Date.now();
+        else if (Date.now() - idleSince > 700) return true;
+      } else {
+        idleSince = null;
+      }
+      await sleep(100);
+    }
+    return false; // never settled
+  }
+
+  async function waitForValue(id, timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const el = document.getElementById(id);
+      if (el && el.value) return true;
+      await sleep(120);
+    }
+    return false;
   }
 
   function setInputValue(input, value) {
@@ -104,39 +170,25 @@
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  async function waitForPriceOrTimeout(priceId, timeoutMs) {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      const el = document.getElementById(priceId);
-      if (el && el.value) return true;
-      await sleep(150);
-    }
-    return false;
-  }
-
-  // drpservice/drpdrug (~2000+ options each) do NOT populate on page load —
-  // they only fill in once their classification dropdown's own change event
-  // actually fires, regardless of whether its value is already "selected".
-  // Checking `value !== target` to decide whether to fire is wrong: once one
-  // item in a run sets it, later items see "no change needed" and skip the
-  // event entirely, leaving the catalog stuck empty/stale for a fresh page.
-  async function ensureCatalogLoaded(cfg, timeoutMs) {
-    const select = document.getElementById(cfg.selectId);
-    if (select && select.options.length > 10) return select;
-
+  // Make sure the item dropdown is populated (and, for drugs/supplies, that
+  // radDrugMain reflects the correct category so the row is filed right).
+  // drpservice/drpdrug are empty until their main-class change fires; also we
+  // switch radDrugMain per bucket. Every such change is an AutoPostBack, so we
+  // wait for each one. We only fire when needed (empty list, or wrong category).
+  async function ensureMainClass(cfg) {
     const mainSel = cfg.mainSelId ? document.getElementById(cfg.mainSelId) : null;
-    if (mainSel) {
-      if (cfg.mainClassValue) mainSel.value = cfg.mainClassValue;
-      if (window.jQuery) window.jQuery(mainSel).trigger('chosen:updated').trigger('change');
-      else mainSel.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+    const select = document.getElementById(cfg.selectId);
+    const populated = select && select.options.length > 10;
+    const needsCategory = cfg.mainClassValue && mainSel && mainSel.value !== String(cfg.mainClassValue);
 
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      const el = document.getElementById(cfg.selectId);
-      if (el && el.options.length > 10) return el;
-      await sleep(200);
-    }
+    if (populated && !needsCategory) return select;
+    if (!mainSel) return select;
+
+    await actionAndSettle(() => {
+      if (cfg.mainClassValue) mainSel.value = String(cfg.mainClassValue);
+      mainSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }, 15000);
+
     return document.getElementById(cfg.selectId);
   }
 
@@ -248,9 +300,17 @@
       return;
     }
 
-    document.getElementById('hioCurrent').innerHTML =
-      `<div class="hio-item"><div class="name">${item.name}</div><div class="meta">جارٍ التأكد من تحميل قائمة ${cfg.label}...</div></div>`;
-    const select = await ensureCatalogLoaded(cfg, 8000);
+    const setCurrent = (note) => {
+      document.getElementById('hioCurrent').innerHTML = `<div class="hio-item">
+        <div class="name">${item.name}</div>
+        <div class="meta">${cfg.label} — كود: ${item.code} — الكمية: ${item.qty}</div>
+        <div class="meta">${note}</div></div>`;
+    };
+
+    // 1. Make sure the catalog is loaded and the category is right (postback).
+    setCurrent('جارٍ تحميل القائمة وضبط التصنيف...');
+    const select = await ensureMainClass(cfg);
+    if (isSessionExpired()) return 'session_expired';
     if (!select || select.options.length <= 10) {
       log.push({ status: 'err', item, message: `قائمة ${cfg.label} لم تُحمَّل فى صفحة HIO — أعد تحميل الصفحة وجرب تانى` });
       idx++; persist(); renderLog(); updateProgress();
@@ -262,62 +322,78 @@
       return;
     }
 
-    setSelectValue(select, item.code, cfg.useChosen);
+    // 2. Select the item — this fires ~2 chained AutoPostBacks (~6s total). WAIT
+    //    for the whole chain to settle before touching anything, otherwise the
+    //    price isn't filled yet and the Add below collides with the postback.
+    setCurrent('جارٍ اختيار الصنف والانتظار...');
+    const selected = await actionAndSettle(() => {
+      select.value = String(item.code);
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }, 15000);
+    if (isSessionExpired()) return 'session_expired';
+    if (!selected) {
+      log.push({ status: 'err', item, message: 'لم تكتمل استجابة HIO بعد اختيار الصنف — أعد المحاولة' });
+      idx++; persist(); renderLog(); updateProgress();
+      return;
+    }
 
+    // 3. Price / unit / discount — set AFTER the select postback so they don't
+    //    get wiped by it. (None of these fields auto-post-back.)
     if (cfg.autoPrice) {
-      const gotPrice = await waitForPriceOrTimeout(cfg.priceId, 4000);
+      // HIO fills this itself, but only once the whole postback chain is done —
+      // give it a little extra grace beyond settle before giving up.
+      const gotPrice = await waitForValue(cfg.priceId, 3000);
       if (!gotPrice) {
-        log.push({ status: 'err', item, message: 'السعر لم يُعبَّأ من HIO خلال 4 ثوانى — أضِفه يدويًا' });
+        log.push({ status: 'err', item, message: 'السعر لم يُعبَّأ من HIO — أضِفه يدويًا' });
         idx++; persist(); renderLog(); updateProgress();
         return;
       }
     } else {
-      // Medications/supplies never auto-fill — set from our own catalog data.
-      await sleep(400);
       const priceEl = document.getElementById(cfg.priceId);
       if (priceEl) setInputValue(priceEl, item.unit_price);
       const unitEl = document.getElementById(cfg.unitId);
       if (unitEl) setInputValue(unitEl, item.unit || cfg.unitFallback || 'قطعة');
       const discSel = document.getElementById('ContentPlaceHolder1_drpdiscount');
       if (discSel && cfg.discountValue !== undefined) {
-        setSelectValue(discSel, cfg.discountValue, true);
-        await sleep(300);
+        discSel.value = String(cfg.discountValue);
+        discSel.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
 
+    // 4. Quantity.
     const qtyEl = document.getElementById(cfg.qtyId);
     if (qtyEl) setInputValue(qtyEl, item.qty);
-    await sleep(200);
+    await sleep(150);
 
-    const priceEl2 = document.getElementById(cfg.priceId);
-    const price = priceEl2 ? priceEl2.value : '';
+    const priceShown = document.getElementById(cfg.priceId)?.value || '—';
+    setCurrent(`جارٍ الإضافة... السعر: ${priceShown}`);
 
-    document.getElementById('hioCurrent').innerHTML = `<div class="hio-item">
-      <div class="name">${item.name}</div>
-      <div class="meta">${cfg.label} — كود: ${item.code} — الكمية: ${item.qty}</div>
-      <div class="meta">السعر: ${price || '—'}</div>
-    </div>`;
-
+    // 5. Click Add — another postback. Clear the status message first so we can
+    //    tell it actually changed, then WAIT for the postback to complete.
     const msgEl = document.getElementById(cfg.msgId);
-    if (msgEl) msgEl.textContent = ''; // clear stale message so we can tell it actually changed
+    if (msgEl) msgEl.textContent = '';
+    const added = await actionAndSettle(() => {
+      const addBtn = document.getElementById(cfg.addBtnId);
+      if (addBtn) addBtn.click();
+    }, 15000);
+    if (isSessionExpired()) return 'session_expired';
 
-    const addBtn = document.getElementById(cfg.addBtnId);
-    if (addBtn) addBtn.click();
-    await sleep(1200);
-
-    const resultMsg = (msgEl && msgEl.textContent.trim()) || '';
-    const success = /تم\s*الاضافة|تم\s*الإضافة/.test(resultMsg);
+    // 6. Confirm against HIO's own response message.
+    const resultMsg = (document.getElementById(cfg.msgId)?.textContent || '').trim();
+    const success = /تم\s*الا?ضافة/.test(resultMsg);
 
     log.push({
       status: success ? 'ok' : 'err',
       item,
-      message: success ? 'تمت الإضافة (تأكدنا من رسالة HIO)' : `فشلت الإضافة — رسالة HIO: "${resultMsg || 'بدون رسالة'}"`,
+      message: success
+        ? 'تمت الإضافة (تأكدنا من رسالة HIO)'
+        : (!added ? 'لم تكتمل استجابة HIO بعد الضغط على إضافة' : `فشلت الإضافة — رسالة HIO: "${resultMsg || 'بدون رسالة'}"`),
     });
     idx++;
     persist();
     renderLog();
     updateProgress();
-    await sleep(800);
+    await sleep(400);
   }
 
   async function runLoop() {
@@ -344,6 +420,7 @@
       panel.remove();
       return;
     }
+    installPostbackBridge();
     queue = buildQueue(stored.hioExportData);
     if (stored.hioFillProgress) {
       idx = stored.hioFillProgress.idx || 0;
