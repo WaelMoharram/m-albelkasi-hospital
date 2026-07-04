@@ -12,6 +12,8 @@
   const BUCKETS = {
     procedure: {
       selectId: 'ContentPlaceHolder1_drpservice',
+      mainSelId: 'ContentPlaceHolder1_radMasterClass',
+      mainClassValue: '11', // اجور العمليات — value doesn't matter for coverage, just needs a change event
       qtyId: 'ContentPlaceHolder1_txtCount',
       priceId: 'ContentPlaceHolder1_txtservicePrice',
       addBtnId: 'ContentPlaceHolder1_btnAdd',
@@ -22,6 +24,7 @@
     },
     local_medication: {
       selectId: 'ContentPlaceHolder1_drpdrug',
+      mainSelId: 'ContentPlaceHolder1_radDrugMain',
       qtyId: 'ContentPlaceHolder1_txtDrugCount',
       priceId: 'ContentPlaceHolder1_txtprice',
       unitId: 'ContentPlaceHolder1_txtUnite',
@@ -35,6 +38,7 @@
     },
     imported_medication: {
       selectId: 'ContentPlaceHolder1_drpdrug',
+      mainSelId: 'ContentPlaceHolder1_radDrugMain',
       qtyId: 'ContentPlaceHolder1_txtDrugCount',
       priceId: 'ContentPlaceHolder1_txtprice',
       unitId: 'ContentPlaceHolder1_txtUnite',
@@ -48,6 +52,7 @@
     },
     supply: {
       selectId: 'ContentPlaceHolder1_drpdrug',
+      mainSelId: 'ContentPlaceHolder1_radDrugMain',
       qtyId: 'ContentPlaceHolder1_txtDrugCount',
       priceId: 'ContentPlaceHolder1_txtprice',
       unitId: 'ContentPlaceHolder1_txtUnite',
@@ -106,6 +111,32 @@
       await sleep(150);
     }
     return false;
+  }
+
+  // drpservice/drpdrug (~2000+ options each) do NOT populate on page load —
+  // they only fill in once their classification dropdown's own change event
+  // actually fires, regardless of whether its value is already "selected".
+  // Checking `value !== target` to decide whether to fire is wrong: once one
+  // item in a run sets it, later items see "no change needed" and skip the
+  // event entirely, leaving the catalog stuck empty/stale for a fresh page.
+  async function ensureCatalogLoaded(cfg, timeoutMs) {
+    const select = document.getElementById(cfg.selectId);
+    if (select && select.options.length > 10) return select;
+
+    const mainSel = cfg.mainSelId ? document.getElementById(cfg.mainSelId) : null;
+    if (mainSel) {
+      if (cfg.mainClassValue) mainSel.value = cfg.mainClassValue;
+      if (window.jQuery) window.jQuery(mainSel).trigger('chosen:updated').trigger('change');
+      else mainSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const el = document.getElementById(cfg.selectId);
+      if (el && el.options.length > 10) return el;
+      await sleep(200);
+    }
+    return document.getElementById(cfg.selectId);
   }
 
   function persist() {
@@ -199,18 +230,11 @@
       return;
     }
 
-    if (cfg.mainClassValue) {
-      const mainSel = document.getElementById('ContentPlaceHolder1_radDrugMain');
-      if (mainSel && mainSel.value !== cfg.mainClassValue) {
-        mainSel.value = cfg.mainClassValue;
-        mainSel.dispatchEvent(new Event('change', { bubbles: true }));
-        await sleep(1200);
-      }
-    }
-
-    const select = document.getElementById(cfg.selectId);
-    if (!select) {
-      log.push({ status: 'err', item, message: 'تعذر العثور على عنصر الاختيار فى الصفحة' });
+    document.getElementById('hioCurrent').innerHTML =
+      `<div class="hio-item"><div class="name">${item.name}</div><div class="meta">جارٍ التأكد من تحميل قائمة ${cfg.label}...</div></div>`;
+    const select = await ensureCatalogLoaded(cfg, 8000);
+    if (!select || select.options.length <= 10) {
+      log.push({ status: 'err', item, message: `قائمة ${cfg.label} لم تُحمَّل فى صفحة HIO — أعد تحميل الصفحة وجرب تانى` });
       idx++; persist(); renderLog(); updateProgress();
       return;
     }
