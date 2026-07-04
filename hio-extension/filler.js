@@ -117,6 +117,21 @@
     return document.documentElement.getAttribute('data-hio-pb') || 'idle';
   }
 
+  // Click a page element from the page's OWN (main-world) context. Needed for
+  // the procedures "اضافة" button, which is an <a href="javascript:WebForm_
+  // DoPostBackWithOptions(...)"> — a programmatic .click() from this isolated
+  // content-script world does NOT run a javascript: href, so the postback
+  // never fired and the procedure was never added (drugs worked because their
+  // button is a plain <input type=submit>). Injecting a <script> makes the
+  // click happen in the page context, exactly as if the user clicked it.
+  function clickInPage(elementId) {
+    const s = document.createElement('script');
+    s.textContent =
+      '(function(){var el=document.getElementById(' + JSON.stringify(elementId) + ');if(el)el.click();})();';
+    document.documentElement.appendChild(s);
+    s.remove();
+  }
+
   function findOption(select, code) {
     return Array.from(select.options).some((o) => o.value === String(code));
   }
@@ -428,8 +443,7 @@
     const msgEl = document.getElementById(cfg.msgId);
     if (msgEl) msgEl.textContent = '';
     await actionAndSettle(() => {
-      const addBtn = document.getElementById(cfg.addBtnId);
-      if (addBtn) addBtn.click();
+      clickInPage(cfg.addBtnId);
     }, 15000);
     if (isSessionExpired()) return 'session_expired';
 
