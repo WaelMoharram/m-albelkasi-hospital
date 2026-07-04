@@ -72,6 +72,7 @@
   let log = [];
   let paused = false;
   let running = false;
+  let sessionExpired = false;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -193,6 +194,11 @@
 
   function renderControls() {
     const box = document.getElementById('hioCurrent');
+    if (sessionExpired) {
+      box.innerHTML = `<div class="hio-item hio-err">انتهت صلاحية جلسة HIO أثناء التشغيل — الصفحة رجعت لتسجيل الدخول.<br>
+        سجّل الدخول تانى فى HIO، ارجع لنفس الفاتورة، وابدأ تانى — البنود اللي خلصت فعلاً محفوظة ومش هتتكرر.</div>`;
+      return;
+    }
     if (idx >= queue.length) {
       const ok = log.filter((l) => l.status === 'ok').length;
       const warn = log.filter((l) => l.status !== 'ok').length;
@@ -220,9 +226,21 @@
     document.getElementById('hioProgress').textContent = `البند ${Math.min(idx + 1, queue.length)} من ${queue.length}`;
   }
 
+  // The HIO portal times out the session after a while. Once that happens
+  // every click just lands on nothing (redirected to ProviderLogin.aspx),
+  // and every remaining item would otherwise get logged as a generic
+  // failure. Detect it up front and stop the whole run instead.
+  function isSessionExpired() {
+    return /ProviderLogin/i.test(window.location.href) || !!document.getElementById('txtloginName');
+  }
+
   async function processItem() {
     const item = queue[idx];
     const cfg = BUCKETS[item.bucket];
+
+    if (isSessionExpired()) {
+      return 'session_expired';
+    }
 
     if (!item.code) {
       log.push({ status: 'warn', item, message: 'لا يوجد كود HIO لهذا الصنف فى نظامنا — أضِفه يدويًا' });
@@ -301,7 +319,13 @@
     running = true;
     renderControls();
     while (idx < queue.length && !paused) {
-      await processItem();
+      const result = await processItem();
+      if (result === 'session_expired') {
+        sessionExpired = true;
+        paused = true;
+        persist();
+        break;
+      }
       if (idx < queue.length) renderControls();
     }
     running = false;
