@@ -4,31 +4,60 @@
     return;
   }
 
+  // Confirmed against the live portal: procedures/lab prices auto-fill from
+  // HIO's own catalog when the service code is selected. Medications and
+  // supplies NEVER auto-fill price/unit — the portal rejects the add with
+  // "ادخل سعر اصغر او اضغط وحدة صرف" if they're left empty — so those two
+  // fields are always set from our own catalog data instead.
   const BUCKETS = {
     procedure: {
       selectId: 'ContentPlaceHolder1_drpservice',
       qtyId: 'ContentPlaceHolder1_txtCount',
       priceId: 'ContentPlaceHolder1_txtservicePrice',
       addBtnId: 'ContentPlaceHolder1_btnAdd',
+      msgId: 'ContentPlaceHolder1_lbmsg',
       useChosen: false,
+      autoPrice: true,
       label: 'إجراء / تحليل',
     },
-    medication: {
+    local_medication: {
       selectId: 'ContentPlaceHolder1_drpdrug',
       qtyId: 'ContentPlaceHolder1_txtDrugCount',
       priceId: 'ContentPlaceHolder1_txtprice',
+      unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
+      msgId: 'ContentPlaceHolder1_lbmsgDrug',
       useChosen: true,
+      autoPrice: false,
       mainClassValue: '1',
-      label: 'دواء',
+      discountValue: '15', // محلى
+      label: 'دواء محلى',
+    },
+    imported_medication: {
+      selectId: 'ContentPlaceHolder1_drpdrug',
+      qtyId: 'ContentPlaceHolder1_txtDrugCount',
+      priceId: 'ContentPlaceHolder1_txtprice',
+      unitId: 'ContentPlaceHolder1_txtUnite',
+      addBtnId: 'ContentPlaceHolder1_btndrugsave',
+      msgId: 'ContentPlaceHolder1_lbmsgDrug',
+      useChosen: true,
+      autoPrice: false,
+      mainClassValue: '1',
+      discountValue: '7', // مستورد
+      label: 'دواء مستورد',
     },
     supply: {
       selectId: 'ContentPlaceHolder1_drpdrug',
       qtyId: 'ContentPlaceHolder1_txtDrugCount',
       priceId: 'ContentPlaceHolder1_txtprice',
+      unitId: 'ContentPlaceHolder1_txtUnite',
       addBtnId: 'ContentPlaceHolder1_btndrugsave',
+      msgId: 'ContentPlaceHolder1_lbmsgDrug',
       useChosen: true,
+      autoPrice: false,
       mainClassValue: '2',
+      discountValue: '0', // لا يوجد
+      unitFallback: 'قطعة',
       label: 'مستلزم طبى',
     },
   };
@@ -44,7 +73,8 @@
   function buildQueue(data) {
     const q = [];
     (data.procedures || []).forEach((it) => q.push(Object.assign({}, it, { bucket: 'procedure' })));
-    (data.medications || []).forEach((it) => q.push(Object.assign({}, it, { bucket: 'medication' })));
+    (data.local_medications || []).forEach((it) => q.push(Object.assign({}, it, { bucket: 'local_medication' })));
+    (data.imported_medications || []).forEach((it) => q.push(Object.assign({}, it, { bucket: 'imported_medication' })));
     (data.supplies || []).forEach((it) => q.push(Object.assign({}, it, { bucket: 'supply' })));
     return q;
   }
@@ -135,8 +165,8 @@
     if (idx >= queue.length) {
       const ok = log.filter((l) => l.status === 'ok').length;
       const warn = log.filter((l) => l.status !== 'ok').length;
-      box.innerHTML = `<div class="hio-item hio-ok">تم الانتهاء من كل البنود.<br>تمت إضافة ${ok} بند تلقائيًا، وفيه ${warn} بند محتاج مراجعة/إضافة يدوية (اتفصّلوا فى السجل تحت).<br><br>
-        <b>راجع كل البنود جوه صفحة HIO ثم اضغط "Submit" هناك يدويًا.</b></div>`;
+      box.innerHTML = `<div class="hio-item hio-ok">تم الانتهاء من كل البنود.<br>تمت إضافة ${ok} بند فعليًا (تأكدنا من رسالة HIO)، وفيه ${warn} بند فشل أو محتاج مراجعة/إضافة يدوية (اتفصّلوا فى السجل تحت).<br><br>
+        <b>راجع الجداول جوه صفحة HIO ثم اضغط "Submit" هناك يدويًا.</b></div>`;
       return;
     }
     if (!running) {
@@ -191,34 +221,56 @@
     }
 
     setSelectValue(select, item.code, cfg.useChosen);
-    const gotPrice = await waitForPriceOrTimeout(cfg.priceId, 2500);
+
+    if (cfg.autoPrice) {
+      await waitForPriceOrTimeout(cfg.priceId, 2500);
+    } else {
+      // Medications/supplies never auto-fill — set from our own catalog data.
+      await sleep(400);
+      const priceEl = document.getElementById(cfg.priceId);
+      if (priceEl) setInputValue(priceEl, item.unit_price);
+      const unitEl = document.getElementById(cfg.unitId);
+      if (unitEl) setInputValue(unitEl, item.unit || cfg.unitFallback || 'قطعة');
+      const discSel = document.getElementById('ContentPlaceHolder1_drpdiscount');
+      if (discSel && cfg.discountValue !== undefined) {
+        setSelectValue(discSel, cfg.discountValue, true);
+        await sleep(300);
+      }
+    }
 
     const qtyEl = document.getElementById(cfg.qtyId);
     if (qtyEl) setInputValue(qtyEl, item.qty);
     await sleep(200);
 
-    const priceEl = document.getElementById(cfg.priceId);
-    const price = priceEl ? priceEl.value : '';
+    const priceEl2 = document.getElementById(cfg.priceId);
+    const price = priceEl2 ? priceEl2.value : '';
 
     document.getElementById('hioCurrent').innerHTML = `<div class="hio-item">
       <div class="name">${item.name}</div>
       <div class="meta">${cfg.label} — كود: ${item.code} — الكمية: ${item.qty}</div>
-      <div class="meta ${gotPrice ? 'hio-ok' : 'hio-warn'}">السعر: ${price || 'لم يُعبَّأ تلقائيًا'}</div>
+      <div class="meta">السعر: ${price || '—'}</div>
     </div>`;
+
+    const msgEl = document.getElementById(cfg.msgId);
+    if (msgEl) msgEl.textContent = ''; // clear stale message so we can tell it actually changed
 
     const addBtn = document.getElementById(cfg.addBtnId);
     if (addBtn) addBtn.click();
+    await sleep(1200);
+
+    const resultMsg = (msgEl && msgEl.textContent.trim()) || '';
+    const success = /تم\s*الاضافة|تم\s*الإضافة/.test(resultMsg);
 
     log.push({
-      status: gotPrice ? 'ok' : 'warn',
+      status: success ? 'ok' : 'err',
       item,
-      message: gotPrice ? 'تمت الإضافة تلقائيًا' : 'تمت الإضافة لكن السعر لم يظهر تلقائيًا — راجعه فى الجدول',
+      message: success ? 'تمت الإضافة (تأكدنا من رسالة HIO)' : `فشلت الإضافة — رسالة HIO: "${resultMsg || 'بدون رسالة'}"`,
     });
     idx++;
     persist();
     renderLog();
     updateProgress();
-    await sleep(1000);
+    await sleep(800);
   }
 
   async function runLoop() {
@@ -226,7 +278,7 @@
     renderControls();
     while (idx < queue.length && !paused) {
       await processItem();
-      if (idx < queue.length) renderControls(); // keep pause button visible/refresh state
+      if (idx < queue.length) renderControls();
     }
     running = false;
     renderControls();

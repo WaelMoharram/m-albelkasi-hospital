@@ -89,6 +89,7 @@
                 'name'       => $first->itemable->name ?? null,
                 'qty'        => (int) $rows->sum('qty'),
                 'unit_price' => (float) $first->unit_price,
+                'unit'       => $first->itemable->unit ?? null,
             ];
         })->values();
     };
@@ -110,16 +111,15 @@
         ->values();
 
     $hioExport = [
-        'invoice_id'   => $invoice->id,
-        'admission_id' => $admission->id,
-        'patient_name' => $patient->name,
-        'national_id'  => $patient->national_id,
-        'exported_at'  => now()->toIso8601String(),
-        'procedures'   => $hioProcedures,
-        'medications'  => $hioBucket($grouped['local_med'] ?? collect())
-            ->merge($hioBucket($grouped['imported_med'] ?? collect()))
-            ->values(),
-        'supplies'     => $hioBucket($grouped['supplies'] ?? collect())->values(),
+        'invoice_id'          => $invoice->id,
+        'admission_id'        => $admission->id,
+        'patient_name'        => $patient->name,
+        'national_id'         => $patient->national_id,
+        'exported_at'         => now()->toIso8601String(),
+        'procedures'          => $hioProcedures,
+        'local_medications'   => $hioBucket($grouped['local_med'] ?? collect())->values(),
+        'imported_medications' => $hioBucket($grouped['imported_med'] ?? collect())->values(),
+        'supplies'            => $hioBucket($grouped['supplies'] ?? collect())->values(),
     ];
 @endphp
 
