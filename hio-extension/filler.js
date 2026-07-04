@@ -155,7 +155,11 @@
   // only correct after the WHOLE chain finishes. So we wait for "busy" to
   // appear, then for "idle" to hold steady (past every chained postback) —
   // not just the first one. Falls back to a fixed delay without the bridge.
-  async function actionAndSettle(fn, timeoutMs) {
+  // `abortable` lets a Stop request cut the wait short. Only pass it for waits
+  // that happen BEFORE the Add is clicked — never for the Add's own postback,
+  // so we never stop between "add clicked" and "add confirmed" (which could
+  // leave a half-added row or cause a duplicate on resume).
+  async function actionAndSettle(fn, timeoutMs, abortable) {
     if (!bridgeOk) {
       fn();
       await sleep(6000);
@@ -167,14 +171,14 @@
     let sawBusy = false;
     while (Date.now() - start < 2500) {
       if (pbState() === 'busy') { sawBusy = true; break; }
-      if (isSessionExpired()) return false;
+      if (isSessionExpired() || (abortable && paused)) return false;
       await sleep(80);
     }
     if (!sawBusy) return true; // no postback was triggered at all
     // 2. Wait for idle to hold ~700ms straight (past all chained postbacks).
     let idleSince = null;
     while (Date.now() - start < timeoutMs) {
-      if (isSessionExpired()) return false;
+      if (isSessionExpired() || (abortable && paused)) return false;
       if (pbState() === 'idle') {
         if (idleSince === null) idleSince = Date.now();
         else if (Date.now() - idleSince > 700) return true;
@@ -186,9 +190,10 @@
     return false; // never settled
   }
 
-  async function waitForValue(id, timeoutMs) {
+  async function waitForValue(id, timeoutMs, abortable) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
+      if (abortable && paused) return false;
       const el = document.getElementById(id);
       if (el && el.value) return true;
       await sleep(120);
@@ -219,7 +224,7 @@
     await actionAndSettle(() => {
       if (cfg.mainClassValue) mainSel.value = String(cfg.mainClassValue);
       mainSel.dispatchEvent(new Event('change', { bubbles: true }));
-    }, 15000);
+    }, 15000, true);
 
     return document.getElementById(cfg.selectId);
   }
@@ -248,7 +253,8 @@
     #hio-fill-panel .hio-err { color: #b91c1c; }
     #hio-fill-panel button.hio-btn { width: 100%; padding: 7px; margin-bottom: 6px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
     #hio-fill-panel .hio-start { background: #2563eb; color: #fff; }
-    #hio-fill-panel .hio-pause { background: #e5e7eb; color: #333; }
+    #hio-fill-panel .hio-stop { background: #b91c1c; color: #fff; }
+    #hio-fill-panel button.hio-btn:disabled { opacity: .7; cursor: default; }
     #hio-fill-panel .hio-log { max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; margin-top: 8px; padding-top: 6px; }
     #hio-fill-panel .hio-log div { font-size: 11px; padding: 2px 0; }
   `;
@@ -291,17 +297,23 @@
       return;
     }
     if (!running) {
-      box.innerHTML = `<button class="hio-btn hio-start" id="hioStart">▶ ${paused ? 'استكمال' : 'بدء'} الإضافة التلقائية لكل البنود</button>`;
+      const doneCount = idx;
+      box.innerHTML =
+        (paused && idx > 0 ? `<div class="hio-item">تم الإيقاف عند البند ${idx} من ${queue.length}.</div>` : '') +
+        `<button class="hio-btn hio-start" id="hioStart">▶ ${paused && idx > 0 ? 'استكمال' : 'بدء'} الإضافة التلقائية لكل البنود</button>`;
       document.getElementById('hioStart').addEventListener('click', () => {
         paused = false;
         persist();
         runLoop();
       });
     } else {
-      box.innerHTML = `<button class="hio-btn hio-pause" id="hioPause">⏸ إيقاف مؤقت</button>`;
-      document.getElementById('hioPause').addEventListener('click', () => {
+      box.innerHTML = `<button class="hio-btn hio-stop" id="hioStop">■ إيقاف</button>`;
+      document.getElementById('hioStop').addEventListener('click', (e) => {
         paused = true;
         persist();
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        btn.textContent = '⏳ جارٍ الإيقاف بعد إتمام البند الحالى...';
       });
     }
   }
@@ -325,6 +337,8 @@
     if (isSessionExpired()) {
       return 'session_expired';
     }
+    // Stop requested before this item even started — bail without touching it.
+    if (paused) return 'paused';
 
     if (!item.code) {
       log.push({ status: 'warn', item, message: 'لا يوجد كود HIO لهذا الصنف فى نظامنا — أضِفه يدويًا' });
@@ -343,6 +357,7 @@
     setCurrent('جارٍ تحميل القائمة وضبط التصنيف...');
     const select = await ensureMainClass(cfg);
     if (isSessionExpired()) return 'session_expired';
+    if (paused) return 'paused';
     if (!select || select.options.length <= 10) {
       log.push({ status: 'err', item, message: `قائمة ${cfg.label} لم تُحمَّل فى صفحة HIO — أعد تحميل الصفحة وجرب تانى` });
       idx++; persist(); renderLog(); updateProgress();
@@ -361,8 +376,10 @@
     const selected = await actionAndSettle(() => {
       select.value = String(item.code);
       select.dispatchEvent(new Event('change', { bubbles: true }));
-    }, 15000);
+    }, 15000, true);
     if (isSessionExpired()) return 'session_expired';
+    // Nothing has been added yet, so a stop here is safe to honour immediately.
+    if (paused) return 'paused';
     if (!selected) {
       log.push({ status: 'err', item, message: 'لم تكتمل استجابة HIO بعد اختيار الصنف — أعد المحاولة' });
       idx++; persist(); renderLog(); updateProgress();
@@ -374,7 +391,8 @@
     if (cfg.autoPrice) {
       // HIO fills this itself, but only once the whole postback chain is done —
       // give it a little extra grace beyond settle before giving up.
-      const gotPrice = await waitForValue(cfg.priceId, 3000);
+      const gotPrice = await waitForValue(cfg.priceId, 3000, true);
+      if (paused) return 'paused';
       if (!gotPrice) {
         log.push({ status: 'err', item, message: 'السعر لم يُعبَّأ من HIO — أضِفه يدويًا' });
         idx++; persist(); renderLog(); updateProgress();
@@ -397,12 +415,16 @@
     if (qtyEl) setInputValue(qtyEl, item.qty);
     await sleep(150);
 
+    // Last safe stop point: nothing added yet. Past here we always finish the
+    // add + confirmation so we never leave a half-added row.
+    if (paused) return 'paused';
+
     const priceShown = document.getElementById(cfg.priceId)?.value || '—';
     setCurrent(`جارٍ الإضافة... السعر: ${priceShown}`);
 
     // 5. Clear the status label first (so "تم الاضافة" can only mean THIS add),
     //    click Add, wait for the postback chain to settle, then confirm the add
-    //    actually went through before moving on to the next item.
+    //    actually went through before moving on to the next item. NOT abortable.
     const msgEl = document.getElementById(cfg.msgId);
     if (msgEl) msgEl.textContent = '';
     await actionAndSettle(() => {
@@ -440,6 +462,7 @@
         persist();
         break;
       }
+      if (result === 'paused') break; // Stop honoured at a safe point.
       if (idx < queue.length) renderControls();
     }
     running = false;
