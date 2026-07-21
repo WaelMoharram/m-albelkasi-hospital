@@ -52,9 +52,9 @@
         <label class="form-label" for="daily_qty">{{ __('Times per day') }}</label>
         <div class="input-group">
             <input id="daily_qty" type="number" name="daily_qty"
-                   value="{{ old('daily_qty', $medication->daily_qty ?? 1) }}"
+                   value="{{ old('daily_qty', $medication->daily_qty ?? 0) }}"
                    class="form-control text-center @error('daily_qty') is-invalid @enderror"
-                   min="1" max="99" step="1">
+                   min="0" max="99" step="1">
             <span class="input-group-text">×</span>
             @error('daily_qty') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>

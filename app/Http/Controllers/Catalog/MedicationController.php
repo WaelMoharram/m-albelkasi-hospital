@@ -39,10 +39,10 @@ class MedicationController extends Controller
             'unit'      => ['nullable', 'string', 'max:100'],
             'price'     => ['required', 'numeric', 'min:0'],
             'type'      => ['required', 'in:local,imported'],
-            'daily_qty' => ['nullable', 'integer', 'min:1', 'max:99'],
+            'daily_qty' => ['nullable', 'integer', 'min:0', 'max:99'],
         ]);
 
-        $data['daily_qty'] = max(1, (int) $request->input('daily_qty', 1));
+        $data['daily_qty'] = (int) $request->input('daily_qty', 0);
 
         $medication = $this->service->create($data);
         $this->service->syncTriggers($medication, $request->input('triggers', []));
@@ -69,10 +69,10 @@ class MedicationController extends Controller
             'unit'      => ['nullable', 'string', 'max:100'],
             'price'     => ['required', 'numeric', 'min:0'],
             'type'      => ['required', 'in:local,imported'],
-            'daily_qty' => ['nullable', 'integer', 'min:1', 'max:99'],
+            'daily_qty' => ['nullable', 'integer', 'min:0', 'max:99'],
         ]);
 
-        $data['daily_qty'] = max(1, (int) $request->input('daily_qty', 1));
+        $data['daily_qty'] = (int) $request->input('daily_qty', 0);
 
         $this->service->update($medication, $data);
         $this->service->syncTriggers($medication, $request->input('triggers', []));
