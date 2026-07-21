@@ -16,6 +16,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use LogicException;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
@@ -74,6 +76,17 @@ class InvoiceController extends Controller
         }
 
         return view('invoices.show', compact('invoice', 'catalogJson'));
+    }
+
+    public function bulkImportExample(): StreamedResponse
+    {
+        $writer = new Xlsx($this->service->bulkImportExampleSpreadsheet());
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'invoice-bulk-import-example.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function bulkAddItems(Request $request, Invoice $invoice): JsonResponse

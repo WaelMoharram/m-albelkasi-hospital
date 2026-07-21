@@ -260,6 +260,9 @@
         <div class="collapse mt-2" id="bulkImportPanel">
             <p class="text-muted small mb-2">
                 {{ __('Upload an Excel sheet — columns in order: Item Name, Qty, Item Code. Matches medications first, then supplies — by code, then by name. If neither is found, the row is added to the warning list.') }}
+                <a href="{{ route('invoices.items.bulk-example') }}" class="d-block mt-1">
+                    <i class="bi bi-download ms-1"></i>{{ __('Download an example sheet') }}
+                </a>
             </p>
             <input type="file" id="bulkFileInput" class="form-control form-control-sm mb-2"
                    accept=".xlsx,.xls,.csv">

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
 use LogicException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class InvoiceService
 {
@@ -129,6 +130,39 @@ class InvoiceService
         }
 
         return $this->bulkAdd($invoice, $rows);
+    }
+
+    /**
+     * Build the downloadable example sheet for the bulk-import panel — same
+     * column order bulkAddFromFile() expects (Name, Qty, Code). Uses two real
+     * catalog rows (one medication, one supply) so the example matches
+     * successfully if uploaded as-is.
+     */
+    public function bulkImportExampleSpreadsheet(): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->fromArray(['اسم الصنف', 'الكمية', 'كود الصنف'], null, 'A1');
+        $sheet->getStyle('A1:C1')->getFont()->setBold(true);
+
+        $row = 2;
+        $exampleMedication = Medication::whereNotNull('code')->orderBy('name')->first();
+        if ($exampleMedication) {
+            $sheet->fromArray([$exampleMedication->name, 2, $exampleMedication->code], null, "A{$row}");
+            $row++;
+        }
+        $exampleSupply = Service::where('category', 'supplies')->whereNotNull('code')->orderBy('name')->first();
+        if ($exampleSupply) {
+            $sheet->fromArray([$exampleSupply->name, 1, $exampleSupply->code], null, "A{$row}");
+            $row++;
+        }
+
+        foreach (['A', 'B', 'C'] as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return $spreadsheet;
     }
 
     /**
