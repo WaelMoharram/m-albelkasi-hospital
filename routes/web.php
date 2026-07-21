@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Catalog\CatalogHealthController;
 use App\Http\Controllers\Catalog\InsuranceCompanyController;
 use App\Http\Controllers\Catalog\MedicationController;
 use App\Http\Controllers\Catalog\ServiceController;
@@ -170,6 +171,9 @@ Route::middleware('auth')->group(function () {
         ->prefix('catalog')
         ->name('catalog.')
         ->group(function () {
+            Route::get('duplicate-codes', [CatalogHealthController::class, 'duplicateCodes'])
+                ->name('duplicate-codes');
+
             Route::resource('medications', MedicationController::class)
                 ->except(['show'])
                 ->names('medications');

@@ -36,6 +36,25 @@ class MedicationService
     }
 
     /**
+     * Group medications that share the same non-empty HIO code — a data
+     * entry error that has caused billing/catalog duplicates before (a bulk
+     * price-sheet import can create a second row for an item that already
+     * exists under a slightly different name).
+     *
+     * @return \Illuminate\Support\Collection<int, \Illuminate\Support\Collection<int, Medication>>
+     */
+    public function duplicateCodeGroups(): \Illuminate\Support\Collection
+    {
+        return Medication::query()
+            ->whereNotNull('code')
+            ->where('code', '!=', '')
+            ->orderBy('name')
+            ->get()
+            ->groupBy('code')
+            ->filter(fn ($group) => $group->count() > 1);
+    }
+
+    /**
      * Sync which services are auto-triggered when this medication is added to an invoice.
      *
      * @param array<int> $serviceIds

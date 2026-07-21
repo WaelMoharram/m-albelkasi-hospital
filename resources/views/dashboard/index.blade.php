@@ -22,6 +22,23 @@
         </div>
     </div>
 
+    {{-- Duplicate catalog codes warning --}}
+    @can('manage_catalog')
+    @if($duplicateCodeGroups > 0)
+    <div class="col-12">
+        <a href="{{ route('catalog.duplicate-codes') }}" class="text-decoration-none">
+            <div class="alert alert-warning py-2 mb-0 d-flex align-items-center justify-content-between">
+                <span>
+                    <i class="bi bi-exclamation-triangle ms-1"></i>
+                    {{ __(':count medication/service code(s) are shared by more than one item — likely duplicate catalog entries.', ['count' => $duplicateCodeGroups]) }}
+                </span>
+                <span class="text-decoration-underline">{{ __('Review') }}</span>
+            </div>
+        </a>
+    </div>
+    @endif
+    @endcan
+
     {{-- Patients --}}
     @can('view_patients')
     <div class="col-sm-6 col-xl-3">

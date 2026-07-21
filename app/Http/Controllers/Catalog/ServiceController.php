@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Services\ServiceCatalogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ServiceController extends Controller
@@ -35,13 +36,15 @@ class ServiceController extends Controller
     {
         $data = $request->validate([
             'name'                => ['required', 'string', 'max:255'],
-            'code'                => ['nullable', 'string', 'max:50'],
+            'code'                => ['nullable', 'string', 'max:50', Rule::unique('services', 'code')],
             'price'               => ['required', 'numeric', 'min:0'],
             'category'            => ['required', 'in:supplies,lab,radiology,other'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
             'is_daily'            => ['nullable', 'boolean'],
             'daily_qty'           => ['nullable', 'integer', 'min:1', 'max:99'],
             'is_once'             => ['nullable', 'boolean'],
+        ], [
+            'code.unique' => __('This code is already used by another service.'),
         ]);
         $data['is_daily']  = $request->boolean('is_daily');
         $data['daily_qty'] = $request->boolean('is_daily') ? max(1, (int) $request->input('daily_qty', 1)) : 1;
@@ -67,13 +70,15 @@ class ServiceController extends Controller
     {
         $data = $request->validate([
             'name'                => ['required', 'string', 'max:255'],
-            'code'                => ['nullable', 'string', 'max:50'],
+            'code'                => ['nullable', 'string', 'max:50', Rule::unique('services', 'code')->ignore($service->id)],
             'price'               => ['required', 'numeric', 'min:0'],
             'category'            => ['required', 'in:supplies,lab,radiology,other'],
             'invoice_category_id' => ['nullable', 'integer', 'exists:invoice_categories,id'],
             'is_daily'            => ['nullable', 'boolean'],
             'daily_qty'           => ['nullable', 'integer', 'min:1', 'max:99'],
             'is_once'             => ['nullable', 'boolean'],
+        ], [
+            'code.unique' => __('This code is already used by another service.'),
         ]);
         $data['is_daily']  = $request->boolean('is_daily');
         $data['daily_qty'] = $request->boolean('is_daily') ? max(1, (int) $request->input('daily_qty', 1)) : 1;

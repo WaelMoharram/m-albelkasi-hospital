@@ -9,6 +9,7 @@ use App\Models\Unit;
 use App\Services\MedicationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MedicationController extends Controller
@@ -35,11 +36,13 @@ class MedicationController extends Controller
     {
         $data = $request->validate([
             'name'      => ['required', 'string', 'max:255'],
-            'code'      => ['nullable', 'string', 'max:50'],
+            'code'      => ['nullable', 'string', 'max:50', Rule::unique('medications', 'code')],
             'unit'      => ['nullable', 'string', 'max:100'],
             'price'     => ['required', 'numeric', 'min:0'],
             'type'      => ['required', 'in:local,imported'],
             'daily_qty' => ['nullable', 'integer', 'min:0', 'max:99'],
+        ], [
+            'code.unique' => __('This code is already used by another medication.'),
         ]);
 
         $data['daily_qty'] = (int) $request->input('daily_qty', 0);
@@ -65,11 +68,13 @@ class MedicationController extends Controller
     {
         $data = $request->validate([
             'name'      => ['required', 'string', 'max:255'],
-            'code'      => ['nullable', 'string', 'max:50'],
+            'code'      => ['nullable', 'string', 'max:50', Rule::unique('medications', 'code')->ignore($medication->id)],
             'unit'      => ['nullable', 'string', 'max:100'],
             'price'     => ['required', 'numeric', 'min:0'],
             'type'      => ['required', 'in:local,imported'],
             'daily_qty' => ['nullable', 'integer', 'min:0', 'max:99'],
+        ], [
+            'code.unique' => __('This code is already used by another medication.'),
         ]);
 
         $data['daily_qty'] = (int) $request->input('daily_qty', 0);

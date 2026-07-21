@@ -38,6 +38,23 @@ class ServiceCatalogService
     }
 
     /**
+     * Group services that share the same non-empty HIO code. See
+     * MedicationService::duplicateCodeGroups() for why this happens.
+     *
+     * @return \Illuminate\Support\Collection<int, \Illuminate\Support\Collection<int, Service>>
+     */
+    public function duplicateCodeGroups(): \Illuminate\Support\Collection
+    {
+        return Service::query()
+            ->whereNotNull('code')
+            ->where('code', '!=', '')
+            ->orderBy('name')
+            ->get()
+            ->groupBy('code')
+            ->filter(fn ($group) => $group->count() > 1);
+    }
+
+    /**
      * Sync which services are auto-triggered when $service is added to an invoice.
      *
      * @param array<int> $triggerIds
