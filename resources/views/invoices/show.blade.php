@@ -351,6 +351,8 @@
                                 @if($item->itemable?->code)
                                     <span class="font-monospace text-muted fw-semibold">{{ $item->itemable->code }}</span>
                                     <span class="text-muted mx-1">—</span>
+                                @else
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="{{ __('No HIO code set for this item') }}">{{ __('No code') }}</span>
                                 @endif
                                 {{ $item->itemable->name ?? '—' }}
                             </td>
@@ -424,6 +426,8 @@
                                 @if($item->itemable?->code)
                                     <span class="font-monospace text-muted fw-semibold">{{ $item->itemable->code }}</span>
                                     <span class="text-muted mx-1">—</span>
+                                @else
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="{{ __('No HIO code set for this item') }}">{{ __('No code') }}</span>
                                 @endif
                                 {{ $item->itemable->name ?? '—' }}
                             </td>
@@ -533,6 +537,12 @@
                         @forelse ($items as $item)
                         <tr id="item-{{ $item->id }}">
                             <td>
+                                @if($item->itemable?->code)
+                                    <span class="font-monospace text-muted fw-semibold small">{{ $item->itemable->code }}</span>
+                                    <span class="text-muted mx-1">—</span>
+                                @else
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="{{ __('No HIO code set for this item') }}">{{ __('No code') }}</span>
+                                @endif
                                 <span class="fw-medium">{{ $item->itemable->name ?? '—' }}</span>
                                 @if($sectionKey === 'local_med' || $sectionKey === 'imported_med')
                                     <span class="text-muted small ms-1">{{ $item->itemable->unit ?? '' }}</span>
