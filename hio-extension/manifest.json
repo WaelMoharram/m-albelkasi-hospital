@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ربط الفواتير بمنظومة التأمين الصحي (HIO)",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "تصدير بنود فاتورة المريض من نظام المستشفى ومساعدة تعبئتها فى منظومة مقدمى الخدمة (HIO) — بند بند مع مراجعة قبل كل إضافة.",
   "permissions": ["storage", "activeTab", "scripting"],
   "action": {

@@ -73,6 +73,12 @@
   let paused = false;
   let running = false;
   let sessionExpired = false;
+  // 'manual' = fill each item then wait for the operator to confirm/skip it
+  // before clicking Add. 'automatic' = run the whole queue unattended (old
+  // behaviour). Manual is the default per operator feedback — the portal run
+  // used to require a per-item click, and switching that to fully automatic
+  // by default surprised the operator, so it's opt-in now.
+  let mode = 'manual';
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -238,7 +244,7 @@
   }
 
   function persist() {
-    chrome.storage.local.set({ hioFillProgress: { idx, log, paused } });
+    chrome.storage.local.set({ hioFillProgress: { idx, log, paused, mode } });
   }
 
   // ── Panel UI ─────────────────────────────────────────────────────────
@@ -262,7 +268,13 @@
     #hio-fill-panel button.hio-btn { width: 100%; padding: 7px; margin-bottom: 6px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
     #hio-fill-panel .hio-start { background: #2563eb; color: #fff; }
     #hio-fill-panel .hio-stop { background: #b91c1c; color: #fff; }
+    #hio-fill-panel .hio-skip { background: #e5e7eb; color: #333; }
     #hio-fill-panel button.hio-btn:disabled { opacity: .7; cursor: default; }
+    #hio-fill-panel .hio-mode { display: flex; gap: 6px; margin-bottom: 8px; }
+    #hio-fill-panel .hio-mode-btn { flex: 1; padding: 6px 4px; border: 1px solid #cbd5e1; border-radius: 5px;
+      background: #fff; color: #444; font-size: 11px; cursor: pointer; }
+    #hio-fill-panel .hio-mode-btn.active { background: #1a3c6e; border-color: #1a3c6e; color: #fff; font-weight: bold; }
+    #hio-fill-panel .hio-mode-hint { color: #777; font-size: 10px; margin: -4px 0 8px; }
     #hio-fill-panel .hio-log { max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; margin-top: 8px; padding-top: 6px; }
     #hio-fill-panel .hio-log div { font-size: 11px; padding: 2px 0; }
   `;
@@ -305,16 +317,31 @@
       return;
     }
     if (!running) {
-      const doneCount = idx;
+      const resuming = idx > 0;
+      const startLabel = mode === 'manual'
+        ? (resuming ? 'استكمال — بند بند' : '▶ بدء — بند بند (يدوي)')
+        : (resuming ? '▶ استكمال تلقائيًا' : '▶ بدء تلقائي لكل البنود');
       box.innerHTML =
-        (paused && idx > 0 ? `<div class="hio-item">تم الإيقاف عند البند ${idx} من ${queue.length}.</div>` : '') +
-        `<button class="hio-btn hio-start" id="hioStart">▶ ${paused && idx > 0 ? 'استكمال' : 'بدء'} الإضافة التلقائية لكل البنود</button>`;
+        (resuming ? `<div class="hio-item">تم الإيقاف عند البند ${idx} من ${queue.length}.</div>` : '') +
+        `<div class="hio-mode">
+           <button class="hio-mode-btn ${mode === 'manual' ? 'active' : ''}" id="hioModeManual">يدوي (افتراضي)</button>
+           <button class="hio-mode-btn ${mode === 'automatic' ? 'active' : ''}" id="hioModeAuto">تلقائي</button>
+         </div>
+         <div class="hio-mode-hint">${mode === 'manual'
+           ? 'هيوقّفلك على كل بند تراجعه وتضغط "إضافة" أو "تخطي" بنفسك.'
+           : 'هيكمّل كل البنود على التوالي من غير ما يوقف يسأل.'}</div>
+         <button class="hio-btn hio-start" id="hioStart">${startLabel}</button>`;
+      document.getElementById('hioModeManual').addEventListener('click', () => { mode = 'manual'; persist(); renderControls(); });
+      document.getElementById('hioModeAuto').addEventListener('click', () => { mode = 'automatic'; persist(); renderControls(); });
       document.getElementById('hioStart').addEventListener('click', () => {
         paused = false;
         persist();
-        runLoop();
+        if (mode === 'manual') runManualStep();
+        else runLoop();
       });
-    } else {
+    } else if (mode === 'automatic') {
+      // Manual mode manages #hioCurrent itself (setCurrent / renderManualConfirm)
+      // while running, so only the automatic loop's Stop button belongs here.
       box.innerHTML = `<button class="hio-btn hio-stop" id="hioStop">■ إيقاف</button>`;
       document.getElementById('hioStop').addEventListener('click', (e) => {
         paused = true;
@@ -338,10 +365,21 @@
     return /ProviderLogin/i.test(window.location.href) || !!document.getElementById('txtloginName');
   }
 
-  async function processItem() {
-    const item = queue[idx];
-    const cfg = BUCKETS[item.bucket];
+  function setCurrent(item, cfg, note) {
+    document.getElementById('hioCurrent').innerHTML = `<div class="hio-item">
+      <div class="name">${item.name}</div>
+      <div class="meta">${cfg.label} — كود: ${item.code} — الكمية: ${item.qty}</div>
+      <div class="meta">${note}</div></div>`;
+  }
 
+  // Fill an item's fields and stop right before "Add" — steps 1-4 of the old
+  // combined processItem. Shared by both modes: automatic clicks Add itself
+  // right after (see processItem below); manual shows a confirm/skip prompt
+  // instead. Returns 'ready' (fields filled, waiting to commit),
+  // 'auto_advanced' (nothing to confirm — already logged + idx moved on:
+  // no code, code not in HIO's list, list failed to load, or price never
+  // filled), or 'session_expired' / 'paused'.
+  async function prepareItem(item, cfg) {
     if (isSessionExpired()) {
       return 'session_expired';
     }
@@ -351,36 +389,29 @@
     if (!item.code) {
       log.push({ status: 'warn', item, message: 'لا يوجد كود HIO لهذا الصنف فى نظامنا — أضِفه يدويًا' });
       idx++; persist(); renderLog(); updateProgress();
-      return;
+      return 'auto_advanced';
     }
 
-    const setCurrent = (note) => {
-      document.getElementById('hioCurrent').innerHTML = `<div class="hio-item">
-        <div class="name">${item.name}</div>
-        <div class="meta">${cfg.label} — كود: ${item.code} — الكمية: ${item.qty}</div>
-        <div class="meta">${note}</div></div>`;
-    };
-
     // 1. Make sure the catalog is loaded and the category is right (postback).
-    setCurrent('جارٍ تحميل القائمة وضبط التصنيف...');
+    setCurrent(item, cfg, 'جارٍ تحميل القائمة وضبط التصنيف...');
     const select = await ensureMainClass(cfg);
     if (isSessionExpired()) return 'session_expired';
     if (paused) return 'paused';
     if (!select || select.options.length <= 10) {
       log.push({ status: 'err', item, message: `قائمة ${cfg.label} لم تُحمَّل فى صفحة HIO — أعد تحميل الصفحة وجرب تانى` });
       idx++; persist(); renderLog(); updateProgress();
-      return;
+      return 'auto_advanced';
     }
     if (!findOption(select, item.code)) {
       log.push({ status: 'warn', item, message: `الكود ${item.code} غير موجود فى قائمة ${cfg.label} فى HIO — أضِفه يدويًا` });
       idx++; persist(); renderLog(); updateProgress();
-      return;
+      return 'auto_advanced';
     }
 
     // 2. Select the item — this fires ~2 chained AutoPostBacks (~6s total). WAIT
     //    for the whole chain to settle before touching anything, otherwise the
     //    price isn't filled yet and the Add below collides with the postback.
-    setCurrent('جارٍ اختيار الصنف والانتظار...');
+    setCurrent(item, cfg, 'جارٍ اختيار الصنف والانتظار...');
     const selected = await actionAndSettle(() => {
       select.value = String(item.code);
       select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -391,7 +422,7 @@
     if (!selected) {
       log.push({ status: 'err', item, message: 'لم تكتمل استجابة HIO بعد اختيار الصنف — أعد المحاولة' });
       idx++; persist(); renderLog(); updateProgress();
-      return;
+      return 'auto_advanced';
     }
 
     // 3. Price / unit / discount — set AFTER the select postback so they don't
@@ -404,7 +435,7 @@
       if (!gotPrice) {
         log.push({ status: 'err', item, message: 'السعر لم يُعبَّأ من HIO — أضِفه يدويًا' });
         idx++; persist(); renderLog(); updateProgress();
-        return;
+        return 'auto_advanced';
       }
     } else {
       const priceEl = document.getElementById(cfg.priceId);
@@ -427,12 +458,19 @@
     // add + confirmation so we never leave a half-added row.
     if (paused) return 'paused';
 
-    const priceShown = document.getElementById(cfg.priceId)?.value || '—';
-    setCurrent(`جارٍ الإضافة... السعر: ${priceShown}`);
+    return 'ready';
+  }
 
-    // 5. Clear the status label first (so "تم الاضافة" can only mean THIS add),
-    //    click Add, wait for the postback chain to settle, then confirm the add
-    //    actually went through before moving on to the next item. NOT abortable.
+  // Steps 5-6 of the old combined processItem: click Add, confirm, log. Always
+  // runs to completion once called (not abortable) so a Stop/tab-close can
+  // never leave a half-added row — matches the pre-existing behaviour.
+  async function commitItem(item, cfg) {
+    const priceShown = document.getElementById(cfg.priceId)?.value || '—';
+    setCurrent(item, cfg, `جارٍ الإضافة... السعر: ${priceShown}`);
+
+    // Clear the status label first (so "تم الاضافة" can only mean THIS add),
+    // click Add, wait for the postback chain to settle, then confirm the add
+    // actually went through before moving on to the next item.
     const msgEl = document.getElementById(cfg.msgId);
     if (msgEl) msgEl.textContent = '';
     await actionAndSettle(() => {
@@ -442,7 +480,6 @@
 
     const success = await waitForAddConfirm(cfg, item.code, 12000);
 
-    // 6. Log the outcome.
     const resultMsg = (document.getElementById(cfg.msgId)?.textContent || '').trim();
     log.push({
       status: success ? 'ok' : 'err',
@@ -456,6 +493,15 @@
     renderLog();
     updateProgress();
     await sleep(500);
+  }
+
+  // Automatic mode: prepare then immediately commit, no operator step in between.
+  async function processItem() {
+    const item = queue[idx];
+    const cfg = BUCKETS[item.bucket];
+    const prep = await prepareItem(item, cfg);
+    if (prep === 'ready') return commitItem(item, cfg);
+    return prep;
   }
 
   async function runLoop() {
@@ -474,6 +520,70 @@
     }
     running = false;
     renderControls();
+  }
+
+  // Manual mode: prepare one item, then wait for the operator to confirm or
+  // skip it before touching the next. Items with nothing to confirm (no code,
+  // code missing from HIO, etc.) are skipped automatically in either mode —
+  // there's nothing for the operator to review in those cases.
+  async function runManualStep() {
+    running = true;
+    while (idx < queue.length) {
+      const item = queue[idx];
+      const cfg = BUCKETS[item.bucket];
+      const prep = await prepareItem(item, cfg);
+      if (prep === 'session_expired') {
+        sessionExpired = true;
+        paused = true;
+        persist();
+        running = false;
+        renderControls();
+        return;
+      }
+      if (prep === 'paused') {
+        running = false;
+        renderControls();
+        return;
+      }
+      if (prep === 'ready') {
+        renderManualConfirm(item, cfg);
+        return;
+      }
+      // 'auto_advanced' — nothing to confirm, loop to the next item.
+    }
+    running = false;
+    renderControls();
+  }
+
+  function renderManualConfirm(item, cfg) {
+    const priceShown = document.getElementById(cfg.priceId)?.value || '—';
+    document.getElementById('hioCurrent').innerHTML = `<div class="hio-item">
+        <div class="name">${item.name}</div>
+        <div class="meta">${cfg.label} — كود: ${item.code} — الكمية: ${item.qty}</div>
+        <div class="meta">السعر: ${priceShown}</div>
+      </div>
+      <button class="hio-btn hio-start" id="hioConfirm">✔ إضافة هذا البند</button>
+      <button class="hio-btn hio-skip" id="hioSkip">⏭ تخطي بدون إضافة</button>`;
+
+    document.getElementById('hioConfirm').addEventListener('click', async (e) => {
+      e.currentTarget.disabled = true;
+      document.getElementById('hioSkip').disabled = true;
+      const res = await commitItem(item, cfg);
+      if (res === 'session_expired') {
+        sessionExpired = true;
+        paused = true;
+        persist();
+        running = false;
+        renderControls();
+        return;
+      }
+      runManualStep();
+    });
+    document.getElementById('hioSkip').addEventListener('click', () => {
+      log.push({ status: 'skip', item, message: 'تم التخطي بواسطة المستخدم' });
+      idx++; persist(); renderLog(); updateProgress();
+      runManualStep();
+    });
   }
 
   async function init() {
@@ -497,13 +607,14 @@
       idx = stored.hioFillProgress.idx || 0;
       log = stored.hioFillProgress.log || [];
       paused = !!stored.hioFillProgress.paused;
+      mode = stored.hioFillProgress.mode === 'automatic' ? 'automatic' : 'manual';
     }
     updateProgress();
     renderLog();
+    // Always wait for an explicit "بدء"/"استكمال" click — even to resume —
+    // instead of auto-continuing, so opening the panel never starts adding
+    // items to HIO on its own.
     renderControls();
-    if (!paused && idx < queue.length) {
-      runLoop();
-    }
   }
 
   init();
