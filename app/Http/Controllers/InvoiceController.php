@@ -113,13 +113,16 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            ['main' => $item, 'triggered' => $triggeredItems] = $this->service->addItem($invoice, $data);
+            $result = $this->service->addItem($invoice, $data);
+            $item            = $result['main'];
+            $itemMerged      = $result['main_merged'];
+            $itemDelta       = $result['main_delta'];
+            $triggeredItems  = $result['triggered'];
+            $triggeredMerged = $result['triggered_merged'];
+            $triggeredDelta  = $result['triggered_delta'];
 
             if ($request->expectsJson()) {
-                $item->load('itemable');
-                $unit = $item->itemable instanceof Medication ? ($item->itemable->unit ?? '') : '';
-
-                $formatItem = function (InvoiceItem $i) use ($invoice): array {
+                $formatItem = function (InvoiceItem $i, bool $merged, float $delta) use ($invoice): array {
                     $i->loadMissing('itemable');
                     $unit = $i->itemable instanceof Medication ? ($i->itemable->unit ?? '') : '';
                     $categoryName = '';
@@ -139,14 +142,21 @@ class InvoiceController extends Controller
                         'section'       => $i->section,
                         'category_name' => $categoryName,
                         'category_id'   => $categoryId,
+                        'merged'        => $merged,
+                        'delta_total'   => $delta,
                         'update_url'    => route('invoices.items.update', [$invoice, $i]),
                         'destroy_url'   => route('invoices.items.destroy', [$invoice, $i]),
                     ];
                 };
 
+                $triggeredFormatted = [];
+                foreach ($triggeredItems as $idx => $triggeredItem) {
+                    $triggeredFormatted[] = $formatItem($triggeredItem, $triggeredMerged[$idx], $triggeredDelta[$idx]);
+                }
+
                 return response()->json([
-                    'item'            => $formatItem($item),
-                    'triggered_items' => array_map($formatItem, $triggeredItems),
+                    'item'            => $formatItem($item, $itemMerged, $itemDelta),
+                    'triggered_items' => $triggeredFormatted,
                     'invoice_total'   => (float) $invoice->fresh()->total_amount,
                 ]);
             }

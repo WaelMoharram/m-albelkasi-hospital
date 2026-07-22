@@ -840,9 +840,43 @@ document.addEventListener('DOMContentLoaded', function () {
                 const data = await res.json();
                 if (!res.ok) { alert(data.error || 'Error'); return; }
 
+                // Row already existed for this item — patch qty/total in place instead
+                // of inserting a duplicate row (server merged the new qty into it).
+                function qtyTotalCellIndices(ts, row) {
+                    if (ts === 'other') return { qty: 2, total: 4 };
+                    if (ts === 'daily') {
+                        const hasCatCells = row.querySelectorAll('td[rowspan]').length > 0;
+                        return hasCatCells ? { qty: 2, total: 4 } : { qty: 0, total: 2 };
+                    }
+                    return { qty: 1, total: 3 }; // local_med, imported_med, supplies, lab
+                }
+
+                function patchMergedItem(d, ts) {
+                    const row = document.getElementById('item-' + d.id) ||
+                                document.getElementById('item-' + ts + '-' + d.id);
+                    if (row) {
+                        const idx   = qtyTotalCellIndices(ts, row);
+                        const cells = row.querySelectorAll('td');
+                        if (cells[idx.qty])   cells[idx.qty].textContent   = d.qty;
+                        if (cells[idx.total]) cells[idx.total].textContent = parseFloat(d.total).toFixed(2);
+                        const editBtn = row.querySelector('[data-item-qty]');
+                        if (editBtn) {
+                            editBtn.dataset.itemQty   = d.qty;
+                            editBtn.dataset.itemPrice = d.unit_price;
+                        }
+                    }
+                    const sub = document.getElementById('subtotal-' + ts);
+                    if (sub && d.delta_total) {
+                        const prev = parseFloat(sub.textContent.replace(/,/g, '')) || 0;
+                        sub.textContent = (prev + d.delta_total)
+                            .toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+                    }
+                }
+
                 // Insert one item into its section tbody and update subtotal + badge
                 function insertItem(d) {
                     const ts = d.section || section;
+                    if (d.merged) { patchMergedItem(d, ts); return; }
                     const tbody = document.getElementById('tbody-' + ts);
                     if (!tbody) return;
                     const emptyRow = document.getElementById('empty-' + ts);

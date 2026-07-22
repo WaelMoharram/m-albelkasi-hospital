@@ -40,7 +40,8 @@ class InvoiceService
      *   unit_price  → decimal (pre-filled from catalog, user may override)
      */
     /**
-     * Returns ['main' => InvoiceItem, 'triggered' => InvoiceItem[]]
+     * Returns ['main' => InvoiceItem, 'main_merged' => bool, 'main_delta' => float,
+     *          'triggered' => InvoiceItem[], 'triggered_merged' => bool[], 'triggered_delta' => float[]]
      */
     public function addItem(Invoice $invoice, array $data): array
     {
@@ -48,27 +49,72 @@ class InvoiceService
             throw new LogicException('Cannot add items to a finalised invoice.');
         }
 
-        $main      = $this->createItem($invoice, $data);
-        $triggered = [];
+        [$main, $mainMerged, $mainDelta] = $this->createOrMergeItem($invoice, $data);
+        $triggered       = [];
+        $triggeredMerged = [];
+        $triggeredDelta  = [];
 
         // Auto-add triggered services (one level deep, no chains)
         if ($data['item_type'] !== 'medication') {
             $service = Service::find((int) $data['itemable_id']);
             if ($service) {
                 foreach ($service->triggers as $triggeredSvc) {
-                    $triggered[] = $this->createItem($invoice, [
+                    [$item, $merged, $delta] = $this->createOrMergeItem($invoice, [
                         'item_type'   => $triggeredSvc->category,
                         'itemable_id' => $triggeredSvc->id,
                         'qty'         => $data['qty'],
                         'unit_price'  => $triggeredSvc->price,
                     ]);
+                    $triggered[]       = $item;
+                    $triggeredMerged[] = $merged;
+                    $triggeredDelta[]  = $delta;
                 }
             }
         }
 
         $invoice->recalculateTotal();
 
-        return ['main' => $main, 'triggered' => $triggered];
+        return [
+            'main'             => $main,
+            'main_merged'      => $mainMerged,
+            'main_delta'       => $mainDelta,
+            'triggered'        => $triggered,
+            'triggered_merged' => $triggeredMerged,
+            'triggered_delta'  => $triggeredDelta,
+        ];
+    }
+
+    /**
+     * Add a manually-selected item to a draft invoice, merging into an existing
+     * row for the same itemable instead of creating a duplicate — mirrors
+     * bulkAdd()'s behaviour. Only merges into manually-added rows (service_date
+     * null) so auto-charged daily rows for the same service are never touched.
+     *
+     * Returns [InvoiceItem, bool $wasMerged, float $deltaTotal]
+     */
+    private function createOrMergeItem(Invoice $invoice, array $data): array
+    {
+        [$itemable, ] = $this->resolveItemable($data['item_type'], (int) $data['itemable_id']);
+
+        $existing = $invoice->items()
+            ->where('itemable_type', $itemable::class)
+            ->where('itemable_id', $itemable->id)
+            ->whereNull('service_date')
+            ->first();
+
+        if ($existing) {
+            $qty      = max(1, (int) $data['qty']);
+            $oldTotal = (float) $existing->total;
+            $existing->qty  += $qty;
+            $existing->total = round($existing->qty * (float) $existing->unit_price, 2);
+            $existing->save();
+
+            return [$existing, true, (float) $existing->total - $oldTotal];
+        }
+
+        $item = $this->createItem($invoice, $data);
+
+        return [$item, false, (float) $item->total];
     }
 
     private function createItem(Invoice $invoice, array $data): InvoiceItem
