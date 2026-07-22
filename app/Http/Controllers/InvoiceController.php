@@ -190,6 +190,18 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.show', $invoice);
     }
 
+    public function removeServiceItems(Invoice $invoice, Service $service): RedirectResponse
+    {
+        try {
+            $this->service->removeServiceItems($invoice, $service);
+            alert()->success(__('Removed'), __('Item removed from invoice.'));
+        } catch (LogicException $e) {
+            alert()->error(__('Error'), $e->getMessage());
+        }
+
+        return redirect()->route('invoices.show', $invoice);
+    }
+
     public function updateItem(Request $request, Invoice $invoice, InvoiceItem $item): RedirectResponse
     {
         $data = $request->validate([

@@ -330,6 +330,26 @@ class InvoiceService
     }
 
     /**
+     * Remove ALL invoice_items for the given service from an invoice — including
+     * daily auto-charged records across every day. Used to fully remove an
+     * aggregated (multi-record) item that updateServiceItems() can only edit
+     * down to, never delete (its qty floor is 1).
+     */
+    public function removeServiceItems(Invoice $invoice, Service $service): void
+    {
+        if ($invoice->status === 'final') {
+            throw new LogicException('Cannot remove items from a finalised invoice.');
+        }
+
+        $invoice->items()
+            ->where('itemable_type', Service::class)
+            ->where('itemable_id', $service->id)
+            ->delete();
+
+        $invoice->recalculateTotal();
+    }
+
+    /**
      * Delete an invoice and all its items.
      */
     public function delete(Invoice $invoice): void

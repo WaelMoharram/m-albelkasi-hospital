@@ -379,7 +379,7 @@
                                 @else
                                 {{-- Aggregated (multi-day) item: edit unit_price across all daily records --}}
                                 <button type="button"
-                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1"
+                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
                                         data-item-bulk="1"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
@@ -388,6 +388,13 @@
                                         data-item-url="{{ route('invoices.service-items.update', [$invoice, $item->itemable->id]) }}">
                                     <i class="bi bi-pencil"></i>
                                 </button>
+                                <form method="POST" action="{{ route('invoices.service-items.destroy', [$invoice, $item->itemable->id]) }}"
+                                      class="d-inline" onsubmit="return confirm('{{ __('Remove all charges for this item?') }}')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
                                 @endif
                                 @endcanany
                             </td>
@@ -576,7 +583,7 @@
                                 @else
                                 {{-- Aggregated (multiple records): edit unit_price across all --}}
                                 <button type="button"
-                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1"
+                                        class="btn btn-xs btn-outline-primary border-0 p-0 px-1 me-1"
                                         data-bs-toggle="modal" data-bs-target="#editItemModal"
                                         data-item-bulk="1"
                                         data-item-name="{{ $item->itemable->name ?? '' }}"
@@ -585,6 +592,13 @@
                                         data-item-url="{{ route('invoices.service-items.update', [$invoice, $item->itemable]) }}">
                                     <i class="bi bi-pencil"></i>
                                 </button>
+                                <form method="POST" action="{{ route('invoices.service-items.destroy', [$invoice, $item->itemable]) }}"
+                                      class="d-inline" onsubmit="return confirm('{{ __('Remove all charges for this item?') }}')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-xs btn-outline-danger border-0 p-0 px-1">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
                                 @endif
                                 @endcanany
                             </td>
