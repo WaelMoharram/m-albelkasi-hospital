@@ -28,16 +28,9 @@ class InvoiceController extends Controller
         $invoices = $this->service->paginate(
             search: $request->input('search'),
             status: $request->input('status'),
-            from:   $request->input('from'),
-            to:     $request->input('to'),
-            all:    $request->boolean('all'),
         );
 
-        [$defaultFrom, $defaultTo] = $this->service->defaultPeriod();
-        $filterFrom = $request->input('from', $defaultFrom);
-        $filterTo   = $request->input('to', $defaultTo);
-
-        return view('invoices.index', compact('invoices', 'filterFrom', 'filterTo'));
+        return view('invoices.index', compact('invoices'));
     }
 
     public function show(Invoice $invoice): View

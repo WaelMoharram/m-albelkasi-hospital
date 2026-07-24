@@ -11,41 +11,29 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class AdmissionService
 {
-    public function paginate(?string $search, ?string $status, ?string $from = null, ?string $to = null, bool $all = false, int $perPage = 15): LengthAwarePaginator
+    /**
+     * With no explicit status filter, only open (active) admissions show
+     * indefinitely; discharged ones only stay visible through the end of
+     * the month they were discharged in, then drop out of the default list.
+     * Selecting a status explicitly (e.g. "discharged") bypasses this and
+     * shows every matching admission regardless of age.
+     */
+    public function paginate(?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Admission::with(['patient', 'patient.insuranceCompany'])
+        return Admission::with(['patient', 'patient.insuranceCompany'])
             ->search($search)
-            ->when($status, fn ($q) => $q->where('status', $status));
-
-        if (! $all) {
-            [$start, $end] = $this->resolveDateRange($from, $to);
-            $query->whereBetween('admission_date', [$start, $end]);
-        }
-
-        return $query
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when(!$status, fn ($q) => $q->where(function ($q) {
+                $q->where('status', 'active')
+                  ->orWhere(function ($q) {
+                      $q->where('status', 'discharged')
+                        ->whereYear('discharge_date', now()->year)
+                        ->whereMonth('discharge_date', now()->month);
+                  });
+            }))
             ->orderByDesc('admission_date')
             ->paginate($perPage)
             ->withQueryString();
-    }
-
-    /**
-     * Default admissions/invoices list period: last month and the month before it.
-     * The current (in-progress) month is excluded until it becomes "last month" —
-     * invoices are only sent out the month after they close.
-     */
-    public function defaultPeriod(): array
-    {
-        return [now()->subMonths(2)->format('Y-m'), now()->subMonth()->format('Y-m')];
-    }
-
-    private function resolveDateRange(?string $from, ?string $to): array
-    {
-        [$defaultFrom, $defaultTo] = $this->defaultPeriod();
-
-        $start = Carbon::parse(($from ?: $defaultFrom) . '-01')->startOfMonth();
-        $end   = Carbon::parse(($to ?: $defaultTo) . '-01')->endOfMonth();
-
-        return [$start, $end];
     }
 
     /**

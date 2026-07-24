@@ -21,22 +21,10 @@
                 <option value="discharged" {{ request('status') === 'discharged' ? 'selected' : '' }}>{{ __('Discharged') }}</option>
             </select>
 
-            <input type="month" name="from" value="{{ $filterFrom }}" max="{{ now()->format('Y-m') }}"
-                   class="form-control form-control-sm" style="max-width:150px;" title="{{ __('From') }}">
-            <span class="align-self-center small text-muted">{{ __('To') }}</span>
-            <input type="month" name="to" value="{{ $filterTo }}" max="{{ now()->format('Y-m') }}"
-                   class="form-control form-control-sm" style="max-width:150px;" title="{{ __('To') }}">
-
-            <div class="form-check align-self-center">
-                <input class="form-check-input" type="checkbox" name="all" value="1" id="allMonths"
-                       {{ request()->boolean('all') ? 'checked' : '' }}>
-                <label class="form-check-label small" for="allMonths">{{ __('All months') }}</label>
-            </div>
-
             <button class="btn btn-sm btn-outline-secondary" type="submit">
                 <i class="bi bi-search"></i>
             </button>
-            @if(request()->hasAny(['search','status','from','to','all']))
+            @if(request()->hasAny(['search','status']))
                 <a href="{{ route('admissions.index') }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-x"></i> {{ __('Clear') }}
                 </a>

@@ -375,8 +375,5 @@
     "If enabled, this service is added once automatically when the admission is created.": "إذا كان مفعّلاً، يُضاف هذا الصنف تلقائياً مرة واحدة عند بداية الإقامة.",
     "Once": "مرة واحدة",
     "Auto-add to Invoice": "إضافة تلقائية للفاتورة",
-    "Other": "أخرى",
-    "From": "من",
-    "To": "إلى",
-    "All months": "كل الشهور"
+    "Other": "أخرى"
 }
