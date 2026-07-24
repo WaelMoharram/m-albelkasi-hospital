@@ -275,6 +275,8 @@
     "Cost per Day": "تكلفة اليوم",
     "Remaining Available Days This Month": "الأيام المتاحة المتبقية هذا الشهر",
     "of": "من",
+    "Delete Selected": "حذف المحدد",
+    "Remove selected items?": "حذف العناصر المحددة؟",
     "Linked Services": "الخدمات المرتبطة",
     "Select linked services": "اختر الخدمات المرتبطة",
     "These services will be added automatically when this service is added to an invoice.": "سيتم إضافة هذه الخدمات تلقائياً عند إضافة هذه الخدمة إلى الفاتورة.",

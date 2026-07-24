@@ -358,10 +358,27 @@
 
         {{-- ── "الفاتورة" tab — daily services grouped by invoice category ── --}}
         <div class="tab-pane fade show active p-0" id="tab-daily" role="tabpanel">
+            @if($isDraft)
+            @canany(['add_invoice_items', 'edit_invoices'])
+            <div class="d-flex justify-content-end p-2 border-bottom bg-light bg-opacity-50">
+                <button type="button" class="btn btn-sm btn-outline-danger bulk-delete-btn" disabled
+                        data-target="daily" data-url="{{ route('invoices.items.bulk-destroy', $invoice) }}">
+                    <i class="bi bi-trash ms-1"></i> {{ __('Delete Selected') }}
+                </button>
+            </div>
+            @endcanany
+            @endif
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
+                            @if($isDraft)
+                            <th style="width:30px;">
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <input type="checkbox" class="form-check-input select-all" data-target="daily">
+                                @endcanany
+                            </th>
+                            @endif
                             <th class="text-center" style="width:36px;">م</th>
                             <th style="width:110px;">{{ __('Category') }}</th>
                             <th class="text-end" style="width:55px;">{{ __('Qty') }}</th>
@@ -377,6 +394,15 @@
                         @php $count = $group['items']->count(); $isFirst = true; @endphp
                         @foreach ($group['items'] as $item)
                         <tr id="item-daily-{{ $item->id }}" data-cat-id="{{ $group['id'] }}">
+                            @if($isDraft)
+                            <td>
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <input type="checkbox" class="form-check-input row-check" data-target="daily"
+                                       data-type="{{ $item->isSingle ? 'item' : 'service' }}"
+                                       value="{{ $item->isSingle ? $item->singleItem->id : $item->itemable->id }}">
+                                @endcanany
+                            </td>
+                            @endif
                             @if($isFirst)
                             <td rowspan="{{ $count }}"
                                 class="text-center fw-bold align-middle"
@@ -446,7 +472,7 @@
                         @php $catNo++; @endphp
                         @empty
                         <tr id="empty-daily">
-                            <td colspan="{{ $isDraft ? 7 : 6 }}" class="text-muted small fst-italic py-3 text-center">
+                            <td colspan="{{ $isDraft ? 8 : 6 }}" class="text-muted small fst-italic py-3 text-center">
                                 {{ __('No items in this section.') }}
                             </td>
                         </tr>
@@ -456,6 +482,7 @@
                     @php $otherItems = $grouped['other'] ?? collect(); @endphp
                     <tbody id="tbody-other-header" style="{{ $otherItems->isEmpty() ? 'display:none' : '' }}">
                         <tr>
+                            @if($isDraft) <td></td> @endif
                             <td class="text-center fw-bold align-middle"
                                 style="background:#f0f4fa; border-right:3px solid #6c757d; color:#6c757d;"
                                 id="other-cat-num">{{ $catNo }}</td>
@@ -466,6 +493,14 @@
                     <tbody id="tbody-other">
                         @foreach($otherItems as $item)
                         <tr id="item-other-{{ $item->id }}">
+                            @if($isDraft)
+                            <td>
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <input type="checkbox" class="form-check-input row-check" data-target="daily"
+                                       data-type="item" value="{{ $item->id }}">
+                                @endcanany
+                            </td>
+                            @endif
                             <td></td>
                             <td></td>
                             <td class="text-end">{{ $item->qty }}</td>
@@ -510,6 +545,7 @@
                     </tbody>
                     <tfoot class="table-light {{ $allSvcItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-daily">
                         <tr>
+                            @if($isDraft) <td></td> @endif
                             <td colspan="4" class="text-end small fw-semibold">{{ __('Invoice Subtotal') }}</td>
                             <td class="text-end fw-bold" id="subtotal-daily">{{ number_format($allSvcItems->sum('total'), 2) }}</td>
                             <td colspan="{{ $isDraft ? 2 : 1 }}"></td>
@@ -519,6 +555,7 @@
                     @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
                     <tfoot>
                         <tr class="table-light">
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td><input type="number" class="form-control form-control-sm text-end"
@@ -571,10 +608,27 @@
                 ->values();
         @endphp
         <div class="tab-pane fade p-0" id="tab-{{ $sectionKey }}" role="tabpanel">
+            @if($isDraft)
+            @canany(['add_invoice_items', 'edit_invoices'])
+            <div class="d-flex justify-content-end p-2 border-bottom bg-light bg-opacity-50">
+                <button type="button" class="btn btn-sm btn-outline-danger bulk-delete-btn" disabled
+                        data-target="{{ $sectionKey }}" data-url="{{ route('invoices.items.bulk-destroy', $invoice) }}">
+                    <i class="bi bi-trash ms-1"></i> {{ __('Delete Selected') }}
+                </button>
+            </div>
+            @endcanany
+            @endif
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
+                            @if($isDraft)
+                            <th style="width:30px;">
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <input type="checkbox" class="form-check-input select-all" data-target="{{ $sectionKey }}">
+                                @endcanany
+                            </th>
+                            @endif
                             <th>{{ __('Item') }}</th>
                             <th class="text-end" style="width:80px;">{{ __('Qty') }}</th>
                             <th class="text-end" style="width:120px;">{{ __('Unit Price') }}</th>
@@ -585,6 +639,15 @@
                     <tbody id="tbody-{{ $sectionKey }}">
                         @forelse ($items as $item)
                         <tr id="item-{{ $item->id }}">
+                            @if($isDraft)
+                            <td>
+                                @canany(['add_invoice_items', 'edit_invoices'])
+                                <input type="checkbox" class="form-check-input row-check" data-target="{{ $sectionKey }}"
+                                       data-type="{{ $item->isSingle ? 'item' : 'service' }}"
+                                       value="{{ $item->isSingle ? $item->singleItem->id : $item->itemable->id }}">
+                                @endcanany
+                            </td>
+                            @endif
                             <td>
                                 @if($item->itemable?->code)
                                     <span class="font-monospace text-muted fw-semibold small">{{ $item->itemable->code }}</span>
@@ -648,7 +711,7 @@
                         </tr>
                         @empty
                         <tr id="empty-{{ $sectionKey }}">
-                            <td colspan="{{ $isDraft ? 5 : 4 }}" class="text-muted small fst-italic py-3 text-center">
+                            <td colspan="{{ $isDraft ? 6 : 4 }}" class="text-muted small fst-italic py-3 text-center">
                                 {{ __('No items in this section.') }}
                             </td>
                         </tr>
@@ -656,6 +719,7 @@
                     </tbody>
                     <tfoot class="table-light {{ $rawItems->isEmpty() ? 'd-none' : '' }}" id="tfoot-{{ $sectionKey }}">
                         <tr>
+                            @if($isDraft) <td></td> @endif
                             <td colspan="{{ $isDraft ? 3 : 2 }}" class="text-end small fw-semibold">{{ $meta['subtotal_label'] }}</td>
                             <td class="text-end fw-bold" id="subtotal-{{ $sectionKey }}">{{ number_format($rawItems->sum('total'), 2) }}</td>
                             @if($isDraft) <td></td> @endif
@@ -665,6 +729,7 @@
                     @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])
                     <tfoot>
                         <tr class="table-light">
+                            <td></td>
                             <td>
                                 <select class="form-select form-select-sm"
                                         id="select-{{ $sectionKey }}" data-section="{{ $sectionKey }}" data-prefix="">
@@ -1198,6 +1263,58 @@ document.getElementById('editItemModal').addEventListener('show.bs.modal', funct
     qty.oninput   = updateTotal;
     price.oninput = updateTotal;
 });
+</script>
+
+{{-- ── Select-all + bulk delete (checkboxes in each tab) ───────────────── --}}
+<script>
+(function () {
+    const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+    const CONFIRM_MSG = '{{ __('Remove selected items?') }}';
+
+    document.querySelectorAll('.bulk-delete-btn').forEach(function (btn) {
+        const target = btn.dataset.target;
+        const master = document.querySelector('.select-all[data-target="' + target + '"]');
+        const boxes  = function () { return document.querySelectorAll('.row-check[data-target="' + target + '"]'); };
+
+        function refreshBtn() {
+            btn.disabled = !Array.from(boxes()).some(function (b) { return b.checked; });
+        }
+
+        if (master) {
+            master.addEventListener('change', function () {
+                boxes().forEach(function (b) { b.checked = master.checked; });
+                refreshBtn();
+            });
+        }
+
+        document.addEventListener('change', function (e) {
+            if (e.target.matches('.row-check[data-target="' + target + '"]')) refreshBtn();
+        });
+
+        btn.addEventListener('click', async function () {
+            const checked = Array.from(boxes()).filter(function (b) { return b.checked; });
+            if (!checked.length || !confirm(CONFIRM_MSG)) return;
+
+            const itemIds    = checked.filter(function (b) { return b.dataset.type === 'item'; }).map(function (b) { return b.value; });
+            const serviceIds = checked.filter(function (b) { return b.dataset.type === 'service'; }).map(function (b) { return b.value; });
+
+            btn.disabled = true;
+            try {
+                const res  = await fetch(btn.dataset.url, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                    body: JSON.stringify({ item_ids: itemIds, service_ids: serviceIds }),
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Error'); btn.disabled = false; return; }
+                location.reload();
+            } catch (e) {
+                alert('Error');
+                btn.disabled = false;
+            }
+        });
+    });
+}());
 </script>
 @endcanany
 @endif

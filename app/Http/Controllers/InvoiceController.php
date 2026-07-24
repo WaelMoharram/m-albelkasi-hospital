@@ -248,6 +248,23 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.show', $invoice);
     }
 
+    public function bulkRemoveItems(Request $request, Invoice $invoice): JsonResponse
+    {
+        $data = $request->validate([
+            'item_ids'      => ['array'],
+            'item_ids.*'    => ['integer'],
+            'service_ids'   => ['array'],
+            'service_ids.*' => ['integer'],
+        ]);
+
+        try {
+            $this->service->bulkRemove($invoice, $data['item_ids'] ?? [], $data['service_ids'] ?? []);
+            return response()->json(['invoice_total' => (float) $invoice->fresh()->total_amount]);
+        } catch (LogicException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
     public function finalize(Invoice $invoice): RedirectResponse
     {
         try {

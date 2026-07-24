@@ -438,6 +438,32 @@ class InvoiceService
     }
 
     /**
+     * Remove a batch of invoice items in one go — used by the tab checkboxes'
+     * "select all + delete" control. $itemIds are single invoice_item rows;
+     * $serviceIds remove ALL records for that service (aggregated/multi-day
+     * items), same as removeServiceItems().
+     */
+    public function bulkRemove(Invoice $invoice, array $itemIds, array $serviceIds): void
+    {
+        if ($invoice->status === 'final') {
+            throw new LogicException('Cannot remove items from a finalised invoice.');
+        }
+
+        if (!empty($itemIds)) {
+            $invoice->items()->whereIn('id', $itemIds)->delete();
+        }
+
+        if (!empty($serviceIds)) {
+            $invoice->items()
+                ->where('itemable_type', Service::class)
+                ->whereIn('itemable_id', $serviceIds)
+                ->delete();
+        }
+
+        $invoice->recalculateTotal();
+    }
+
+    /**
      * Delete an invoice and all its items.
      */
     public function delete(Invoice $invoice): void

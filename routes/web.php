@@ -109,6 +109,8 @@ Route::middleware('auth')->group(function () {
             ->name('invoices.service-items.update');
         Route::delete('invoices/{invoice}/items/remove-service/{service}', [InvoiceController::class, 'removeServiceItems'])
             ->name('invoices.service-items.destroy');
+        Route::delete('invoices/{invoice}/items/bulk-destroy', [InvoiceController::class, 'bulkRemoveItems'])
+            ->name('invoices.items.bulk-destroy');
         Route::put('invoices/{invoice}/items/{item}', [InvoiceController::class, 'updateItem'])
             ->name('invoices.items.update');
         Route::delete('invoices/{invoice}/items/{item}', [InvoiceController::class, 'removeItem'])
