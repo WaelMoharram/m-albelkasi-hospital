@@ -212,10 +212,11 @@ class InvoiceService
     }
 
     /**
-     * Bulk-add medications and supplies from parsed Excel rows.
+     * Bulk-add medications and services from parsed Excel rows.
      *
      * Each row: ['name' => string, 'code' => string, 'qty' => int]
-     * Match priority: exact code → partial name (case-insensitive), medications first, then supplies.
+     * Match priority: exact code → partial name (case-insensitive), medications first,
+     * then services by category (supplies, lab, radiology, other).
      *
      * Returns ['added' => [...], 'not_found' => [...], 'invoice_total' => float]
      */
@@ -245,12 +246,17 @@ class InvoiceService
             }
 
             if (!$match) {
-                $itemType = 'supplies';
-                if ($code !== '') {
-                    $match = Service::where('category', 'supplies')->where('code', $code)->first();
-                }
-                if (!$match && $name !== '') {
-                    $match = Service::where('category', 'supplies')->whereRaw('TRIM(name) LIKE ?', ['%' . $name . '%'])->first();
+                foreach (['supplies', 'lab', 'radiology', 'other'] as $category) {
+                    if ($code !== '') {
+                        $match = Service::where('category', $category)->where('code', $code)->first();
+                    }
+                    if (!$match && $name !== '') {
+                        $match = Service::where('category', $category)->whereRaw('TRIM(name) LIKE ?', ['%' . $name . '%'])->first();
+                    }
+                    if ($match) {
+                        $itemType = $category;
+                        break;
+                    }
                 }
             }
 
