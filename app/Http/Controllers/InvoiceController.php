@@ -80,7 +80,7 @@ class InvoiceController extends Controller
         }
 
         $admissionIndicators = $this->service->admissionIndicators($invoice);
-        $indicators = $this->reportService->getPerformanceData(now()->month, now()->year);
+        $indicators = $this->reportService->getLiveBedAvailability();
 
         return view('invoices.show', compact('invoice', 'catalogJson', 'admissionIndicators', 'indicators'));
     }

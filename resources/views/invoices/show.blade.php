@@ -206,77 +206,58 @@
 </div>
 @endcan
 
-{{-- ── Patient / Admission header ──────────────────────────────────────── --}}
+{{-- ── Patient / Admission header + indicators — one compact strip ─────── --}}
+@php
+    $patientTypeLabels = ['pension' => __('Pension'), 'student' => __('Student'), 'employee' => __('Employee')];
+@endphp
 <div class="card border-0 shadow-sm mb-3">
-    <div class="card-body py-3">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Patient') }}</div>
-                <div class="fw-bold">{{ $patient->name }}</div>
-                <div class="text-muted small font-monospace">{{ $patient->national_id }}</div>
-            </div>
-            <div class="col-md-4">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Insurance') }}</div>
-                <div>{{ $patient->insuranceCompany->name ?? '—' }}</div>
-                @if($admission->referral_number)
-                <div class="text-muted small">{{ __('Referral #') }}: {{ $admission->referral_number }}</div>
+    <div class="card-body py-2 px-3">
+        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small">
+            <span>
+                <span class="text-muted">{{ __('Patient') }}:</span>
+                <strong>{{ $patient->name }}</strong>
+                <span class="text-muted font-monospace">({{ $patient->national_id }})</span>
+            </span>
+            <span>
+                <span class="text-muted">{{ __('Insurance') }}:</span>
+                {{ $patient->insuranceCompany->name ?? '—' }}
+            </span>
+            @if($admission->referral_number)
+            <span><span class="text-muted">{{ __('Referral #') }}:</span> {{ $admission->referral_number }}</span>
+            @endif
+            <span>
+                <span class="text-muted">{{ __('Admission') }}:</span>
+                <a href="{{ route('admissions.show', $admission) }}" class="text-decoration-none">#{{ $admission->id }}</a>
+                — {{ $admission->admission_date->format('d/m/Y') }}
+                @if($admission->discharge_date)
+                    ← {{ $admission->discharge_date->format('d/m/Y') }}
+                @else
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">{{ __('Active') }}</span>
                 @endif
-            </div>
-            <div class="col-md-4">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Admission') }}</div>
-                <div>
-                    <a href="{{ route('admissions.show', $admission) }}" class="text-decoration-none">
-                        #{{ $admission->id }}
-                    </a>
-                    — {{ $admission->admission_date->format('d/m/Y') }}
-                    @if($admission->discharge_date)
-                        ← {{ $admission->discharge_date->format('d/m/Y') }}
-                    @else
-                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">{{ __('Active') }}</span>
-                    @endif
-                </div>
-                <div class="text-muted small">
-                    {{ __('Room') }} {{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}
-                </div>
-            </div>
-        </div>
-        @if($admission->diagnosis || $admissionIndicators['age'] || $admission->patient_type)
-        @php
-            $patientTypeLabels = ['pension' => __('Pension'), 'student' => __('Student'), 'employee' => __('Employee')];
-        @endphp
-        <hr class="my-2">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Diagnosis') }}</div>
-                <div>{{ $admission->diagnosis ?? '—' }}</div>
-            </div>
-            <div class="col-md-2">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Age') }}</div>
-                <div>{{ $admissionIndicators['age'] ?? '—' }}</div>
-            </div>
-            <div class="col-md-4">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Patient Type') }}</div>
-                <div>{{ $admission->patient_type ? $patientTypeLabels[$admission->patient_type] : '—' }}</div>
-            </div>
-        </div>
-        @endif
-    </div>
-</div>
-
-{{-- ── Indicators: cost/day + this month's remaining bed-days ───────────── --}}
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-body py-3">
-        <div class="row g-3 text-center">
-            <div class="col-md-6 border-end">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Cost per Day') }}</div>
-                <div class="fw-bold fs-5">{{ number_format($admissionIndicators['cost_per_day'], 2) }}</div>
-                <div class="text-muted small">{{ $admissionIndicators['days'] }} {{ __('Days') }}</div>
-            </div>
-            <div class="col-md-6">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Remaining Available Days This Month') }}</div>
-                <div class="fw-bold fs-5">{{ number_format($indicators['remaining_days']) }}</div>
-                <div class="text-muted small">{{ __('of') }} {{ number_format($indicators['available_days']) }}</div>
-            </div>
+            </span>
+            <span>
+                <span class="text-muted">{{ __('Room') }}:</span>
+                {{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}
+            </span>
+            @if($admission->diagnosis)
+            <span><span class="text-muted">{{ __('Diagnosis') }}:</span> {{ $admission->diagnosis }}</span>
+            @endif
+            @if($admissionIndicators['age'])
+            <span><span class="text-muted">{{ __('Age') }}:</span> {{ $admissionIndicators['age'] }}</span>
+            @endif
+            @if($admission->patient_type)
+            <span><span class="text-muted">{{ __('Patient Type') }}:</span> {{ $patientTypeLabels[$admission->patient_type] }}</span>
+            @endif
+            <span>
+                <span class="text-muted">{{ __('Cost per Day') }}:</span>
+                <strong>{{ number_format($admissionIndicators['cost_per_day'], 2) }}</strong>
+                <span class="text-muted">({{ $admissionIndicators['days'] }} {{ __('Days') }})</span>
+            </span>
+            <span>
+                <span class="text-muted">{{ __('Remaining Available Days This Month') }}:</span>
+                <strong>{{ number_format($indicators['remaining_days']) }}</strong>
+                <span class="text-muted">/ {{ number_format($indicators['available_days']) }}</span>
+            </span>
         </div>
     </div>
 </div>

@@ -108,6 +108,45 @@ class ReportService
     }
 
     /**
+     * Live remaining bed-days for the current month — unlike getPerformanceData()
+     * (which only counts discharged cases, for the formal monthly report), this
+     * counts every admission whose stay overlaps the month so far, including
+     * ones still active today. Used by the invoice page's day-to-day indicator.
+     */
+    public function getLiveBedAvailability(): array
+    {
+        $today         = Carbon::today();
+        $startOfMonth  = $today->copy()->startOfMonth();
+        $endOfMonth    = $today->copy()->endOfMonth();
+        $daysInMonth   = $today->daysInMonth;
+        $icuBeds       = (int) Setting::getValue('icu_beds', 6);
+        $availableDays = $daysInMonth * $icuBeds;
+
+        $admissions = Admission::where('admission_date', '<=', $endOfMonth)
+            ->where(function ($q) use ($startOfMonth) {
+                $q->whereNull('discharge_date')
+                  ->orWhere('discharge_date', '>=', $startOfMonth);
+            })
+            ->get(['admission_date', 'discharge_date']);
+
+        $usedDays = $admissions->sum(function ($a) use ($startOfMonth, $endOfMonth, $today) {
+            $start = $a->admission_date->greaterThan($startOfMonth) ? $a->admission_date : $startOfMonth;
+            $end   = $a->discharge_date ?? $today;
+            $end   = $end->lessThan($endOfMonth) ? $end : $endOfMonth;
+
+            return max(0, $start->diffInDays($end) + 1);
+        });
+
+        return [
+            'days_in_month'  => $daysInMonth,
+            'icu_beds'       => $icuBeds,
+            'available_days' => $availableDays,
+            'used_days'      => $usedDays,
+            'remaining_days' => $availableDays - $usedDays,
+        ];
+    }
+
+    /**
      * Build data for the patient list summary (ح المطالبة).
      * One row per admission: name, dob, age, dates, days, referral, invoice total, per-day rate.
      */
