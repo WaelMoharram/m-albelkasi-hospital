@@ -655,7 +655,10 @@
         @endforeach
     </div>
 
-    @php $dailyItems = $allSvcItems; @endphp
+    @php
+        $dailyItems = $allSvcItems;
+        $medDiscounts = $invoice->medicationDiscountedSubtotals();
+    @endphp
 
     {{-- Grand total --}}
     <div class="card-body py-3">
@@ -669,12 +672,30 @@
                     </tr>
                     @endif
                     @foreach ($sections as $sectionKey => $meta)
+                    @if(in_array($sectionKey, ['local_med', 'imported_med']))
+                        @php
+                            $isLocal = $sectionKey === 'local_med';
+                            $raw     = $isLocal ? $medDiscounts['local_raw']    : $medDiscounts['imported_raw'];
+                            $pct     = $isLocal ? $medDiscounts['local_discount_pct'] : $medDiscounts['imported_discount_pct'];
+                            $after   = $isLocal ? $medDiscounts['local_after'] : $medDiscounts['imported_after'];
+                        @endphp
+                        @if($raw > 0)
+                        <tr>
+                            <td class="text-muted small border-0">
+                                {{ $meta['subtotal_label'] }}
+                                @if($pct > 0)<br><span class="text-muted" style="font-size: .75rem;">{{ __('after :pct% discount', ['pct' => number_format($pct, 0)]) }}</span>@endif
+                            </td>
+                            <td class="text-end border-0 fw-medium">{{ number_format($after, 2) }}</td>
+                        </tr>
+                        @endif
+                    @else
                     @php $sectionTotal = ($grouped[$sectionKey] ?? collect())->sum('total'); @endphp
                     @if($sectionTotal > 0)
                     <tr>
                         <td class="text-muted small border-0">{{ $meta['subtotal_label'] }}</td>
                         <td class="text-end border-0 fw-medium">{{ number_format($sectionTotal, 2) }}</td>
                     </tr>
+                    @endif
                     @endif
                     @endforeach
                     <tr class="border-top">

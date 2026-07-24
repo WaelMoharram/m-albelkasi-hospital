@@ -266,6 +266,7 @@
     "Applied to the local medications subtotal on every invoice.": "يُطبَّق على إجمالي الأدوية المحلية في كل فاتورة.",
     "Applied to the imported medications subtotal on every invoice.": "يُطبَّق على إجمالي الأدوية المستوردة في كل فاتورة.",
     "Discounts affect the invoice grand total. Existing draft invoices will be recalculated automatically on next view.": "الخصومات تؤثر على الإجمالي الكلي للفاتورة. سيتم إعادة حساب الفواتير المسودة تلقائياً عند عرضها.",
+    "after :pct% discount": "بعد خصم :pct%",
     "Linked Services": "الخدمات المرتبطة",
     "Select linked services": "اختر الخدمات المرتبطة",
     "These services will be added automatically when this service is added to an invoice.": "سيتم إضافة هذه الخدمات تلقائياً عند إضافة هذه الخدمة إلى الفاتورة.",
