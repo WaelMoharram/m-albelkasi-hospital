@@ -19,9 +19,7 @@ class Admission extends Model
         'status',
         'discharge_reason',
         'diagnosis',
-        'age',
         'patient_type',
-        'expected_duration_days',
     ];
 
     protected function casts(): array

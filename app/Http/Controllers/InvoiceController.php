@@ -79,10 +79,10 @@ class InvoiceController extends Controller
             ]);
         }
 
-        $costPerDay = $this->service->costPerDay($invoice);
+        $admissionIndicators = $this->service->admissionIndicators($invoice);
         $indicators = $this->reportService->getPerformanceData(now()->month, now()->year);
 
-        return view('invoices.show', compact('invoice', 'catalogJson', 'costPerDay', 'indicators'));
+        return view('invoices.show', compact('invoice', 'catalogJson', 'admissionIndicators', 'indicators'));
     }
 
     public function bulkImportExample(): StreamedResponse

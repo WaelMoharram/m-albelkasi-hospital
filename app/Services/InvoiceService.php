@@ -46,15 +46,21 @@ class InvoiceService
     }
 
     /**
-     * Cost per day of stay so far: the invoice's grand total divided by days
-     * admitted (admission_date → discharge_date, or → today while still active).
+     * Per-invoice indicators: age is computed from the patient's DOB (never
+     * entered manually), days is admission_date → discharge_date (or → today
+     * while still active), and cost per day is the invoice's grand total
+     * divided by those days.
      */
-    public function costPerDay(Invoice $invoice): array
+    public function admissionIndicators(Invoice $invoice): array
     {
         $admission = $invoice->admission;
         $days = max(1, (int) $admission->admission_date->diffInDays($admission->discharge_date ?? now()));
+        $age  = $admission->patient->dob
+            ? (int) $admission->patient->dob->diffInYears($admission->admission_date)
+            : null;
 
         return [
+            'age'          => $age,
             'days'         => $days,
             'cost_per_day' => round((float) $invoice->total_amount / $days, 2),
         ];

@@ -142,7 +142,7 @@ new TomSelect('#patient_id', {
         @error('referral_source') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-8">
         <label class="form-label" for="diagnosis">{{ __('Diagnosis') }}</label>
         <input id="diagnosis" type="text" name="diagnosis"
                value="{{ old('diagnosis', $admission->diagnosis ?? '') }}"
@@ -151,15 +151,7 @@ new TomSelect('#patient_id', {
         @error('diagnosis') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 
-    <div class="col-md-2">
-        <label class="form-label" for="age">{{ __('Age') }}</label>
-        <input id="age" type="number" name="age" min="0" max="150"
-               value="{{ old('age', $admission->age ?? '') }}"
-               class="form-control @error('age') is-invalid @enderror">
-        @error('age') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    </div>
-
-    <div class="col-md-2">
+    <div class="col-md-4">
         <label class="form-label" for="patient_type">{{ __('Patient Type') }}</label>
         <select id="patient_type" name="patient_type"
                 class="form-select @error('patient_type') is-invalid @enderror">
@@ -169,13 +161,5 @@ new TomSelect('#patient_id', {
             <option value="employee" {{ old('patient_type', $admission->patient_type ?? '') === 'employee' ? 'selected' : '' }}>{{ __('Employee') }}</option>
         </select>
         @error('patient_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-    </div>
-
-    <div class="col-md-2">
-        <label class="form-label" for="expected_duration_days">{{ __('Expected Duration (days)') }}</label>
-        <input id="expected_duration_days" type="number" name="expected_duration_days" min="1" max="365"
-               value="{{ old('expected_duration_days', $admission->expected_duration_days ?? '') }}"
-               class="form-control @error('expected_duration_days') is-invalid @enderror">
-        @error('expected_duration_days') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
 </div>

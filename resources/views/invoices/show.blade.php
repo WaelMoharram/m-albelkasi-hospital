@@ -240,27 +240,23 @@
                 </div>
             </div>
         </div>
-        @if($admission->diagnosis || $admission->age || $admission->patient_type || $admission->expected_duration_days)
+        @if($admission->diagnosis || $admissionIndicators['age'] || $admission->patient_type)
         @php
             $patientTypeLabels = ['pension' => __('Pension'), 'student' => __('Student'), 'employee' => __('Employee')];
         @endphp
         <hr class="my-2">
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Diagnosis') }}</div>
                 <div>{{ $admission->diagnosis ?? '—' }}</div>
             </div>
             <div class="col-md-2">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Age') }}</div>
-                <div>{{ $admission->age ?? '—' }}</div>
+                <div>{{ $admissionIndicators['age'] ?? '—' }}</div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Patient Type') }}</div>
                 <div>{{ $admission->patient_type ? $patientTypeLabels[$admission->patient_type] : '—' }}</div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Expected Duration (days)') }}</div>
-                <div>{{ $admission->expected_duration_days ?? '—' }}</div>
             </div>
         </div>
         @endif
@@ -273,8 +269,8 @@
         <div class="row g-3 text-center">
             <div class="col-md-6 border-end">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Cost per Day') }}</div>
-                <div class="fw-bold fs-5">{{ number_format($costPerDay['cost_per_day'], 2) }}</div>
-                <div class="text-muted small">{{ $costPerDay['days'] }} {{ __('Days') }}</div>
+                <div class="fw-bold fs-5">{{ number_format($admissionIndicators['cost_per_day'], 2) }}</div>
+                <div class="text-muted small">{{ $admissionIndicators['days'] }} {{ __('Days') }}</div>
             </div>
             <div class="col-md-6">
                 <div class="text-muted small text-uppercase fw-semibold mb-1">{{ __('Remaining Available Days This Month') }}</div>
