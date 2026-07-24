@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Medication;
 use App\Models\Service;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
@@ -15,19 +16,46 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class InvoiceService
 {
-    public function paginate(?string $search, ?string $status, int $perPage = 15): LengthAwarePaginator
+    public function paginate(?string $search, ?string $status, ?string $from = null, ?string $to = null, bool $all = false, int $perPage = 15): LengthAwarePaginator
     {
-        return Invoice::with(['admission.patient', 'admission.patient.insuranceCompany'])
+        $query = Invoice::with(['admission.patient', 'admission.patient.insuranceCompany'])
             ->when($status, fn ($q) => $q->where('status', $status))
             ->when($search, function ($q) use ($search) {
                 $q->whereHas('admission.patient', fn ($p) =>
                     $p->where('name', 'like', "%{$search}%")
                       ->orWhere('national_id', 'like', "%{$search}%")
                 );
-            })
+            });
+
+        if (! $all) {
+            [$start, $end] = $this->resolveDateRange($from, $to);
+            $query->whereBetween('invoice_date', [$start, $end]);
+        }
+
+        return $query
             ->orderByDesc('invoice_date')
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    /**
+     * Default invoices/admissions list period: last month and the month before it.
+     * The current (in-progress) month is excluded until it becomes "last month" —
+     * invoices are only sent out the month after they close.
+     */
+    public function defaultPeriod(): array
+    {
+        return [now()->subMonths(2)->format('Y-m'), now()->subMonth()->format('Y-m')];
+    }
+
+    private function resolveDateRange(?string $from, ?string $to): array
+    {
+        [$defaultFrom, $defaultTo] = $this->defaultPeriod();
+
+        $start = Carbon::parse(($from ?: $defaultFrom) . '-01')->startOfMonth();
+        $end   = Carbon::parse(($to ?: $defaultTo) . '-01')->endOfMonth();
+
+        return [$start, $end];
     }
 
     /**
