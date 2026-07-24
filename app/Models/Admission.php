@@ -18,6 +18,10 @@ class Admission extends Model
         'referral_source',
         'status',
         'discharge_reason',
+        'diagnosis',
+        'age',
+        'patient_type',
+        'expected_duration_days',
     ];
 
     protected function casts(): array

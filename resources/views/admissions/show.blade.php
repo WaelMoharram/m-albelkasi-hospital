@@ -36,6 +36,33 @@
                         {{ __('Room') }} {{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}
                     </span>
                 </div>
+                @if($admission->diagnosis || $admission->age || $admission->patient_type || $admission->expected_duration_days)
+                @php
+                    $patientTypeLabels = ['pension' => __('Pension'), 'student' => __('Student'), 'employee' => __('Employee')];
+                @endphp
+                <div class="d-flex flex-wrap gap-3 small mt-2">
+                    @if($admission->diagnosis)
+                    <span><i class="bi bi-clipboard2-pulse text-danger ms-1"></i>
+                        {{ __('Diagnosis') }}: {{ $admission->diagnosis }}
+                    </span>
+                    @endif
+                    @if($admission->age)
+                    <span><i class="bi bi-person text-secondary ms-1"></i>
+                        {{ __('Age') }}: {{ $admission->age }}
+                    </span>
+                    @endif
+                    @if($admission->patient_type)
+                    <span><i class="bi bi-tag text-secondary ms-1"></i>
+                        {{ __('Patient Type') }}: {{ $patientTypeLabels[$admission->patient_type] }}
+                    </span>
+                    @endif
+                    @if($admission->expected_duration_days)
+                    <span><i class="bi bi-calendar-range text-secondary ms-1"></i>
+                        {{ __('Expected Duration (days)') }}: {{ $admission->expected_duration_days }}
+                    </span>
+                    @endif
+                </div>
+                @endif
             </div>
 
             <div class="col-md-4 text-md-start mt-3 mt-md-0">

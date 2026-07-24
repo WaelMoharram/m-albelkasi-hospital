@@ -8,6 +8,7 @@ use App\Models\InvoiceItem;
 use App\Models\Medication;
 use App\Models\Service;
 use App\Services\InvoiceService;
+use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
-    public function __construct(private readonly InvoiceService $service) {}
+    public function __construct(
+        private readonly InvoiceService $service,
+        private readonly ReportService $reportService,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -75,7 +79,10 @@ class InvoiceController extends Controller
             ]);
         }
 
-        return view('invoices.show', compact('invoice', 'catalogJson'));
+        $costPerDay = $this->service->costPerDay($invoice);
+        $indicators = $this->reportService->getPerformanceData(now()->month, now()->year);
+
+        return view('invoices.show', compact('invoice', 'catalogJson', 'costPerDay', 'indicators'));
     }
 
     public function bulkImportExample(): StreamedResponse

@@ -48,6 +48,10 @@ class AdmissionController extends Controller
             'ward'            => ['nullable', 'string', 'max:100'],
             'referral_number' => ['nullable', 'string', 'max:50', 'unique:admissions,referral_number'],
             'referral_source' => ['nullable', 'string', 'max:100'],
+            'diagnosis'       => ['nullable', 'string', 'max:255'],
+            'age'             => ['nullable', 'integer', 'min:0', 'max:150'],
+            'patient_type'    => ['nullable', 'in:pension,student,employee'],
+            'expected_duration_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
         $admission = $this->service->create($data);
@@ -85,6 +89,10 @@ class AdmissionController extends Controller
             'ward'            => ['nullable', 'string', 'max:100'],
             'referral_number' => ['nullable', 'string', 'max:50', Rule::unique('admissions', 'referral_number')->ignore($admission->id)],
             'referral_source' => ['nullable', 'string', 'max:100'],
+            'diagnosis'       => ['nullable', 'string', 'max:255'],
+            'age'             => ['nullable', 'integer', 'min:0', 'max:150'],
+            'patient_type'    => ['nullable', 'in:pension,student,employee'],
+            'expected_duration_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
         $this->service->update($admission, $data);
