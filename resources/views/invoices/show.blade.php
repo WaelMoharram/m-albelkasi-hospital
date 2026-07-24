@@ -66,6 +66,10 @@
         return $group;
     });
 
+    // Row count actually rendered in the الفاتورة table — one row per
+    // aggregated item per category, not one per raw (per-day) invoice_item.
+    $dailyTabRowCount = $dailyCategoryGroups->sum(fn ($group) => $group['items']->count());
+
     $sections = [
         'local_med'    => ['label' => __('Local Medications'),    'subtotal_label' => __('Local Medications Subtotal'),    'icon' => 'bi-capsule',      'color' => 'success'],
         'imported_med' => ['label' => __('Imported Medications'), 'subtotal_label' => __('Imported Medications Subtotal'), 'icon' => 'bi-capsule-pill', 'color' => 'warning'],
@@ -290,8 +294,8 @@
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-daily"
                         type="button" role="tab">
                     {{ __('Invoice') }}
-                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $allSvcItems->isEmpty() ? 'd-none' : '' }}"
-                          id="badge-daily">{{ $allSvcItems->count() }}</span>
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $dailyTabRowCount === 0 ? 'd-none' : '' }}"
+                          id="badge-daily">{{ $dailyTabRowCount }}</span>
                 </button>
             </li>
 
