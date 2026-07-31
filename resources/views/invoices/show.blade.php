@@ -793,14 +793,18 @@
     @endphp
 
     {{-- Grand total --}}
+    <style>
+        .gt-table td { border-bottom: 0; }
+        .gt-table tr + tr td { border-top: 1px solid #dee2e6; }
+    </style>
     <div class="card-body py-3">
         <div class="row justify-content-start">
             <div class="col-md-5">
-                <table class="table table-sm mb-0">
+                <table class="table table-sm mb-0 gt-table">
                     @if($dailyItems->isNotEmpty())
                     <tr>
-                        <td class="text-muted small border-0">{{ __('Daily Charges') }}</td>
-                        <td class="text-end border-0 fw-medium">{{ number_format($dailyItems->sum('total'), 2) }}</td>
+                        <td class="text-muted small">{{ __('Daily Charges') }}</td>
+                        <td class="text-end fw-medium">{{ number_format($dailyItems->sum('total'), 2) }}</td>
                     </tr>
                     @endif
                     @foreach ($sections as $sectionKey => $meta)
@@ -813,15 +817,17 @@
                         @endphp
                         @if($raw > 0)
                         <tr>
-                            <td class="text-muted small border-0">
+                            <td class="text-muted small">
                                 {{ $meta['subtotal_label'] }}
                                 @if($pct > 0)<br><span class="text-muted" style="font-size: .75rem;">{{ __('after :pct% discount', ['pct' => number_format($pct, 0)]) }}</span>@endif
                             </td>
-                            <td class="text-end border-0">
+                            <td class="text-end">
                                 @if($pct > 0)
                                 <div class="text-muted text-decoration-line-through" style="font-size: .75rem;">{{ number_format($raw, 2) }}</div>
-                                @endif
+                                <div class="fw-medium text-success">{{ number_format($after, 2) }}</div>
+                                @else
                                 <div class="fw-medium">{{ number_format($after, 2) }}</div>
+                                @endif
                             </td>
                         </tr>
                         @endif
@@ -829,8 +835,8 @@
                     @php $sectionTotal = ($grouped[$sectionKey] ?? collect())->sum('total'); @endphp
                     @if($sectionTotal > 0)
                     <tr>
-                        <td class="text-muted small border-0">{{ $meta['subtotal_label'] }}</td>
-                        <td class="text-end border-0 fw-medium">{{ number_format($sectionTotal, 2) }}</td>
+                        <td class="text-muted small">{{ $meta['subtotal_label'] }}</td>
+                        <td class="text-end fw-medium">{{ number_format($sectionTotal, 2) }}</td>
                     </tr>
                     @endif
                     @endif
