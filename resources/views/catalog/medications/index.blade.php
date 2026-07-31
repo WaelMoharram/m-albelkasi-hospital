@@ -38,6 +38,9 @@
                 </a>
             @endif
         </form>
+        <a href="{{ route('catalog.medications.export', request()->query()) }}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-excel ms-1"></i> {{ __('Export to Excel') }}
+        </a>
         <a href="{{ route('catalog.medications.create') }}" class="btn btn-sm btn-primary">
             <i class="bi bi-plus-lg ms-1"></i> {{ __('Add Medication') }}
         </a>

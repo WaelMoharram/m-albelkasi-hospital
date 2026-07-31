@@ -178,9 +178,15 @@ Route::middleware('auth')->group(function () {
             Route::get('duplicate-codes', [CatalogHealthController::class, 'duplicateCodes'])
                 ->name('duplicate-codes');
 
+            Route::get('medications/export', [MedicationController::class, 'export'])
+                ->name('medications.export');
+
             Route::resource('medications', MedicationController::class)
                 ->except(['show'])
                 ->names('medications');
+
+            Route::get('services/export', [ServiceController::class, 'export'])
+                ->name('services.export');
 
             Route::resource('services', ServiceController::class)
                 ->except(['show'])

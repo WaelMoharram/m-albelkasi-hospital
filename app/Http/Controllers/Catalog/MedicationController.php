@@ -11,6 +11,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MedicationController extends Controller
 {
@@ -22,6 +24,19 @@ class MedicationController extends Controller
         $medications = $this->service->paginate($request->input('search'), $type);
 
         return view('catalog.medications.index', compact('medications'));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $type = in_array($request->input('type'), ['local', 'imported']) ? $request->input('type') : null;
+
+        $writer = new Xlsx($this->service->exportSpreadsheet($request->input('search'), $type));
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'medications-' . now()->format('Y-m-d') . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function create(): View

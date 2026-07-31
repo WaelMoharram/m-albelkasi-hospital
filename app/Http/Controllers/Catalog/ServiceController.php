@@ -10,6 +10,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ServiceController extends Controller
 {
@@ -22,6 +24,24 @@ class ServiceController extends Controller
         $services = $this->service->paginate($request->input('search'), $category, $isDaily, $request->input('is_once'));
 
         return view('catalog.services.index', compact('services'));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $category = in_array($request->input('category'), ['supplies', 'lab', 'radiology', 'other']) ? $request->input('category') : null;
+
+        $writer = new Xlsx($this->service->exportSpreadsheet(
+            $request->input('search'),
+            $category,
+            $request->input('is_daily'),
+            $request->input('is_once'),
+        ));
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'services-' . now()->format('Y-m-d') . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function create(): View
