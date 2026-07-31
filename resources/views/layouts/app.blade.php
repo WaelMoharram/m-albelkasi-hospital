@@ -36,6 +36,31 @@
             display: flex;
             flex-direction: column;
         }
+        @media (max-width: 991.98px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                height: 100vh;
+                z-index: 1045;
+                transform: translateX(100%);
+                transition: transform 0.25s ease-in-out;
+                box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .sidebar-backdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 1040;
+                display: none;
+            }
+            .sidebar-backdrop.show {
+                display: block;
+            }
+        }
         .topbar {
             background-color: #fff;
             border-bottom: 1px solid #dee2e6;
@@ -66,11 +91,15 @@
 <div id="wrapper">
     {{-- Sidebar --}}
     @include('partials.sidebar')
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     {{-- Page content --}}
     <div id="page-content">
         {{-- Top navbar --}}
         <header class="topbar d-flex align-items-center px-3 py-2">
+            <button class="btn btn-outline-secondary d-lg-none ms-2" id="sidebarToggle" type="button" aria-label="{{ __('Menu') }}">
+                <i class="bi bi-list fs-5"></i>
+            </button>
             <nav aria-label="breadcrumb" class="me-auto">
                 <ol class="breadcrumb mb-0 small">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('Home') }}</a></li>
@@ -118,6 +147,27 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar  = document.getElementById('sidebar');
+        const toggle   = document.getElementById('sidebarToggle');
+        const backdrop = document.getElementById('sidebarBackdrop');
+
+        function closeSidebar() {
+            sidebar.classList.remove('show');
+            backdrop.classList.remove('show');
+        }
+
+        toggle?.addEventListener('click', function () {
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
+        });
+        backdrop?.addEventListener('click', closeSidebar);
+        sidebar?.querySelectorAll('a, button[type="submit"]').forEach(function (el) {
+            el.addEventListener('click', closeSidebar);
+        });
+    });
+</script>
 @include('sweetalert::alert')
 @stack('scripts')
 </body>

@@ -219,9 +219,18 @@
         border: 1px solid #dde3ee;
         border-radius: 999px;
         padding: 0.15rem 0.7rem;
+        white-space: nowrap;
+        max-width: 100%;
     }
+    .field-chip .field-label,
+    .field-chip .field-value { white-space: nowrap; }
     .field-chip .field-label { font-size: 0.7rem; color: #6c757d; font-weight: 600; }
     .field-chip .field-value { font-size: 0.8125rem; font-weight: 600; color: #212529; }
+    @media (max-width: 575.98px) {
+        .field-chip { padding: 0.15rem 0.55rem; }
+        .field-chip .field-label { font-size: 0.65rem; }
+        .field-chip .field-value { font-size: 0.75rem; }
+    }
 </style>
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2 px-3">
