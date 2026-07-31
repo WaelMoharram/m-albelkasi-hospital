@@ -210,65 +210,92 @@
 @php
     $patientTypeLabels = ['pension' => __('Pension'), 'student' => __('Student'), 'employee' => __('Employee')];
 @endphp
+<style>
+    .field-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: #f1f4fa;
+        border: 1px solid #dde3ee;
+        border-radius: 999px;
+        padding: 0.15rem 0.7rem;
+    }
+    .field-chip .field-label { font-size: 0.7rem; color: #6c757d; font-weight: 600; }
+    .field-chip .field-value { font-size: 0.8125rem; font-weight: 600; color: #212529; }
+</style>
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2 px-3">
-        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small border-bottom pb-1 mb-1">
-            <span>
-                <span class="text-muted">{{ __('Patient') }}:</span>
-                <strong>{{ $patient->name }}</strong>
-                <span class="text-muted font-monospace">({{ $patient->national_id }})</span>
+        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
+            <span class="field-chip">
+                <span class="field-label">{{ __('Patient') }}:</span>
+                <span class="field-value">{{ $patient->name }} <span class="text-muted font-monospace fw-normal">({{ $patient->national_id }})</span></span>
             </span>
             @if($admission->diagnosis)
-            <span><span class="text-muted">{{ __('Diagnosis') }}:</span> {{ $admission->diagnosis }}</span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Diagnosis') }}:</span>
+                <span class="field-value">{{ $admission->diagnosis }}</span>
+            </span>
             @endif
         </div>
-        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small border-bottom pb-1 mb-1">
+        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
             @if($admissionIndicators['age'])
-            <span><span class="text-muted">{{ __('Age') }}:</span> {{ $admissionIndicators['age'] }}</span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Age') }}:</span>
+                <span class="field-value">{{ $admissionIndicators['age'] }}</span>
+            </span>
             @endif
             @if($admission->referral_number)
-            <span><span class="text-muted">{{ __('Referral #') }}:</span> {{ $admission->referral_number }}</span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Referral #') }}:</span>
+                <span class="field-value">{{ $admission->referral_number }}</span>
+            </span>
             @endif
         </div>
-        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small border-bottom pb-1 mb-1">
-            <span>
-                <span class="text-muted">{{ __('Admission') }}:</span>
-                <a href="{{ route('admissions.show', $admission) }}" class="text-decoration-none">#{{ $admission->id }}</a>
-                — {{ $admission->admission_date->format('d/m/Y') }}
+        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
+            <span class="field-chip">
+                <span class="field-label">{{ __('Admission') }}:</span>
+                <span class="field-value">
+                    <a href="{{ route('admissions.show', $admission) }}" class="text-decoration-none">#{{ $admission->id }}</a>
+                    — {{ $admission->admission_date->format('d/m/Y') }}
+                </span>
             </span>
-            <span>
-                <span class="text-muted">{{ __('Discharge') }}:</span>
-                @if($admission->discharge_date)
-                    {{ $admission->discharge_date->format('d/m/Y') }}
-                @else
-                    <span class="badge bg-success-subtle text-success border border-success-subtle">{{ __('Active') }}</span>
-                @endif
+            <span class="field-chip">
+                <span class="field-label">{{ __('Discharge') }}:</span>
+                <span class="field-value">
+                    @if($admission->discharge_date)
+                        {{ $admission->discharge_date->format('d/m/Y') }}
+                    @else
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ __('Active') }}</span>
+                    @endif
+                </span>
             </span>
-            <span>
-                <span class="text-muted">{{ __('Duration') }}:</span>
-                {{ $admissionIndicators['days'] }} {{ __('Days') }}
+            <span class="field-chip">
+                <span class="field-label">{{ __('Duration') }}:</span>
+                <span class="field-value">{{ $admissionIndicators['days'] }} {{ __('Days') }}</span>
             </span>
-            <span>
-                <span class="text-muted">{{ __('Remaining Available Days This Month') }}:</span>
-                <strong>{{ number_format($indicators['remaining_days']) }}</strong>
-                <span class="text-muted">/ {{ number_format($indicators['available_days']) }}</span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Remaining Available Days This Month') }}:</span>
+                <span class="field-value">{{ number_format($indicators['remaining_days']) }} <span class="text-muted fw-normal">/ {{ number_format($indicators['available_days']) }}</span></span>
             </span>
         </div>
-        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small">
-            <span>
-                <span class="text-muted">{{ __('Insurance') }}:</span>
-                {{ $patient->insuranceCompany->name ?? '—' }}
+        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center">
+            <span class="field-chip">
+                <span class="field-label">{{ __('Insurance') }}:</span>
+                <span class="field-value">{{ $patient->insuranceCompany->name ?? '—' }}</span>
             </span>
-            <span>
-                <span class="text-muted">{{ __('Room') }}:</span>
-                {{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}
+            <span class="field-chip">
+                <span class="field-label">{{ __('Room') }}:</span>
+                <span class="field-value">{{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}</span>
             </span>
             @if($admission->patient_type)
-            <span><span class="text-muted">{{ __('Patient Type') }}:</span> {{ $patientTypeLabels[$admission->patient_type] }}</span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Patient Type') }}:</span>
+                <span class="field-value">{{ $patientTypeLabels[$admission->patient_type] }}</span>
+            </span>
             @endif
-            <span>
-                <span class="text-muted">{{ __('Cost per Day') }}:</span>
-                <strong>{{ number_format($admissionIndicators['cost_per_day'], 2) }}</strong>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Cost per Day') }}:</span>
+                <span class="field-value">{{ number_format($admissionIndicators['cost_per_day'], 2) }}</span>
             </span>
         </div>
     </div>

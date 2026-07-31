@@ -39,16 +39,19 @@
             border: 0.5pt solid #b0b8c8;
             border-radius: 3pt;
             margin-bottom: 10pt;
-            padding: 5pt 10pt;
+            padding: 6pt 8pt 3pt 8pt;
         }
-        .p-line {
-            padding: 3pt 0;
-            border-bottom: 0.5pt dashed #d8dee8;
+        .p-line { margin-bottom: 3pt; }
+        .p-field {
+            display: inline-block;
+            background: #eef2fa;
+            border: 0.5pt solid #c3cee0;
+            border-radius: 9pt;
+            padding: 2pt 8pt;
+            margin-left: 5pt;
         }
-        .p-line:last-child { border-bottom: none; }
-        .p-field { display: inline-block; margin-left: 20pt; }
-        .p-flabel { font-size: 7pt; color: #777; font-weight: bold; }
-        .p-fvalue { font-size: 9.5pt; font-weight: bold; }
+        .p-flabel { font-size: 6.5pt; color: #5a6b8c; font-weight: bold; }
+        .p-fvalue { font-size: 8.5pt; font-weight: bold; color: #1a3c6e; margin-right: 3pt; }
 
         /* ── Main items table ── */
         .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
