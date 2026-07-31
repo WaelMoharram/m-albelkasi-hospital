@@ -259,10 +259,6 @@
                 <span class="field-label">{{ __('Room') }}:</span>
                 <span class="field-value">{{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}</span>
             </span>
-            <span class="field-chip">
-                <span class="field-label">{{ __('Cost per Day') }}:</span>
-                <span class="field-value">{{ number_format($admissionIndicators['cost_per_day'], 2) }}</span>
-            </span>
         </div>
         @if($admission->diagnosis)
         <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
@@ -297,6 +293,10 @@
             <span class="field-chip">
                 <span class="field-label">{{ __('Remaining Available Days This Month') }}:</span>
                 <span class="field-value">{{ number_format($indicators['remaining_days']) }} <span class="text-muted fw-normal">/ {{ number_format($indicators['available_days']) }}</span></span>
+            </span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Cost per Day') }}:</span>
+                <span class="field-value">{{ number_format($admissionIndicators['cost_per_day'], 2) }}</span>
             </span>
         </div>
         @if($admission->patient_type)
