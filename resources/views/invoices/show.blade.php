@@ -796,6 +796,14 @@
     <style>
         .gt-table td { border-bottom: 0; }
         .gt-table tr + tr td { border-top: 1px solid #dee2e6; }
+        .discount-amount {
+            display: inline-block;
+            background: #cfe2ff;
+            color: #052c65;
+            font-weight: 700;
+            padding: 0.1rem 0.5rem;
+            border-radius: 4px;
+        }
     </style>
     <div class="card-body py-3">
         <div class="row justify-content-start">
@@ -824,7 +832,7 @@
                             <td class="text-end">
                                 @if($pct > 0)
                                 <div class="text-muted text-decoration-line-through" style="font-size: .75rem;">{{ number_format($raw, 2) }}</div>
-                                <div class="fw-medium text-success">{{ number_format($after, 2) }}</div>
+                                <div class="discount-amount">{{ number_format($after, 2) }}</div>
                                 @else
                                 <div class="fw-medium">{{ number_format($after, 2) }}</div>
                                 @endif
