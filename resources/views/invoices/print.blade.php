@@ -407,7 +407,10 @@
                     أدوية محلية
                     @if($localDisc > 0)<br><span class="disc-note">بعد خصم {{ $localDisc }}%</span>@endif
                 </td>
-                <td class="sum-amt">{{ number_format($localAfter, 2) }}</td>
+                <td class="sum-amt">
+                    @if($localDisc > 0)<div class="disc-note" style="text-decoration:line-through;">{{ number_format($localRaw, 2) }}</div>@endif
+                    {{ number_format($localAfter, 2) }}
+                </td>
             </tr>
             @endif
             @if($importedRaw > 0)
@@ -417,7 +420,10 @@
                     أدوية مستوردة
                     @if($importedDisc > 0)<br><span class="disc-note">بعد خصم {{ $importedDisc }}%</span>@endif
                 </td>
-                <td class="sum-amt">{{ number_format($importAfter, 2) }}</td>
+                <td class="sum-amt">
+                    @if($importedDisc > 0)<div class="disc-note" style="text-decoration:line-through;">{{ number_format($importedRaw, 2) }}</div>@endif
+                    {{ number_format($importAfter, 2) }}
+                </td>
             </tr>
             @endif
             <tr class="sum-grand">

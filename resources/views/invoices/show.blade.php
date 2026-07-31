@@ -817,7 +817,12 @@
                                 {{ $meta['subtotal_label'] }}
                                 @if($pct > 0)<br><span class="text-muted" style="font-size: .75rem;">{{ __('after :pct% discount', ['pct' => number_format($pct, 0)]) }}</span>@endif
                             </td>
-                            <td class="text-end border-0 fw-medium">{{ number_format($after, 2) }}</td>
+                            <td class="text-end border-0">
+                                @if($pct > 0)
+                                <div class="text-muted text-decoration-line-through" style="font-size: .75rem;">{{ number_format($raw, 2) }}</div>
+                                @endif
+                                <div class="fw-medium">{{ number_format($after, 2) }}</div>
+                            </td>
                         </tr>
                         @endif
                     @else
