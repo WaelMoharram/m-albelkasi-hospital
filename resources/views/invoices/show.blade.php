@@ -212,51 +212,63 @@
 @endphp
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2 px-3">
-        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small">
+        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small border-bottom pb-1 mb-1">
             <span>
                 <span class="text-muted">{{ __('Patient') }}:</span>
                 <strong>{{ $patient->name }}</strong>
                 <span class="text-muted font-monospace">({{ $patient->national_id }})</span>
             </span>
-            <span>
-                <span class="text-muted">{{ __('Insurance') }}:</span>
-                {{ $patient->insuranceCompany->name ?? '—' }}
-            </span>
+            @if($admission->diagnosis)
+            <span><span class="text-muted">{{ __('Diagnosis') }}:</span> {{ $admission->diagnosis }}</span>
+            @endif
+        </div>
+        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small border-bottom pb-1 mb-1">
+            @if($admissionIndicators['age'])
+            <span><span class="text-muted">{{ __('Age') }}:</span> {{ $admissionIndicators['age'] }}</span>
+            @endif
             @if($admission->referral_number)
             <span><span class="text-muted">{{ __('Referral #') }}:</span> {{ $admission->referral_number }}</span>
             @endif
+        </div>
+        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small border-bottom pb-1 mb-1">
             <span>
                 <span class="text-muted">{{ __('Admission') }}:</span>
                 <a href="{{ route('admissions.show', $admission) }}" class="text-decoration-none">#{{ $admission->id }}</a>
                 — {{ $admission->admission_date->format('d/m/Y') }}
+            </span>
+            <span>
+                <span class="text-muted">{{ __('Discharge') }}:</span>
                 @if($admission->discharge_date)
-                    ← {{ $admission->discharge_date->format('d/m/Y') }}
+                    {{ $admission->discharge_date->format('d/m/Y') }}
                 @else
                     <span class="badge bg-success-subtle text-success border border-success-subtle">{{ __('Active') }}</span>
                 @endif
             </span>
             <span>
+                <span class="text-muted">{{ __('Duration') }}:</span>
+                {{ $admissionIndicators['days'] }} {{ __('Days') }}
+            </span>
+            <span>
+                <span class="text-muted">{{ __('Remaining Available Days This Month') }}:</span>
+                <strong>{{ number_format($indicators['remaining_days']) }}</strong>
+                <span class="text-muted">/ {{ number_format($indicators['available_days']) }}</span>
+            </span>
+        </div>
+        <div class="d-flex flex-wrap column-gap-4 row-gap-1 align-items-center small">
+            <span>
+                <span class="text-muted">{{ __('Insurance') }}:</span>
+                {{ $patient->insuranceCompany->name ?? '—' }}
+            </span>
+            <span>
                 <span class="text-muted">{{ __('Room') }}:</span>
                 {{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}
             </span>
-            @if($admission->diagnosis)
-            <span><span class="text-muted">{{ __('Diagnosis') }}:</span> {{ $admission->diagnosis }}</span>
-            @endif
-            @if($admissionIndicators['age'])
-            <span><span class="text-muted">{{ __('Age') }}:</span> {{ $admissionIndicators['age'] }}</span>
-            @endif
             @if($admission->patient_type)
             <span><span class="text-muted">{{ __('Patient Type') }}:</span> {{ $patientTypeLabels[$admission->patient_type] }}</span>
             @endif
             <span>
                 <span class="text-muted">{{ __('Cost per Day') }}:</span>
                 <strong>{{ number_format($admissionIndicators['cost_per_day'], 2) }}</strong>
-                <span class="text-muted">({{ $admissionIndicators['days'] }} {{ __('Days') }})</span>
-            </span>
-            <span>
-                <span class="text-muted">{{ __('Remaining Available Days This Month') }}:</span>
-                <strong>{{ number_format($indicators['remaining_days']) }}</strong>
-                <span class="text-muted">/ {{ number_format($indicators['available_days']) }}</span>
             </span>
         </div>
     </div>

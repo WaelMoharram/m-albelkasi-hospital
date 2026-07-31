@@ -284,7 +284,9 @@ class InvoiceController extends Controller
             Service::class => ['invoiceCategory'],
         ]);
 
-        $pdf = Pdf::loadView('invoices.print', compact('invoice'))
+        $bedIndicators = $this->reportService->getLiveBedAvailability();
+
+        $pdf = Pdf::loadView('invoices.print', compact('invoice', 'bedIndicators'))
             ->setPaper('a4', 'portrait');
 
         return $pdf->stream("invoice-{$invoice->id}.pdf");

@@ -39,20 +39,16 @@
             border: 0.5pt solid #b0b8c8;
             border-radius: 3pt;
             margin-bottom: 10pt;
-            display: table;
-            width: 100%;
+            padding: 5pt 10pt;
         }
-        .patient-row  { display: table-row; }
-        .patient-cell {
-            display: table-cell;
-            padding: 5pt 8pt;
-            border-left: 0.5pt solid #b0b8c8;
-            vertical-align: top;
+        .p-line {
+            padding: 3pt 0;
+            border-bottom: 0.5pt dashed #d8dee8;
         }
-        .patient-cell:last-child { border-left: none; }
-        .p-label { font-size: 7pt; color: #777; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3pt; }
-        .p-value { font-size: 9.5pt; font-weight: bold; margin-top: 2pt; }
-        .p-sub   { font-size: 7.5pt; color: #555; margin-top: 1pt; }
+        .p-line:last-child { border-bottom: none; }
+        .p-field { display: inline-block; margin-left: 20pt; }
+        .p-flabel { font-size: 7pt; color: #777; font-weight: bold; }
+        .p-fvalue { font-size: 9.5pt; font-weight: bold; }
 
         /* ── Main items table ── */
         .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
@@ -174,6 +170,8 @@
         ? max(1, (int) $admDate->diffInDays($disDate))
         : $admDate->diffInDays(Carbon::today()) + 1;
 
+    $age = $patient->dob ? (int) $patient->dob->diffInYears($admDate) : null;
+
     $serviceItems = $invoice->items->where('itemable_type', \App\Models\Service::class);
     $medItems     = $invoice->items->where('itemable_type', \App\Models\Medication::class);
 
@@ -253,30 +251,23 @@
 
 {{-- ── PATIENT INFO ────────────────────────────────────────────── --}}
 <div class="patient-box">
-    <div class="patient-row">
-        <div class="patient-cell" style="width:35%;">
-            <div class="p-label">الاسم</div>
-            <div class="p-value">{{ $patient->name }}</div>
-            <div class="p-sub">{{ $patient->insuranceCompany->name ?? '—' }}</div>
-            @if($admission->referral_number)<div class="p-sub">رقم التحويل: {{ $admission->referral_number }}</div>@endif
-        </div>
-        <div class="patient-cell" style="width:20%;">
-            <div class="p-label">تاريخ الدخول</div>
-            <div class="p-value">{{ $admDate->format('d/m/Y') }}</div>
-        </div>
-        <div class="patient-cell" style="width:20%;">
-            <div class="p-label">تاريخ الخروج</div>
-            <div class="p-value">{{ $admission->discharge_date ? $disDate->format('d/m/Y') : '—' }}</div>
-        </div>
-        <div class="patient-cell" style="width:12%;">
-            <div class="p-label">مدة الإقامة</div>
-            <div class="p-value">{{ $days }} يوم</div>
-        </div>
-        <div class="patient-cell" style="width:13%;">
-            <div class="p-label">القسم</div>
-            <div class="p-value" style="font-size:8.5pt;">{{ $admission->ward ?? '—' }}</div>
-            <div class="p-sub">غرفة {{ $admission->room ?? '—' }}</div>
-        </div>
+    <div class="p-line">
+        <span class="p-field"><span class="p-flabel">الاسم: </span><span class="p-fvalue">{{ $patient->name }}</span></span>
+        <span class="p-field"><span class="p-flabel">التشخيص: </span><span class="p-fvalue">{{ $admission->diagnosis ?? '—' }}</span></span>
+    </div>
+    <div class="p-line">
+        <span class="p-field"><span class="p-flabel">العمر: </span><span class="p-fvalue">{{ $age !== null ? $age . ' سنة' : '—' }}</span></span>
+        <span class="p-field"><span class="p-flabel">رقم التحويل: </span><span class="p-fvalue">{{ $admission->referral_number ?? '—' }}</span></span>
+    </div>
+    <div class="p-line">
+        <span class="p-field"><span class="p-flabel">تاريخ الدخول: </span><span class="p-fvalue">{{ $admDate->format('d/m/Y') }}</span></span>
+        <span class="p-field"><span class="p-flabel">تاريخ الخروج: </span><span class="p-fvalue">{{ $admission->discharge_date ? $disDate->format('d/m/Y') : '—' }}</span></span>
+        <span class="p-field"><span class="p-flabel">المدة: </span><span class="p-fvalue">{{ $days }} يوم</span></span>
+        <span class="p-field"><span class="p-flabel">الأيام المتاحة المتبقية بالشهر: </span><span class="p-fvalue">{{ number_format($bedIndicators['remaining_days']) }}</span></span>
+    </div>
+    <div class="p-line">
+        <span class="p-field"><span class="p-flabel">نوع التأمين: </span><span class="p-fvalue">{{ $patient->insuranceCompany->name ?? '—' }}</span></span>
+        <span class="p-field"><span class="p-flabel">القسم: </span><span class="p-fvalue">{{ $admission->ward ?? '—' }} @if($admission->room) / غرفة {{ $admission->room }} @endif</span></span>
     </div>
 </div>
 
