@@ -259,19 +259,19 @@
                 <span class="field-label">{{ __('Room') }}:</span>
                 <span class="field-value">{{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}</span>
             </span>
-        </div>
-        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
-            @if($admission->diagnosis)
-            <span class="field-chip">
-                <span class="field-label">{{ __('Diagnosis') }}:</span>
-                <span class="field-value">{{ $admission->diagnosis }}</span>
-            </span>
-            @endif
             <span class="field-chip">
                 <span class="field-label">{{ __('Cost per Day') }}:</span>
                 <span class="field-value">{{ number_format($admissionIndicators['cost_per_day'], 2) }}</span>
             </span>
         </div>
+        @if($admission->diagnosis)
+        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
+            <span class="field-chip">
+                <span class="field-label">{{ __('Diagnosis') }}:</span>
+                <span class="field-value">{{ $admission->diagnosis }}</span>
+            </span>
+        </div>
+        @endif
         <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
             <span class="field-chip">
                 <span class="field-label">{{ __('Admission') }}:</span>
