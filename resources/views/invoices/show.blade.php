@@ -239,14 +239,6 @@
                 <span class="field-label">{{ __('Patient') }}:</span>
                 <span class="field-value">{{ $patient->name }} <span class="text-muted font-monospace fw-normal">({{ $patient->national_id }})</span></span>
             </span>
-            @if($admission->diagnosis)
-            <span class="field-chip">
-                <span class="field-label">{{ __('Diagnosis') }}:</span>
-                <span class="field-value">{{ $admission->diagnosis }}</span>
-            </span>
-            @endif
-        </div>
-        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
             @if($admissionIndicators['age'])
             <span class="field-chip">
                 <span class="field-label">{{ __('Age') }}:</span>
@@ -259,7 +251,23 @@
                 <span class="field-value">{{ $admission->referral_number }}</span>
             </span>
             @endif
+            <span class="field-chip">
+                <span class="field-label">{{ __('Insurance') }}:</span>
+                <span class="field-value">{{ $patient->insuranceCompany->name ?? '—' }}</span>
+            </span>
+            <span class="field-chip">
+                <span class="field-label">{{ __('Room') }}:</span>
+                <span class="field-value">{{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}</span>
+            </span>
         </div>
+        @if($admission->diagnosis)
+        <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
+            <span class="field-chip">
+                <span class="field-label">{{ __('Diagnosis') }}:</span>
+                <span class="field-value">{{ $admission->diagnosis }}</span>
+            </span>
+        </div>
+        @endif
         <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
             <span class="field-chip">
                 <span class="field-label">{{ __('Admission') }}:</span>
@@ -288,14 +296,6 @@
             </span>
         </div>
         <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center">
-            <span class="field-chip">
-                <span class="field-label">{{ __('Insurance') }}:</span>
-                <span class="field-value">{{ $patient->insuranceCompany->name ?? '—' }}</span>
-            </span>
-            <span class="field-chip">
-                <span class="field-label">{{ __('Room') }}:</span>
-                <span class="field-value">{{ $admission->room ?? '—' }} / {{ $admission->ward ?? '—' }}</span>
-            </span>
             @if($admission->patient_type)
             <span class="field-chip">
                 <span class="field-label">{{ __('Patient Type') }}:</span>
