@@ -262,14 +262,14 @@
         </div>
         <div class="d-flex flex-wrap column-gap-2 row-gap-2 align-items-center mb-2">
             <span class="field-chip">
-                <span class="field-label">{{ __('Admission') }}:</span>
+                <span class="field-label text-danger">{{ __('Admission Date') }}:</span>
                 <span class="field-value">
                     <a href="{{ route('admissions.show', $admission) }}" class="text-decoration-none">#{{ $admission->id }}</a>
                     — {{ $admission->admission_date->format('d/m/Y') }}
                 </span>
             </span>
             <span class="field-chip">
-                <span class="field-label">{{ __('Discharge') }}:</span>
+                <span class="field-label text-danger">{{ __('Discharge') }}:</span>
                 <span class="field-value">
                     @if($admission->discharge_date)
                         {{ $admission->discharge_date->format('d/m/Y') }}
