@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\Role;
+use App\Enums\Permission;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use LogicException;
@@ -28,6 +28,7 @@ class UserService
         ]);
 
         $user->syncRoles([$data['role']]);
+        $user->syncPermissions($data['permissions'] ?? []);
 
         return $user;
     }
@@ -45,13 +46,14 @@ class UserService
 
         $user->update($payload);
         $user->syncRoles([$data['role']]);
+        $user->syncPermissions($data['permissions'] ?? []);
 
         return $user;
     }
 
     /**
      * Toggle active/inactive — guards against self-deactivation and
-     * deactivating the very last active super_admin.
+     * deactivating the very last active user who can manage users.
      */
     public function toggleActive(User $user, User $actor): User
     {
@@ -59,13 +61,12 @@ class UserService
             throw new LogicException('You cannot deactivate your own account.');
         }
 
-        // Prevent removing the last active super_admin
         if (
             $user->is_active &&
-            $user->hasRole(Role::SuperAdmin->value) &&
-            User::role(Role::SuperAdmin->value)->where('is_active', true)->count() <= 1
+            $user->can(Permission::ManageUsers->value) &&
+            User::permission(Permission::ManageUsers->value)->where('is_active', true)->count() <= 1
         ) {
-            throw new LogicException('Cannot deactivate the last active Super Admin.');
+            throw new LogicException('Cannot deactivate the last active user who can manage users.');
         }
 
         $user->update(['is_active' => ! $user->is_active]);
@@ -83,10 +84,10 @@ class UserService
         }
 
         if (
-            $user->hasRole(Role::SuperAdmin->value) &&
-            User::role(Role::SuperAdmin->value)->count() <= 1
+            $user->can(Permission::ManageUsers->value) &&
+            User::permission(Permission::ManageUsers->value)->count() <= 1
         ) {
-            throw new LogicException('Cannot delete the last Super Admin.');
+            throw new LogicException('Cannot delete the last user who can manage users.');
         }
 
         $user->delete();

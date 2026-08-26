@@ -13,6 +13,7 @@ use App\Http\Controllers\InvoiceCategoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -165,6 +166,15 @@ Route::middleware('auth')->group(function () {
             Route::post('/{user}/toggle', [UserController::class, 'toggleActive']) ->name('toggle-active');
             Route::delete('/{user}',      [UserController::class, 'destroy'])      ->name('destroy');
         });
+
+    /*
+    |----------------------------------------------------------------------
+    | Roles Management — super_admin only (manage_roles permission)
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('permission:manage_roles')->group(function () {
+        Route::resource('roles', RoleController::class)->except(['show']);
+    });
 
     /*
     |----------------------------------------------------------------------

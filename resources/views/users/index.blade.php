@@ -14,6 +14,10 @@
         'cashier'     => 'success',
         'data_entry'  => 'info',
     ];
+    $rolePalette = ['warning', 'secondary', 'dark', 'primary', 'success', 'info', 'danger'];
+    $roleColor = function (string $roleName) use ($roleColors, $rolePalette) {
+        return $roleColors[$roleName] ?? $rolePalette[crc32($roleName) % count($rolePalette)];
+    };
 @endphp
 
 @section('content')
@@ -65,7 +69,7 @@
 
                     <td>
                         @foreach($user->roles as $role)
-                            @php $color = $roleColors[$role->name] ?? 'secondary'; @endphp
+                            @php $color = $roleColor($role->name); @endphp
                             <span class="badge bg-{{ $color }}-subtle text-{{ $color }} border border-{{ $color }}-subtle">
                                 {{ ucwords(str_replace('_', ' ', $role->name)) }}
                             </span>

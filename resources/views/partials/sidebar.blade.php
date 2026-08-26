@@ -116,16 +116,26 @@
         </li>
         @endcan
 
-        @canany(['manage_users'])
+        @canany(['manage_users', 'manage_roles'])
         <li class="mt-3">
             <span class="text-uppercase text-muted small px-2">{{ __('Administration') }}</span>
         </li>
+        @can('manage_users')
         <li class="nav-item mt-1">
             <a href="{{ route('users.index') }}"
                class="nav-link text-white {{ request()->routeIs('users.*') ? 'active' : '' }}">
                 <i class="bi bi-person-gear ms-2"></i> {{ __('Users') }}
             </a>
         </li>
+        @endcan
+        @can('manage_roles')
+        <li class="nav-item mt-1">
+            <a href="{{ route('roles.index') }}"
+               class="nav-link text-white {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-lock ms-2"></i> {{ __('Roles') }}
+            </a>
+        </li>
+        @endcan
         @endcanany
         @role('super_admin')
         <li class="nav-item mt-1">

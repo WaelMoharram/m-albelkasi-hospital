@@ -28,15 +28,29 @@ class RolesAndPermissionsSeeder extends Seeder
         $admin = RoleModel::firstOrCreate(['name' => Role::Admin->value]);
         $admin->syncPermissions([
             Permission::ManageCatalog,
+            Permission::ViewMedications, Permission::ManageMedications, Permission::ExportMedications,
+            Permission::ViewServices, Permission::ManageServices, Permission::ExportServices,
+            Permission::ViewInsuranceCompanies, Permission::ManageInsuranceCompanies,
+            Permission::ViewInvoiceCategories, Permission::ManageInvoiceCategories,
+            Permission::ViewUnits, Permission::ManageUnits,
+            Permission::ViewWards, Permission::ManageWards,
+            Permission::ViewCatalogHealth,
             Permission::RegisterPatients,
             Permission::ViewPatients,
+            Permission::EditPatients,
+            Permission::DeletePatients,
             Permission::ManageAdmissions,
             Permission::ViewAdmissions,
             Permission::ViewInvoices,
             Permission::CreateInvoices,
             Permission::EditInvoices,
             Permission::PrintInvoices,
+            Permission::FinalizeInvoices,
             Permission::ViewReports,
+            Permission::ViewReportClaim, Permission::ViewReportPatientList,
+            Permission::ViewReportSummary, Permission::ViewReportPerformance,
+            Permission::ExportMonthlyReport,
+            ...Permission::invoiceFieldPermissions(),
         ]);
 
         // cashier — view/print invoices, confirm payment
@@ -46,6 +60,7 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::PrintInvoices,
             Permission::ConfirmPayment,
             Permission::ViewAdmissions,
+            ...Permission::invoiceFieldPermissions(),
         ]);
 
         // data_entry — register & view patients, view admissions, add invoice items
@@ -53,9 +68,12 @@ class RolesAndPermissionsSeeder extends Seeder
         $dataEntry->syncPermissions([
             Permission::RegisterPatients,
             Permission::ViewPatients,
+            Permission::EditPatients,
+            Permission::DeletePatients,
             Permission::ViewAdmissions,
             Permission::AddInvoiceItems,
             Permission::ViewInvoices,
+            ...Permission::invoiceFieldPermissions(),
         ]);
     }
 }
