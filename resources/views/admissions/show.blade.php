@@ -200,6 +200,9 @@
                             <option value="discharged">{{ __('Discharged (recovered)') }}</option>
                             <option value="died">{{ __('Died') }}</option>
                             <option value="transferred">{{ __('Transferred') }}</option>
+                            <option value="improved">{{ __('Discharged (improved)') }}</option>
+                            <option value="on_request">{{ __('Discharged (on request)') }}</option>
+                            <option value="transfer">{{ __('Discharged (transfer)') }}</option>
                         </select>
                     </div>
                 </div>

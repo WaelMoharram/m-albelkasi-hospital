@@ -119,7 +119,7 @@ class AdmissionController extends Controller
 
         $data = $request->validate([
             'discharge_date'   => ['required', 'date', 'after_or_equal:' . $admission->admission_date->toDateString(), 'before_or_equal:today'],
-            'discharge_reason' => ['required', 'in:discharged,died,transferred'],
+            'discharge_reason' => ['required', 'in:discharged,died,transferred,improved,on_request,transfer'],
         ]);
 
         $this->service->discharge($admission, $data['discharge_date'], $data['discharge_reason']);
