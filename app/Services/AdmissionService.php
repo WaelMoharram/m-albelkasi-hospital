@@ -68,7 +68,7 @@ class AdmissionService
      *  - Delete all existing daily invoice items.
      *  - Re-seed daily items from admission_date → discharge_date (inclusive).
      */
-    public function discharge(Admission $admission, string $dischargeDate, string $dischargeReason = 'discharged'): Admission
+    public function discharge(Admission $admission, string $dischargeDate, string $dischargeReason = 'improved'): Admission
     {
         $admission->update([
             'status'           => 'discharged',
