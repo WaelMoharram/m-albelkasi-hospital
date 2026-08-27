@@ -186,11 +186,13 @@
                         </label>
                         <input id="discharge_date" type="date" name="discharge_date"
                                value="{{ now()->toDateString() }}"
+                               data-admission-date="{{ $admission->admission_date->toDateString() }}"
                                min="{{ $admission->admission_date->toDateString() }}"
                                max="{{ now()->toDateString() }}"
                                class="form-control @error('discharge_date') is-invalid @enderror"
                                required>
                         @error('discharge_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div id="discharge_days_stayed" class="form-text fw-semibold"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="discharge_reason">{{ __('Discharge Reason') }} <span class="text-danger">*</span></label>
@@ -248,3 +250,29 @@
 @endcan
 
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const dateInput = document.getElementById('discharge_date');
+        const output = document.getElementById('discharge_days_stayed');
+        if (!dateInput || !output) return;
+
+        function updateDaysStayed() {
+            const admissionDate = new Date(dateInput.dataset.admissionDate);
+            const dischargeDate = new Date(dateInput.value);
+            if (isNaN(dischargeDate.getTime())) {
+                output.textContent = '';
+                return;
+            }
+            const days = Math.max(0, Math.round((dischargeDate - admissionDate) / 86400000));
+            output.textContent = '{{ __('Days stayed') }}: ' + days + ' {{ __('day') }}';
+        }
+
+        dateInput.addEventListener('input', updateDaysStayed);
+        dateInput.addEventListener('change', updateDaysStayed);
+        document.getElementById('dischargeModal')?.addEventListener('shown.bs.modal', updateDaysStayed);
+        updateDaysStayed();
+    })();
+</script>
+@endpush

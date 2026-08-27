@@ -83,6 +83,8 @@
     "Discharge Date": "تاريخ الخروج",
     "Confirm Discharge": "تأكيد الخروج",
     "This will finalise daily services up to the discharge date and close the invoice.": "سيتم إنهاء الخدمات اليومية حتى تاريخ الخروج وإغلاق الفاتورة.",
+    "Days stayed": "عدد أيام الإقامة",
+    "day": "يوم",
     "No admissions found.": "لا توجد إدخالات.",
     "Admission Date": "تاريخ الإدخال",
     "All statuses": "جميع الحالات",
