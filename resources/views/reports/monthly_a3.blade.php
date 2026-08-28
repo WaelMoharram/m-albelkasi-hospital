@@ -33,8 +33,12 @@
             height: 44pt;
         }
 
-        .header-right { display: table-cell; vertical-align: middle; }
-        .header-left  { display: table-cell; vertical-align: middle; text-align: left; }
+        .header-right { display: table-cell; vertical-align: middle; width: 47%; }
+        {{-- dompdf mis-sizes a two-column width:100% RTL table (columns collapse
+             together instead of spanning full width); a third, empty, explicitly
+             sized spacer cell works around it. --}}
+        .header-mid   { display: table-cell; width: 6%; }
+        .header-left  { display: table-cell; vertical-align: middle; width: 47%; text-align: left; }
 
         .hospital-name {
             font-size: 13pt;
@@ -82,8 +86,9 @@
             height: 18pt;
         }
 
-        .footer-right { display: table-cell; vertical-align: middle; }
-        .footer-left  { display: table-cell; vertical-align: middle; text-align: left; }
+        .footer-right { display: table-cell; vertical-align: middle; width: 47%; }
+        .footer-mid   { display: table-cell; width: 6%; }
+        .footer-left  { display: table-cell; vertical-align: middle; width: 47%; text-align: left; }
 
         /* ── Main content ────────────────────────────────────────────────── */
         .content {
@@ -213,6 +218,7 @@
             <div class="hospital-name">{{ config('app.name', 'Hospital') }}</div>
             <div class="report-subtitle">نظام فوترة التأمين</div>
         </div>
+        <div class="header-mid"></div>
         <div class="header-left">
             <div class="report-title">التقرير الشهري للفوترة</div>
             <div class="report-period">{{ strtoupper($monthLabel) }}</div>
@@ -226,6 +232,7 @@
         <div class="footer-right">
             تاريخ الطباعة: {{ $printedAt }} &nbsp;·&nbsp; {{ $totalRows }} إدخال
         </div>
+        <div class="footer-mid"></div>
         <div class="footer-left" id="page-num-placeholder">
             {{-- page number injected by dompdf PHP script --}}
         </div>
