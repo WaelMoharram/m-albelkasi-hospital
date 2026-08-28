@@ -7,6 +7,13 @@
 body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 9pt; direction: rtl; color: #000; }
 @page { size: A4 portrait; margin: 15mm 12mm; }
 
+.no-print {
+    position: fixed; top: 10px; left: 10px; z-index: 10;
+    background: #333; color: #fff; border: none; border-radius: 4px;
+    padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+}
+@media print { .no-print { display: none !important; } }
+
 .header-wrap  { display: table; width: 100%; margin-bottom: 6px; }
 .header-logo  { display: table-cell; width: 55px; vertical-align: middle; }
 .header-logo img { max-height: 50px; max-width: 50px; }
@@ -38,6 +45,8 @@ table.sum tbody tr:nth-child(even) { background: #f9f9f9; }
     $crNumber     = $settings->get('hospital_commercial_reg', '');
     $sigDirector  = $settings->get('invoice_approved_by', 'مدير المستشفى');
 @endphp
+
+<button type="button" class="no-print" onclick="window.print()">طباعة</button>
 
 <div class="header-wrap">
     <div class="header-logo">

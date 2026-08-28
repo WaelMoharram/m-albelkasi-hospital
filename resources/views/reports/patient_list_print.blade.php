@@ -16,6 +16,13 @@ body {
 }
 .page-break { page-break-before: always; }
 
+.no-print {
+    position: fixed; top: 10px; left: 10px; z-index: 10;
+    background: #333; color: #fff; border: none; border-radius: 4px;
+    padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+}
+@media print { .no-print { display: none !important; } }
+
 .header-wrap {
     display: table;
     width: 100%;
@@ -71,6 +78,8 @@ td.name { text-align: right; padding-right: 4px; }
     $crNumber     = $settings->get('hospital_commercial_reg', '');
     $sigDirector  = $settings->get('invoice_approved_by', 'مدير المستشفى');
 @endphp
+
+<button type="button" class="no-print" onclick="window.print()">طباعة</button>
 
 @foreach ($chunks as $pageIndex => $chunk)
     @if ($pageIndex > 0)

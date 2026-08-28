@@ -38,7 +38,7 @@
                 @if($rows->isNotEmpty())
                 <a href="{{ route('reports.export', ['period' => $periodValue]) }}"
                    class="btn btn-sm btn-outline-dark" target="_blank">
-                    <i class="bi bi-file-earmark-pdf ms-1"></i> {{ __('Export A3 PDF') }}
+                    <i class="bi bi-printer ms-1"></i> {{ __('Print A3 Report') }}
                 </a>
                 @endif
             </div>

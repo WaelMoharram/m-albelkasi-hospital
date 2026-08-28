@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\InsuranceCompany;
 use App\Models\Setting;
 use App\Services\ReportService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
@@ -26,23 +24,14 @@ class ReportController extends Controller
         return view('reports.index', compact('rows', 'totals', 'month', 'year'));
     }
 
-    public function export(Request $request): Response
+    public function export(Request $request): View
     {
         [$month, $year] = $this->resolveMonthYear($request);
 
         $rows   = $this->service->monthlyReport($month, $year);
         $totals = $this->service->columnTotals($rows);
 
-        $pdf = Pdf::loadView('reports.monthly_a3', compact('rows', 'totals', 'month', 'year'))
-            ->setPaper('a3', 'landscape')
-            ->setOptions([
-                'isPhpEnabled'    => true,
-                'isRemoteEnabled' => false,
-                'defaultFont'     => 'DejaVu Sans',
-                'dpi'             => 150,
-            ]);
-
-        return $pdf->stream(sprintf('monthly-report-%04d-%02d.pdf', $year, $month));
+        return view('reports.monthly_a3', compact('rows', 'totals', 'month', 'year'));
     }
 
     // ── Patient List (ح) ─────────────────────────────────────────────────────
@@ -60,7 +49,7 @@ class ReportController extends Controller
         return view('reports.patient_list', compact('companies', 'data'));
     }
 
-    public function patientListPrint(Request $request): Response
+    public function patientListPrint(Request $request): View
     {
         $request->validate(['insurance_company_id' => ['required', 'integer', 'exists:insurance_companies,id']]);
 
@@ -70,11 +59,7 @@ class ReportController extends Controller
         $logo      = $this->buildLogo($settings);
         $monthName = Carbon::createFromDate($year, $month, 1)->locale('ar')->isoFormat('MMMM');
 
-        $pdf = Pdf::loadView('reports.patient_list_print', array_merge($data, compact('settings', 'logo', 'monthName')))
-            ->setPaper('a4', 'landscape')
-            ->setOptions(['isPhpEnabled' => true, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans', 'dpi' => 150]);
-
-        return $pdf->stream("patient-list-{$year}-{$month}.pdf");
+        return view('reports.patient_list_print', array_merge($data, compact('settings', 'logo', 'monthName')));
     }
 
     // ── Claim Sheet (كشف المطالبة) ────────────────────────────────────────────
@@ -92,7 +77,7 @@ class ReportController extends Controller
         return view('reports.claim', compact('companies', 'data'));
     }
 
-    public function claimPrint(Request $request): Response
+    public function claimPrint(Request $request): View
     {
         $request->validate(['insurance_company_id' => ['required', 'integer', 'exists:insurance_companies,id']]);
 
@@ -102,11 +87,7 @@ class ReportController extends Controller
         $logo      = $this->buildLogo($settings);
         $monthName = Carbon::createFromDate($year, $month, 1)->locale('ar')->isoFormat('MMMM');
 
-        $pdf = Pdf::loadView('reports.claim_print', array_merge($data, compact('settings', 'logo', 'monthName')))
-            ->setPaper('a3', 'landscape')
-            ->setOptions(['isPhpEnabled' => true, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans', 'dpi' => 150]);
-
-        return $pdf->stream("claim-{$year}-{$month}.pdf");
+        return view('reports.claim_print', array_merge($data, compact('settings', 'logo', 'monthName')));
     }
 
     // ── Summary (المجمع) ──────────────────────────────────────────────────────
@@ -124,7 +105,7 @@ class ReportController extends Controller
         return view('reports.summary', compact('companies', 'data'));
     }
 
-    public function summaryPrint(Request $request): Response
+    public function summaryPrint(Request $request): View
     {
         $request->validate(['insurance_company_id' => ['required', 'integer', 'exists:insurance_companies,id']]);
 
@@ -134,11 +115,7 @@ class ReportController extends Controller
         $logo      = $this->buildLogo($settings);
         $monthName = Carbon::createFromDate($year, $month, 1)->locale('ar')->isoFormat('MMMM');
 
-        $pdf = Pdf::loadView('reports.summary_print', array_merge($data, compact('settings', 'logo', 'monthName')))
-            ->setPaper('a4', 'portrait')
-            ->setOptions(['isPhpEnabled' => true, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans', 'dpi' => 150]);
-
-        return $pdf->stream("summary-{$year}-{$month}.pdf");
+        return view('reports.summary_print', array_merge($data, compact('settings', 'logo', 'monthName')));
     }
 
     // ── Performance Indicators (مؤشرات الأداء) ────────────────────────────────
@@ -155,7 +132,7 @@ class ReportController extends Controller
         return view('reports.performance', compact('data'));
     }
 
-    public function performancePrint(Request $request): Response
+    public function performancePrint(Request $request): View
     {
         [$month, $year] = $this->resolveMonthYear($request);
         $data      = $this->service->getPerformanceData($month, $year);
@@ -163,11 +140,7 @@ class ReportController extends Controller
         $logo      = $this->buildLogo($settings);
         $monthName = Carbon::createFromDate($year, $month, 1)->locale('ar')->isoFormat('MMMM');
 
-        $pdf = Pdf::loadView('reports.performance_print', array_merge($data, compact('settings', 'logo', 'monthName')))
-            ->setPaper('a4', 'portrait')
-            ->setOptions(['isPhpEnabled' => true, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans', 'dpi' => 150]);
-
-        return $pdf->stream("performance-{$year}-{$month}.pdf");
+        return view('reports.performance_print', array_merge($data, compact('settings', 'logo', 'monthName')));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

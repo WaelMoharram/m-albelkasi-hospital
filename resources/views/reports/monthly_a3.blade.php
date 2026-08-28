@@ -8,12 +8,21 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 8.5pt;
             color: #1a1a1a;
             background: #fff;
             direction: rtl;
         }
+
+        @page { size: A3 landscape; margin: 10mm 8mm; }
+
+        .no-print {
+            position: fixed; top: 10px; left: 10px; z-index: 10;
+            background: #0d6efd; color: #fff; border: none; border-radius: 4px;
+            padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+        }
+        @media print { .no-print { display: none !important; } }
 
         /* ── Fixed header — repeats on every page ───────────────────────── */
         .page-header {
@@ -33,12 +42,8 @@
             height: 44pt;
         }
 
-        .header-right { display: table-cell; vertical-align: middle; width: 47%; }
-        {{-- dompdf mis-sizes a two-column width:100% RTL table (columns collapse
-             together instead of spanning full width); a third, empty, explicitly
-             sized spacer cell works around it. --}}
-        .header-mid   { display: table-cell; width: 6%; }
-        .header-left  { display: table-cell; vertical-align: middle; width: 47%; text-align: left; }
+        .header-right { display: table-cell; vertical-align: middle; }
+        .header-left  { display: table-cell; vertical-align: middle; text-align: left; }
 
         .hospital-name {
             font-size: 13pt;
@@ -86,9 +91,8 @@
             height: 18pt;
         }
 
-        .footer-right { display: table-cell; vertical-align: middle; width: 47%; }
-        .footer-mid   { display: table-cell; width: 6%; }
-        .footer-left  { display: table-cell; vertical-align: middle; width: 47%; text-align: left; }
+        .footer-right { display: table-cell; vertical-align: middle; }
+        .footer-left  { display: table-cell; vertical-align: middle; text-align: left; }
 
         /* ── Main content ────────────────────────────────────────────────── */
         .content {
@@ -211,14 +215,15 @@
     $totalRows   = $rows->count();
 @endphp
 
-{{-- ── Fixed page header ──────────────────────────────────────────────── --}}
+<button type="button" class="no-print" onclick="window.print()">طباعة</button>
+
+{{-- ── Page header — repeats on every printed page (position: fixed) ───── --}}
 <div class="page-header">
     <div class="page-header-inner">
         <div class="header-right">
             <div class="hospital-name">{{ config('app.name', 'Hospital') }}</div>
             <div class="report-subtitle">نظام فوترة التأمين</div>
         </div>
-        <div class="header-mid"></div>
         <div class="header-left">
             <div class="report-title">التقرير الشهري للفوترة</div>
             <div class="report-period">{{ strtoupper($monthLabel) }}</div>
@@ -226,33 +231,15 @@
     </div>
 </div>
 
-{{-- ── Fixed page footer ──────────────────────────────────────────────── --}}
+{{-- ── Page footer — repeats on every printed page (position: fixed) ───── --}}
 <div class="page-footer">
     <div class="footer-inner">
         <div class="footer-right">
             تاريخ الطباعة: {{ $printedAt }} &nbsp;·&nbsp; {{ $totalRows }} إدخال
         </div>
-        <div class="footer-mid"></div>
-        <div class="footer-left" id="page-num-placeholder">
-            {{-- page number injected by dompdf PHP script --}}
-        </div>
+        <div class="footer-left"></div>
     </div>
 </div>
-
-{{-- ── Page number script (requires isPhpEnabled = true) ─────────────── --}}
-<script type="text/php">
-    if (isset($pdf)) {
-        $pageWidth  = $pdf->get_width();
-        $pageHeight = $pdf->get_height();
-        $font       = $fontMetrics->get_font("DejaVu Sans, helvetica", "normal");
-        $size       = 7;
-        $color      = [0.42, 0.45, 0.49];
-        $text       = "Page {PAGE_NUM} / {PAGE_COUNT}";
-        $x          = 16;
-        $y          = $pageHeight - 14;
-        $pdf->page_text($x, $y, $text, $font, $size, $color);
-    }
-</script>
 
 {{-- ── Content ────────────────────────────────────────────────────────── --}}
 <div class="content">

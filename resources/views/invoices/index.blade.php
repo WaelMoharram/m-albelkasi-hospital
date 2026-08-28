@@ -75,7 +75,7 @@
                             <i class="bi bi-eye"></i>
                         </a>
                         <a href="{{ route('invoices.print', $invoice) }}" class="btn btn-sm btn-outline-dark"
-                           target="_blank" title="{{ __('Print PDF') }}">
+                           target="_blank" title="{{ __('Print') }}">
                             <i class="bi bi-printer"></i>
                         </a>
                         @can('delete_invoices')

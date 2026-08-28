@@ -22,7 +22,7 @@ report covers all cases and their line items.
 | Database | MySQL |
 | Auth & Roles | spatie/laravel-permission ^7.3 |
 | Alerts | realrashid/sweet-alert ^7.3 |
-| PDF (invoices + reports) | barryvdh/laravel-dompdf ^3.1 |
+| Invoices & reports | Plain Blade HTML + `@page` print CSS, printed via the browser (no PDF library) |
 | Pagination | Laravel built-in Blade pagination |
 | Code style | Laravel Pint |
 | Testing | PHPUnit 12 |
@@ -155,8 +155,9 @@ Each section has its own subtotal. Grand total at the bottom.
 ### 4. Monthly A3 Report
 - All admissions in a selected month.
 - One row per admission with all line items.
-- PDF output: A3 size, landscape orientation.
-- Generated via `dompdf` with a dedicated Blade view `reports/monthly_a3.blade.php`.
+- Rendered as an HTML page sized for A3 landscape (`@page { size: A3 landscape; }`),
+  dedicated Blade view `reports/monthly_a3.blade.php`. User prints/saves as PDF
+  from the browser (a "طباعة" button calls `window.print()`).
 
 ---
 
@@ -186,11 +187,16 @@ Always use `@can` directives in Blade and Gate policies in controllers.
 - Call `alert()->success('...')` in controller after redirect.
 - Include `@include('sweetalert::alert')` in main layout.
 
-### barryvdh/laravel-dompdf
-- Invoice PDF: `resources/views/invoices/print.blade.php`
-- Monthly report PDF: `resources/views/reports/monthly_a3.blade.php`
-- Set paper size in controller: `$pdf->setPaper('a3', 'landscape')` for reports.
-- Always inline CSS in PDF Blade views — dompdf does not support external stylesheets.
+### Print views (invoices & reports)
+- Invoice print: `resources/views/invoices/print.blade.php`
+- Monthly A3 report: `resources/views/reports/monthly_a3.blade.php`
+- Other report sheets: `resources/views/reports/{claim,patient_list,summary,performance}_print.blade.php`
+- These are standalone Blade views (not extending `layouts/app`) returned directly
+  by the controller as HTML — no PDF library involved. Paper size/margins are set
+  via CSS `@page { size: ...; margin: ...; }` in each view's `<style>` block.
+  A `.no-print` "طباعة" button calls `window.print()`; it's hidden in
+  `@media print` via a `.no-print { display: none }` rule.
+- Always inline CSS in these views — keep them fully self-contained.
 
 ---
 
@@ -246,9 +252,9 @@ resources/views/
   patients/
   admissions/
   invoices/
-    print.blade.php       ← PDF invoice view
+    print.blade.php       ← printable invoice view (browser print)
   reports/
-    monthly_a3.blade.php  ← A3 landscape PDF view
+    monthly_a3.blade.php  ← A3 landscape printable report view
   catalog/
   users/
 
@@ -299,7 +305,10 @@ Admission::observe(AdmissionObserver::class);
 - Do not use `appstract/laravel-options` — not needed.
 - Do not use `maatwebsite/excel` — not currently installed; do not add bulk
   Excel import without first agreeing on scope.
-- Do not put CSS in external files for PDF Blade views.
+- Do not put CSS in external files for the invoice/report print views — keep them inline and self-contained.
+- Do not reintroduce a PDF-generation library for invoices/reports — they are
+  plain HTML printed via the browser (`window.print()`); style them with
+  `@page`/`@media print` CSS instead.
 - Do not use JavaScript-heavy solutions — this is a Blade/server-rendered app.
 - Do not register a wildcard `{model}` route before fixed-path siblings
   (`/create`, `/print`, `/export`) — it will shadow them.

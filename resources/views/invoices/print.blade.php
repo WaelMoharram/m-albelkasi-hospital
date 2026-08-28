@@ -7,12 +7,21 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 9.5pt;
             color: #111;
             background: #fff;
             direction: rtl;
         }
+
+        @page { size: A4 portrait; margin: 10mm; }
+
+        .no-print {
+            position: fixed; top: 10px; left: 10px; z-index: 10;
+            background: #1a3c6e; color: #fff; border: none; border-radius: 4px;
+            padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+        }
+        @media print { .no-print { display: none !important; } }
 
         .page { width: 100%; padding: 12mm 14mm 10mm 14mm; }
 
@@ -24,12 +33,8 @@
             padding-bottom: 8pt;
             margin-bottom: 10pt;
         }
-        .header-right { display: table-cell; vertical-align: top; width: 56%; }
-        {{-- dompdf mis-sizes a two-column width:100% RTL table (columns collapse
-             together instead of spanning full width); a third, empty, explicitly
-             sized spacer cell works around it. --}}
-        .header-mid   { display: table-cell; width: 6%; }
-        .header-left  { display: table-cell; vertical-align: top; width: 38%; text-align: left; }
+        .header-right { display: table-cell; vertical-align: top; width: 60%; }
+        .header-left  { display: table-cell; vertical-align: top; width: 40%; text-align: left; }
         .logo-wrap img { max-height: 55pt; max-width: 120pt; margin-bottom: 3pt; }
         .hosp-name  { font-size: 14pt; font-weight: bold; color: #1a3c6e; }
         .hosp-meta  { font-size: 7.5pt; color: #555; margin-top: 2pt; line-height: 1.5; }
@@ -138,9 +143,8 @@
             display: table;
             width: 100%;
         }
-        .footer-right { display: table-cell; width: 47%; font-size: 7.5pt; color: #666; }
-        .footer-mid   { display: table-cell; width: 6%; }
-        .footer-left  { display: table-cell; width: 47%; text-align: left; font-size: 7.5pt; color: #666; }
+        .footer-right { display: table-cell; font-size: 7.5pt; color: #666; }
+        .footer-left  { display: table-cell; text-align: left; font-size: 7.5pt; color: #666; }
 
         .watermark {
             position: fixed; top: 40%; left: 10%;
@@ -216,7 +220,7 @@
     $importAfter = round($importedRaw * (1 - $importedDisc / 100), 2);
     $grandTotal  = (float) $invoice->total_amount;
 
-    // Logo as base64 for dompdf
+    // Logo as base64 (works from any storage disk without a public URL)
     $logoBase64 = null;
     if ($hospLogo && \Illuminate\Support\Facades\Storage::disk('public')->exists($hospLogo)) {
         $logoPath   = \Illuminate\Support\Facades\Storage::disk('public')->path($hospLogo);
@@ -228,6 +232,8 @@
 @if($invoice->status === 'draft')
 <div class="watermark">مسودة</div>
 @endif
+
+<button type="button" class="no-print" onclick="window.print()">طباعة</button>
 
 <div class="page">
 
@@ -245,7 +251,6 @@
             @if($hospPhones)<br>{{ $hospPhones }}@endif
         </div>
     </div>
-    <div class="header-mid"></div>
     <div class="header-left">
         <div class="inv-label">فاتورة</div>
         <div class="inv-meta">
@@ -456,7 +461,6 @@
         @if($hospAddress){{ $hospAddress }}&nbsp;@endif
         @if($hospPhones) — {{ $hospPhones }}@endif
     </div>
-    <div class="footer-mid"></div>
     <div class="footer-left">
         تاريخ الطباعة: {{ now()->format('d/m/Y H:i') }}<br>
         فاتورة رقم #{{ str_pad($invoice->id, 6, '0', STR_PAD_LEFT) }}

@@ -25,7 +25,7 @@
                 @if ($data)
                     <a href="{{ route('reports.performance.print', request()->query()) }}"
                        target="_blank" class="btn btn-outline-secondary ms-2">
-                        <i class="bi bi-printer ms-1"></i> {{ __('Print PDF') }}
+                        <i class="bi bi-printer ms-1"></i> {{ __('Print') }}
                     </a>
                 @endif
             </div>

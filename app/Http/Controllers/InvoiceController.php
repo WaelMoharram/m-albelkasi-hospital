@@ -9,11 +9,9 @@ use App\Models\Medication;
 use App\Models\Service;
 use App\Services\InvoiceService;
 use App\Services\ReportService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use LogicException;
@@ -277,7 +275,7 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.show', $invoice);
     }
 
-    public function print(Invoice $invoice): Response
+    public function print(Invoice $invoice): View
     {
         $invoice->load(['admission.patient.insuranceCompany', 'items.itemable']);
         $invoice->items->loadMorph('itemable', [
@@ -286,9 +284,6 @@ class InvoiceController extends Controller
 
         $bedIndicators = $this->reportService->getLiveBedAvailability();
 
-        $pdf = Pdf::loadView('invoices.print', compact('invoice', 'bedIndicators'))
-            ->setPaper('a4', 'portrait');
-
-        return $pdf->stream("invoice-{$invoice->id}.pdf");
+        return view('invoices.print', compact('invoice', 'bedIndicators'));
     }
 }

@@ -159,7 +159,7 @@
             @endcan
         @endif
         <a href="{{ route('invoices.print', $invoice) }}" target="_blank" class="btn btn-sm btn-outline-dark">
-            <i class="bi bi-printer ms-1"></i> {{ __('Print PDF') }}
+            <i class="bi bi-printer ms-1"></i> {{ __('Print') }}
         </a>
         <a href="{{ route('admissions.show', $admission) }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-right ms-1"></i> {{ __('Admission') }}
