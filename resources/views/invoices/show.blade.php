@@ -860,6 +860,220 @@
 
 </div>
 
+{{-- ── Medical Reports ─────────────────────────────────────────────────── --}}
+<style>
+#medicalReportsTabs { --bs-nav-tabs-link-active-color: #212529; }
+#medicalReportsTabs .nav-link          { color: #6c757d !important; }
+#medicalReportsTabs .nav-link.active   { color: #212529 !important; font-weight: 600; }
+#medicalReportsTabs .nav-link:hover:not(.active) { color: #343a40 !important; }
+</style>
+
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+        <h6 class="mb-2 text-muted">{{ __('Medical Reports') }}</h6>
+        <ul class="nav nav-tabs card-header-tabs" id="medicalReportsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-report-inpatient"
+                        type="button" role="tab">
+                    {{ \App\Enums\MedicalReportType::Inpatient->label() }}
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $inpatientReports->isEmpty() ? 'd-none' : '' }}">{{ $inpatientReports->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-report-radiology"
+                        type="button" role="tab">
+                    {{ \App\Enums\MedicalReportType::Radiology->label() }}
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $radiologyReports->isEmpty() ? 'd-none' : '' }}">{{ $radiologyReports->count() }}</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content">
+
+        {{-- ── تقرير طبي لمريض داخلي ─────────────────────────────────────── --}}
+        <div class="tab-pane fade show active p-3" id="tab-report-inpatient" role="tabpanel">
+            @hasanyrole('super_admin|admin|data_entry')
+            <div class="d-flex justify-content-end mb-2">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInpatientReportModal">
+                    <i class="bi bi-plus-lg ms-1"></i> {{ __('Add New Copy') }}
+                </button>
+            </div>
+            @endhasanyrole
+
+            @if($inpatientReports->isEmpty())
+                <p class="text-muted small mb-0">{{ __('No reports added yet.') }}</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>{{ __('Date') }}</th>
+                                <th>{{ __('Doctor') }}</th>
+                                <th>{{ __('Added By') }}</th>
+                                <th class="text-end">{{ __('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($inpatientReports as $r)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ ($r->report_date ?? $r->created_at)->format('d/m/Y') }}</td>
+                                <td>{{ $r->referring_doctor ?: '—' }}</td>
+                                <td>{{ $r->createdBy->name ?? '—' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('medical-reports.print', $r) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-printer ms-1"></i> {{ __('Print') }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+
+        {{-- ── تقرير قسم الأشعة ──────────────────────────────────────────── --}}
+        <div class="tab-pane fade p-3" id="tab-report-radiology" role="tabpanel">
+            @hasanyrole('super_admin|admin|data_entry')
+            <div class="d-flex justify-content-end mb-2">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRadiologyReportModal">
+                    <i class="bi bi-plus-lg ms-1"></i> {{ __('Add New Copy') }}
+                </button>
+            </div>
+            @endhasanyrole
+
+            @if($radiologyReports->isEmpty())
+                <p class="text-muted small mb-0">{{ __('No reports added yet.') }}</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>{{ __('Date') }}</th>
+                                <th>{{ __('Exam Type') }}</th>
+                                <th>{{ __('Referring Physician') }}</th>
+                                <th>{{ __('Added By') }}</th>
+                                <th class="text-end">{{ __('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($radiologyReports as $r)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ ($r->report_date ?? $r->created_at)->format('d/m/Y') }}</td>
+                                <td>{{ $r->exam_type ?: '—' }}</td>
+                                <td>{{ $r->referring_doctor ?: '—' }}</td>
+                                <td>{{ $r->createdBy->name ?? '—' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('medical-reports.print', $r) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-printer ms-1"></i> {{ __('Print') }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+
+    </div>
+</div>
+
+@hasanyrole('super_admin|admin|data_entry')
+<div class="modal fade" id="addInpatientReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('medical-reports.inpatient.store', $admission) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ \App\Enums\MedicalReportType::Inpatient->label() }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Report Date') }}</label>
+                            <input type="date" name="report_date" class="form-control" value="{{ now()->toDateString() }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Attending Doctor') }}</label>
+                            <input type="text" name="referring_doctor" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Diagnosis') }}</label>
+                            <textarea name="diagnosis" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Procedures Done') }}</label>
+                            <textarea name="procedure_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Notes') }}</label>
+                            <textarea name="remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addRadiologyReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('medical-reports.radiology.store', $admission) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ \App\Enums\MedicalReportType::Radiology->label() }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Report Date') }}</label>
+                            <input type="date" name="report_date" class="form-control" value="{{ now()->toDateString() }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Exam Type') }}</label>
+                            <input type="text" name="exam_type" class="form-control" placeholder="Echo, X-Ray Chest, CT...">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Referring Physician') }}</label>
+                            <input type="text" name="referring_doctor" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Diagnosis') }}</label>
+                            <textarea name="diagnosis" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Findings') }}</label>
+                            <textarea name="procedure_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Conclusion') }}</label>
+                            <textarea name="remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endhasanyrole
+
 {{-- ── Inline Add AJAX Script ───────────────────────────────────────────── --}}
 @if($isDraft)
 @canany(['add_invoice_items', 'edit_invoices', 'create_invoices'])

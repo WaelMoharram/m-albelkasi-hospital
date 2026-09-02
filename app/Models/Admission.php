@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Admission extends Model
@@ -25,8 +26,8 @@ class Admission extends Model
     protected function casts(): array
     {
         return [
-            'admission_date'  => 'date',
-            'discharge_date'  => 'date',
+            'admission_date' => 'date',
+            'discharge_date' => 'date',
         ];
     }
 
@@ -42,6 +43,11 @@ class Admission extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function medicalReports(): HasMany
+    {
+        return $this->hasMany(MedicalReport::class);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     public function isActive(): bool
@@ -54,9 +60,8 @@ class Admission extends Model
     public function scopeSearch($query, ?string $search)
     {
         if ($search) {
-            $query->whereHas('patient', fn ($q) =>
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('national_id', 'like', "%{$search}%")
+            $query->whereHas('patient', fn ($q) => $q->where('name', 'like', "%{$search}%")
+                ->orWhere('national_id', 'like', "%{$search}%")
             );
         }
 

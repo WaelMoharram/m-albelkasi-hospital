@@ -11,6 +11,7 @@ use App\Http\Controllers\Catalog\WardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceCategoryController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MedicalReportController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
@@ -128,6 +129,23 @@ Route::middleware('auth')->group(function () {
 
     /*
     |----------------------------------------------------------------------
+    | Medical Reports (per admission) — inpatient report, radiology report.
+    |  - add        → data_entry and above
+    |  - print       → all auth (open), fixed path registered separately, no wildcard clash
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:super_admin|admin|data_entry')->group(function () {
+        Route::post('admissions/{admission}/medical-reports/inpatient', [MedicalReportController::class, 'storeInpatient'])
+            ->name('medical-reports.inpatient.store');
+        Route::post('admissions/{admission}/medical-reports/radiology', [MedicalReportController::class, 'storeRadiology'])
+            ->name('medical-reports.radiology.store');
+    });
+
+    Route::get('medical-reports/{medicalReport}/print', [MedicalReportController::class, 'print'])
+        ->name('medical-reports.print');
+
+    /*
+    |----------------------------------------------------------------------
     | Reports — admin and above only
     |  export must be registered before the wildcard index to avoid
     |  any future route shadowing issues.
@@ -137,21 +155,21 @@ Route::middleware('auth')->group(function () {
         ->prefix('reports')
         ->name('reports.')
         ->group(function () {
-            Route::get('export',                     [ReportController::class, 'export'])                ->name('export');
-            Route::get('export-excel',                [ReportController::class, 'exportExcel'])           ->name('export-excel');
-            Route::get('claim/print',                 [ReportController::class, 'claimPrint'])            ->name('claim.print');
-            Route::get('claim/export-excel',          [ReportController::class, 'claimExportExcel'])      ->name('claim.export-excel');
-            Route::get('claim',                       [ReportController::class, 'claim'])                 ->name('claim');
-            Route::get('patient-list/print',          [ReportController::class, 'patientListPrint'])      ->name('patient-list.print');
-            Route::get('patient-list/export-excel',   [ReportController::class, 'patientListExportExcel']) ->name('patient-list.export-excel');
-            Route::get('patient-list',                [ReportController::class, 'patientList'])           ->name('patient-list');
-            Route::get('summary/print',               [ReportController::class, 'summaryPrint'])          ->name('summary.print');
-            Route::get('summary/export-excel',        [ReportController::class, 'summaryExportExcel'])    ->name('summary.export-excel');
-            Route::get('summary',                     [ReportController::class, 'summary'])               ->name('summary');
-            Route::get('performance/print',           [ReportController::class, 'performancePrint'])      ->name('performance.print');
-            Route::get('performance/export-excel',    [ReportController::class, 'performanceExportExcel']) ->name('performance.export-excel');
-            Route::get('performance',                 [ReportController::class, 'performance'])           ->name('performance');
-            Route::get('/',                           [ReportController::class, 'index'])                 ->name('index');
+            Route::get('export', [ReportController::class, 'export'])->name('export');
+            Route::get('export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
+            Route::get('claim/print', [ReportController::class, 'claimPrint'])->name('claim.print');
+            Route::get('claim/export-excel', [ReportController::class, 'claimExportExcel'])->name('claim.export-excel');
+            Route::get('claim', [ReportController::class, 'claim'])->name('claim');
+            Route::get('patient-list/print', [ReportController::class, 'patientListPrint'])->name('patient-list.print');
+            Route::get('patient-list/export-excel', [ReportController::class, 'patientListExportExcel'])->name('patient-list.export-excel');
+            Route::get('patient-list', [ReportController::class, 'patientList'])->name('patient-list');
+            Route::get('summary/print', [ReportController::class, 'summaryPrint'])->name('summary.print');
+            Route::get('summary/export-excel', [ReportController::class, 'summaryExportExcel'])->name('summary.export-excel');
+            Route::get('summary', [ReportController::class, 'summary'])->name('summary');
+            Route::get('performance/print', [ReportController::class, 'performancePrint'])->name('performance.print');
+            Route::get('performance/export-excel', [ReportController::class, 'performanceExportExcel'])->name('performance.export-excel');
+            Route::get('performance', [ReportController::class, 'performance'])->name('performance');
+            Route::get('/', [ReportController::class, 'index'])->name('index');
         });
 
     /*
@@ -163,13 +181,13 @@ Route::middleware('auth')->group(function () {
         ->prefix('users')
         ->name('users.')
         ->group(function () {
-            Route::get('/',               [UserController::class, 'index'])        ->name('index');
-            Route::get('/create',         [UserController::class, 'create'])       ->name('create');
-            Route::post('/',              [UserController::class, 'store'])        ->name('store');
-            Route::get('/{user}/edit',    [UserController::class, 'edit'])         ->name('edit');
-            Route::put('/{user}',         [UserController::class, 'update'])       ->name('update');
-            Route::post('/{user}/toggle', [UserController::class, 'toggleActive']) ->name('toggle-active');
-            Route::delete('/{user}',      [UserController::class, 'destroy'])      ->name('destroy');
+            Route::get('/', [UserController::class, 'index'])->name('index');
+            Route::get('/create', [UserController::class, 'create'])->name('create');
+            Route::post('/', [UserController::class, 'store'])->name('store');
+            Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [UserController::class, 'update'])->name('update');
+            Route::post('/{user}/toggle', [UserController::class, 'toggleActive'])->name('toggle-active');
+            Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         });
 
     /*
@@ -237,7 +255,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:super_admin')
         ->name('settings.')
         ->group(function () {
-            Route::get('/settings',  [SettingsController::class, 'index'])  ->name('index');
-            Route::put('/settings',  [SettingsController::class, 'update']) ->name('update');
+            Route::get('/settings', [SettingsController::class, 'index'])->name('index');
+            Route::put('/settings', [SettingsController::class, 'update'])->name('update');
         });
 });

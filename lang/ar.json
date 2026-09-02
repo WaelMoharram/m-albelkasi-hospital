@@ -410,5 +410,21 @@
     "Role updated successfully.": "تم تحديث الدور بنجاح.",
     "Role deleted successfully.": "تم حذف الدور بنجاح.",
     "Additional Permissions": "صلاحيات إضافية",
-    "Optional — grant this specific user extra permissions on top of their role.": "اختياري — امنح هذا المستخدم بالذات صلاحيات إضافية فوق دوره."
+    "Optional — grant this specific user extra permissions on top of their role.": "اختياري — امنح هذا المستخدم بالذات صلاحيات إضافية فوق دوره.",
+    "Print": "طباعة",
+    "Medical Reports": "التقارير الطبية",
+    "Add New Copy": "إضافة نسخة جديدة",
+    "No reports added yet.": "لم تتم إضافة تقارير بعد.",
+    "Report Date": "تاريخ التقرير",
+    "Attending Doctor": "الطبيب المعالج",
+    "Procedures Done": "ما تم إجراؤه للمريض",
+    "Notes": "ملاحظات",
+    "Exam Type": "نوع الفحص",
+    "Referring Physician": "الطبيب المحول",
+    "Findings": "النتائج",
+    "Conclusion": "الخلاصة",
+    "Added By": "أضيف بواسطة",
+    "Doctor": "الطبيب",
+    "Medical report added successfully.": "تمت إضافة التقرير الطبي بنجاح.",
+    "Radiology report added successfully.": "تمت إضافة تقرير الأشعة بنجاح."
 }

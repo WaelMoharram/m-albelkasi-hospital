@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MedicalReportType;
 use App\Enums\Permission;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Medication;
 use App\Models\Service;
 use App\Services\InvoiceService;
+use App\Services\MedicalReportService;
 use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +25,7 @@ class InvoiceController extends Controller
     public function __construct(
         private readonly InvoiceService $service,
         private readonly ReportService $reportService,
+        private readonly MedicalReportService $medicalReportService,
     ) {}
 
     public function index(Request $request): View
@@ -54,11 +57,11 @@ class InvoiceController extends Controller
         $catalogJson = '{}';
 
         if ($invoice->status === 'draft') {
-            $medications       = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type', 'code']);
-            $labServices       = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $medications = Medication::orderBy('name')->get(['id', 'name', 'unit', 'price', 'type', 'code']);
+            $labServices = Service::where('category', 'lab')->orderBy('name')->get(['id', 'name', 'price', 'code']);
             $radiologyServices = Service::where('category', 'radiology')->orderBy('name')->get(['id', 'name', 'price', 'code']);
-            $suppliesServices  = Service::where('category', 'supplies')->orderBy('name')->get(['id', 'name', 'price', 'code']);
-            $otherServices     = Service::where('category', 'other')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $suppliesServices = Service::where('category', 'supplies')->orderBy('name')->get(['id', 'name', 'price', 'code']);
+            $otherServices = Service::where('category', 'other')->orderBy('name')->get(['id', 'name', 'price', 'code']);
 
             $toMed = fn ($m) => ['id' => $m->id, 'name' => $m->name, 'unit' => $m->unit, 'price' => (float) $m->price, 'code' => $m->code ?? ''];
             $toSvc = fn ($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price, 'code' => $s->code ?? ''];
@@ -68,19 +71,25 @@ class InvoiceController extends Controller
             $allMeds = $medications->map($toMed)->values();
 
             $catalogJson = json_encode([
-                'local_med'    => $allMeds,
+                'local_med' => $allMeds,
                 'imported_med' => $allMeds,
-                'supplies'     => $suppliesServices->map($toSvc)->values(),
-                'lab'          => $labServices->map($toSvc)->values(),
-                'radiology'    => $radiologyServices->map($toSvc)->values(),
-                'other'        => $otherServices->map($toSvc)->values(),
+                'supplies' => $suppliesServices->map($toSvc)->values(),
+                'lab' => $labServices->map($toSvc)->values(),
+                'radiology' => $radiologyServices->map($toSvc)->values(),
+                'other' => $otherServices->map($toSvc)->values(),
             ]);
         }
 
         $admissionIndicators = $this->service->admissionIndicators($invoice);
         $indicators = $this->reportService->getLiveBedAvailability();
 
-        return view('invoices.show', compact('invoice', 'catalogJson', 'admissionIndicators', 'indicators'));
+        $inpatientReports = $this->medicalReportService->forAdmission($invoice->admission, MedicalReportType::Inpatient);
+        $radiologyReports = $this->medicalReportService->forAdmission($invoice->admission, MedicalReportType::Radiology);
+
+        return view('invoices.show', compact(
+            'invoice', 'catalogJson', 'admissionIndicators', 'indicators',
+            'inpatientReports', 'radiologyReports'
+        ));
     }
 
     public function bulkImportExample(): StreamedResponse
@@ -102,6 +111,7 @@ class InvoiceController extends Controller
 
         try {
             $result = $this->service->bulkAddFromFile($invoice, $data['file']);
+
             return response()->json($result);
         } catch (LogicException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -111,46 +121,47 @@ class InvoiceController extends Controller
     public function addItem(Request $request, Invoice $invoice): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
-            'item_type'  => ['required', 'in:medication,lab,radiology,supplies,other'],
-            'itemable_id'=> ['required', 'integer', 'min:1'],
-            'qty'        => ['required', 'integer', 'min:1'],
+            'item_type' => ['required', 'in:medication,lab,radiology,supplies,other'],
+            'itemable_id' => ['required', 'integer', 'min:1'],
+            'qty' => ['required', 'integer', 'min:1'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ]);
 
         try {
             $result = $this->service->addItem($invoice, $data);
-            $item            = $result['main'];
-            $itemMerged      = $result['main_merged'];
-            $itemDelta       = $result['main_delta'];
-            $triggeredItems  = $result['triggered'];
+            $item = $result['main'];
+            $itemMerged = $result['main_merged'];
+            $itemDelta = $result['main_delta'];
+            $triggeredItems = $result['triggered'];
             $triggeredMerged = $result['triggered_merged'];
-            $triggeredDelta  = $result['triggered_delta'];
+            $triggeredDelta = $result['triggered_delta'];
 
             if ($request->expectsJson()) {
                 $formatItem = function (InvoiceItem $i, bool $merged, float $delta) use ($invoice): array {
                     $i->loadMissing('itemable');
                     $unit = $i->itemable instanceof Medication ? ($i->itemable->unit ?? '') : '';
                     $categoryName = '';
-                    $categoryId   = null;
+                    $categoryId = null;
                     if ($i->section === 'daily' && $i->itemable instanceof Service) {
                         $i->itemable->loadMissing('invoiceCategory');
                         $categoryName = $i->itemable->invoiceCategory?->name ?? '';
-                        $categoryId   = $i->itemable->invoice_category_id;
+                        $categoryId = $i->itemable->invoice_category_id;
                     }
+
                     return [
-                        'id'            => $i->id,
-                        'name'          => $i->itemable->name ?? '—',
-                        'unit'          => $unit,
-                        'qty'           => $i->qty,
-                        'unit_price'    => (float) $i->unit_price,
-                        'total'         => (float) $i->total,
-                        'section'       => $i->section,
+                        'id' => $i->id,
+                        'name' => $i->itemable->name ?? '—',
+                        'unit' => $unit,
+                        'qty' => $i->qty,
+                        'unit_price' => (float) $i->unit_price,
+                        'total' => (float) $i->total,
+                        'section' => $i->section,
                         'category_name' => $categoryName,
-                        'category_id'   => $categoryId,
-                        'merged'        => $merged,
-                        'delta_total'   => $delta,
-                        'update_url'    => route('invoices.items.update', [$invoice, $i]),
-                        'destroy_url'   => route('invoices.items.destroy', [$invoice, $i]),
+                        'category_id' => $categoryId,
+                        'merged' => $merged,
+                        'delta_total' => $delta,
+                        'update_url' => route('invoices.items.update', [$invoice, $i]),
+                        'destroy_url' => route('invoices.items.destroy', [$invoice, $i]),
                     ];
                 };
 
@@ -160,9 +171,9 @@ class InvoiceController extends Controller
                 }
 
                 return response()->json([
-                    'item'            => $formatItem($item, $itemMerged, $itemDelta),
+                    'item' => $formatItem($item, $itemMerged, $itemDelta),
                     'triggered_items' => $triggeredFormatted,
-                    'invoice_total'   => (float) $invoice->fresh()->total_amount,
+                    'invoice_total' => (float) $invoice->fresh()->total_amount,
                 ]);
             }
 
@@ -191,7 +202,7 @@ class InvoiceController extends Controller
     public function updateServiceItems(Request $request, Invoice $invoice, Service $service): RedirectResponse
     {
         $data = $request->validate([
-            'qty'        => ['required', 'integer', 'min:1'],
+            'qty' => ['required', 'integer', 'min:1'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -220,7 +231,7 @@ class InvoiceController extends Controller
     public function updateItem(Request $request, Invoice $invoice, InvoiceItem $item): RedirectResponse
     {
         $data = $request->validate([
-            'qty'        => ['required', 'integer', 'min:1'],
+            'qty' => ['required', 'integer', 'min:1'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -249,14 +260,15 @@ class InvoiceController extends Controller
     public function bulkRemoveItems(Request $request, Invoice $invoice): JsonResponse
     {
         $data = $request->validate([
-            'item_ids'      => ['array'],
-            'item_ids.*'    => ['integer'],
-            'service_ids'   => ['array'],
+            'item_ids' => ['array'],
+            'item_ids.*' => ['integer'],
+            'service_ids' => ['array'],
             'service_ids.*' => ['integer'],
         ]);
 
         try {
             $this->service->bulkRemove($invoice, $data['item_ids'] ?? [], $data['service_ids'] ?? []);
+
             return response()->json(['invoice_total' => (float) $invoice->fresh()->total_amount]);
         } catch (LogicException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
