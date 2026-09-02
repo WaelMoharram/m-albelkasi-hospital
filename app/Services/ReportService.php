@@ -279,7 +279,8 @@ class ReportService
             $importedRaw  = (float) $items->where('section', 'imported_med')->sum('total');
             $localMeds    = round($localRaw    * (1 - $localDiscount),    2);
             $importedMeds = round($importedRaw * (1 - $importedDiscount), 2);
-            $grandTotal   = $staySubtotal + $labs + $localMeds + $importedMeds;
+            $supplies     = (float) $items->where('section', 'supplies')->sum('total');
+            $grandTotal   = $staySubtotal + $labs + $localMeds + $importedMeds + $supplies;
             $days         = max(1, (int) $admission->admission_date->diffInDays($admission->discharge_date));
 
             return [
@@ -292,7 +293,7 @@ class ReportService
                 'labs'          => $labs,
                 'local_meds'    => $localMeds,
                 'imported_meds' => $importedMeds,
-                'supplies'      => 0,
+                'supplies'      => $supplies,
                 'grand_total'   => $grandTotal,
                 'per_day'       => $days > 0 ? round($grandTotal / $days, 6) : 0,
             ];
@@ -304,7 +305,7 @@ class ReportService
             'labs'          => round($rows->sum('labs'), 2),
             'local_meds'    => round($rows->sum('local_meds'), 2),
             'imported_meds' => round($rows->sum('imported_meds'), 2),
-            'supplies'      => 0,
+            'supplies'      => round($rows->sum('supplies'), 2),
             'grand_total'   => round($rows->sum('grand_total'), 2),
             'by_category'   => [],
         ];
