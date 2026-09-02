@@ -835,6 +835,25 @@
                                     <a href="{{ route('medical-reports.print', $r) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-printer ms-1"></i> {{ __('Print') }}
                                     </a>
+                                    @hasanyrole('super_admin|admin|data_entry')
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal" data-bs-target="#editInpatientReportModal"
+                                            data-report-url="{{ route('medical-reports.inpatient.update', $r) }}"
+                                            data-report-date="{{ $r->report_date?->format('Y-m-d') }}"
+                                            data-report-doctor="{{ $r->referring_doctor }}"
+                                            data-report-diagnosis="{{ $r->diagnosis }}"
+                                            data-report-procedure="{{ $r->procedure_notes }}"
+                                            data-report-remarks="{{ $r->remarks }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('medical-reports.destroy', $r) }}" class="d-inline"
+                                          onsubmit="return confirm('{{ __('Remove this report?') }}')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endhasanyrole
                                 </td>
                             </tr>
                         @endforeach
@@ -881,6 +900,26 @@
                                     <a href="{{ route('medical-reports.print', $r) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-printer ms-1"></i> {{ __('Print') }}
                                     </a>
+                                    @hasanyrole('super_admin|admin|data_entry')
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal" data-bs-target="#editRadiologyReportModal"
+                                            data-report-url="{{ route('medical-reports.radiology.update', $r) }}"
+                                            data-report-date="{{ $r->report_date?->format('Y-m-d') }}"
+                                            data-report-exam-type="{{ $r->exam_type }}"
+                                            data-report-doctor="{{ $r->referring_doctor }}"
+                                            data-report-diagnosis="{{ $r->diagnosis }}"
+                                            data-report-procedure="{{ $r->procedure_notes }}"
+                                            data-report-remarks="{{ $r->remarks }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('medical-reports.destroy', $r) }}" class="d-inline"
+                                          onsubmit="return confirm('{{ __('Remove this report?') }}')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endhasanyrole
                                 </td>
                             </tr>
                         @endforeach
@@ -980,7 +1019,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{{ __('Report Date') }}</label>
-                            <input type="date" name="report_date" class="form-control" value="{{ now()->toDateString() }}">
+                            <input type="date" name="report_date" class="form-control" value="{{ $admission->admission_date->format('Y-m-d') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{{ __('Attending Doctor') }}</label>
@@ -1022,7 +1061,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{{ __('Report Date') }}</label>
-                            <input type="date" name="report_date" class="form-control" value="{{ now()->toDateString() }}">
+                            <input type="date" name="report_date" class="form-control" value="{{ $admission->admission_date->format('Y-m-d') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{{ __('Exam Type') }}</label>
@@ -1054,6 +1093,117 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="editInpatientReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editInpatientReportForm" method="POST">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ __('Edit') }} — {{ \App\Enums\MedicalReportType::Inpatient->label() }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Report Date') }}</label>
+                            <input type="date" name="report_date" id="edit_inpatient_report_date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Attending Doctor') }}</label>
+                            <input type="text" name="referring_doctor" id="edit_inpatient_referring_doctor" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Diagnosis') }}</label>
+                            <textarea name="diagnosis" id="edit_inpatient_diagnosis" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Procedures Done') }}</label>
+                            <textarea name="procedure_notes" id="edit_inpatient_procedure_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Notes') }}</label>
+                            <textarea name="remarks" id="edit_inpatient_remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('editInpatientReportModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('editInpatientReportForm').action = btn.dataset.reportUrl;
+    document.getElementById('edit_inpatient_report_date').value = btn.dataset.reportDate || '';
+    document.getElementById('edit_inpatient_referring_doctor').value = btn.dataset.reportDoctor || '';
+    document.getElementById('edit_inpatient_diagnosis').value = btn.dataset.reportDiagnosis || '';
+    document.getElementById('edit_inpatient_procedure_notes').value = btn.dataset.reportProcedure || '';
+    document.getElementById('edit_inpatient_remarks').value = btn.dataset.reportRemarks || '';
+});
+</script>
+
+<div class="modal fade" id="editRadiologyReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editRadiologyReportForm" method="POST">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ __('Edit') }} — {{ \App\Enums\MedicalReportType::Radiology->label() }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Report Date') }}</label>
+                            <input type="date" name="report_date" id="edit_radiology_report_date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('Exam Type') }}</label>
+                            <input type="text" name="exam_type" id="edit_radiology_exam_type" class="form-control" placeholder="Echo, X-Ray Chest, CT...">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Referring Physician') }}</label>
+                            <input type="text" name="referring_doctor" id="edit_radiology_referring_doctor" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Diagnosis') }}</label>
+                            <textarea name="diagnosis" id="edit_radiology_diagnosis" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Findings') }}</label>
+                            <textarea name="procedure_notes" id="edit_radiology_procedure_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('Conclusion') }}</label>
+                            <textarea name="remarks" id="edit_radiology_remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('editRadiologyReportModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('editRadiologyReportForm').action = btn.dataset.reportUrl;
+    document.getElementById('edit_radiology_report_date').value = btn.dataset.reportDate || '';
+    document.getElementById('edit_radiology_exam_type').value = btn.dataset.reportExamType || '';
+    document.getElementById('edit_radiology_referring_doctor').value = btn.dataset.reportDoctor || '';
+    document.getElementById('edit_radiology_diagnosis').value = btn.dataset.reportDiagnosis || '';
+    document.getElementById('edit_radiology_procedure_notes').value = btn.dataset.reportProcedure || '';
+    document.getElementById('edit_radiology_remarks').value = btn.dataset.reportRemarks || '';
+});
+</script>
 @endhasanyrole
 
 {{-- ── Inline Add AJAX Script ───────────────────────────────────────────── --}}

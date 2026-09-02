@@ -130,8 +130,8 @@ Route::middleware('auth')->group(function () {
     /*
     |----------------------------------------------------------------------
     | Medical Reports (per admission) — inpatient report, radiology report.
-    |  - add        → data_entry and above
-    |  - print       → all auth (open), fixed path registered separately, no wildcard clash
+    |  - add / edit / delete → data_entry and above
+    |  - print                → all auth (open), fixed path registered separately, no wildcard clash
     |----------------------------------------------------------------------
     */
     Route::middleware('role:super_admin|admin|data_entry')->group(function () {
@@ -139,6 +139,12 @@ Route::middleware('auth')->group(function () {
             ->name('medical-reports.inpatient.store');
         Route::post('admissions/{admission}/medical-reports/radiology', [MedicalReportController::class, 'storeRadiology'])
             ->name('medical-reports.radiology.store');
+        Route::put('medical-reports/{medicalReport}/inpatient', [MedicalReportController::class, 'updateInpatient'])
+            ->name('medical-reports.inpatient.update');
+        Route::put('medical-reports/{medicalReport}/radiology', [MedicalReportController::class, 'updateRadiology'])
+            ->name('medical-reports.radiology.update');
+        Route::delete('medical-reports/{medicalReport}', [MedicalReportController::class, 'destroy'])
+            ->name('medical-reports.destroy');
     });
 
     Route::get('medical-reports/{medicalReport}/print', [MedicalReportController::class, 'print'])

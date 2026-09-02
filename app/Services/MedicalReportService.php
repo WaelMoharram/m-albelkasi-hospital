@@ -25,4 +25,16 @@ class MedicalReportService
             ->latest()
             ->get();
     }
+
+    public function update(MedicalReport $report, array $data): MedicalReport
+    {
+        $report->update($data);
+
+        return $report;
+    }
+
+    public function delete(MedicalReport $report): void
+    {
+        $report->delete();
+    }
 }

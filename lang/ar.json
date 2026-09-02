@@ -426,5 +426,9 @@
     "Added By": "أضيف بواسطة",
     "Doctor": "الطبيب",
     "Medical report added successfully.": "تمت إضافة التقرير الطبي بنجاح.",
-    "Radiology report added successfully.": "تمت إضافة تقرير الأشعة بنجاح."
+    "Radiology report added successfully.": "تمت إضافة تقرير الأشعة بنجاح.",
+    "Medical report updated successfully.": "تم تحديث التقرير الطبي بنجاح.",
+    "Radiology report updated successfully.": "تم تحديث تقرير الأشعة بنجاح.",
+    "Report removed.": "تم حذف التقرير.",
+    "Remove this report?": "حذف هذا التقرير؟"
 }
