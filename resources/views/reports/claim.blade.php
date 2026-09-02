@@ -99,7 +99,7 @@
                         <td>{{ $row['labs'] > 0 ? number_format($row['labs'], 2) : '—' }}</td>
                         <td>{{ $row['local_meds'] > 0 ? number_format($row['local_meds'], 2) : '—' }}</td>
                         <td>{{ $row['imported_meds'] > 0 ? number_format($row['imported_meds'], 2) : '—' }}</td>
-                        <td>—</td>
+                        <td>{{ $row['supplies'] > 0 ? number_format($row['supplies'], 2) : '—' }}</td>
                         <td><strong>{{ number_format($row['grand_total'], 2) }}</strong></td>
                         <td class="text-muted small">{{ number_format($row['per_day'], 2) }}</td>
                     </tr>
@@ -116,7 +116,7 @@
                         <td>{{ number_format($data['totals']['labs'], 2) }}</td>
                         <td>{{ number_format($data['totals']['local_meds'], 2) }}</td>
                         <td>{{ number_format($data['totals']['imported_meds'], 2) }}</td>
-                        <td>—</td>
+                        <td>{{ number_format($data['totals']['supplies'], 2) }}</td>
                         <td>{{ number_format($data['totals']['grand_total'], 2) }}</td>
                         <td></td>
                     </tr>
