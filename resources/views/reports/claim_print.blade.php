@@ -16,12 +16,14 @@ body {
 }
 .page-break { page-break-before: always; }
 
+.print-toolbar { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; }
 .no-print {
-    position: fixed; top: 10px; left: 10px; z-index: 10;
     background: #333; color: #fff; border: none; border-radius: 4px;
     padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+    text-decoration: none; display: inline-block;
 }
-@media print { .no-print { display: none !important; } }
+.no-print.excel-btn { background: #198754; }
+@media print { .print-toolbar { display: none !important; } }
 
 /* ── Header ─────────────────────────────── */
 .header-wrap {
@@ -90,7 +92,10 @@ td.name { text-align: right; padding-right: 3px; }
     $sigDirector  = $settings->get('invoice_approved_by', 'مدير المستشفى');
 @endphp
 
-<button type="button" class="no-print" onclick="window.print()">طباعة</button>
+<div class="print-toolbar">
+    <button type="button" class="no-print" onclick="window.print()">طباعة</button>
+    <a class="no-print excel-btn" href="{{ route('reports.claim.export-excel', ['month' => $month, 'year' => $year, 'insurance_company_id' => $insurance->id]) }}">تصدير Excel</a>
+</div>
 
 @foreach ($chunks as $pageIndex => $chunk)
     @if ($pageIndex > 0)

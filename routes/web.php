@@ -137,16 +137,21 @@ Route::middleware('auth')->group(function () {
         ->prefix('reports')
         ->name('reports.')
         ->group(function () {
-            Route::get('export',              [ReportController::class, 'export'])           ->name('export');
-            Route::get('claim/print',         [ReportController::class, 'claimPrint'])        ->name('claim.print');
-            Route::get('claim',               [ReportController::class, 'claim'])             ->name('claim');
-            Route::get('patient-list/print',  [ReportController::class, 'patientListPrint'])  ->name('patient-list.print');
-            Route::get('patient-list',        [ReportController::class, 'patientList'])       ->name('patient-list');
-            Route::get('summary/print',       [ReportController::class, 'summaryPrint'])      ->name('summary.print');
-            Route::get('summary',             [ReportController::class, 'summary'])            ->name('summary');
-            Route::get('performance/print',   [ReportController::class, 'performancePrint'])  ->name('performance.print');
-            Route::get('performance',         [ReportController::class, 'performance'])        ->name('performance');
-            Route::get('/',                   [ReportController::class, 'index'])              ->name('index');
+            Route::get('export',                     [ReportController::class, 'export'])                ->name('export');
+            Route::get('export-excel',                [ReportController::class, 'exportExcel'])           ->name('export-excel');
+            Route::get('claim/print',                 [ReportController::class, 'claimPrint'])            ->name('claim.print');
+            Route::get('claim/export-excel',          [ReportController::class, 'claimExportExcel'])      ->name('claim.export-excel');
+            Route::get('claim',                       [ReportController::class, 'claim'])                 ->name('claim');
+            Route::get('patient-list/print',          [ReportController::class, 'patientListPrint'])      ->name('patient-list.print');
+            Route::get('patient-list/export-excel',   [ReportController::class, 'patientListExportExcel']) ->name('patient-list.export-excel');
+            Route::get('patient-list',                [ReportController::class, 'patientList'])           ->name('patient-list');
+            Route::get('summary/print',               [ReportController::class, 'summaryPrint'])          ->name('summary.print');
+            Route::get('summary/export-excel',        [ReportController::class, 'summaryExportExcel'])    ->name('summary.export-excel');
+            Route::get('summary',                     [ReportController::class, 'summary'])               ->name('summary');
+            Route::get('performance/print',           [ReportController::class, 'performancePrint'])      ->name('performance.print');
+            Route::get('performance/export-excel',    [ReportController::class, 'performanceExportExcel']) ->name('performance.export-excel');
+            Route::get('performance',                 [ReportController::class, 'performance'])           ->name('performance');
+            Route::get('/',                           [ReportController::class, 'index'])                 ->name('index');
         });
 
     /*

@@ -7,12 +7,14 @@
 body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 9pt; direction: rtl; color: #000; }
 @page { size: A4 portrait; margin: 15mm 12mm; }
 
+.print-toolbar { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; }
 .no-print {
-    position: fixed; top: 10px; left: 10px; z-index: 10;
     background: #333; color: #fff; border: none; border-radius: 4px;
     padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+    text-decoration: none; display: inline-block;
 }
-@media print { .no-print { display: none !important; } }
+.no-print.excel-btn { background: #198754; }
+@media print { .print-toolbar { display: none !important; } }
 
 .header-wrap  { display: table; width: 100%; margin-bottom: 6px; }
 .header-logo  { display: table-cell; width: 55px; vertical-align: middle; }
@@ -53,7 +55,10 @@ table.data td { text-align: center; font-weight: bold; width: 30%; }
     $sigDirector  = $settings->get('invoice_approved_by', 'مدير المستشفى');
 @endphp
 
-<button type="button" class="no-print" onclick="window.print()">طباعة</button>
+<div class="print-toolbar">
+    <button type="button" class="no-print" onclick="window.print()">طباعة</button>
+    <a class="no-print excel-btn" href="{{ route('reports.performance.export-excel', ['month' => $month, 'year' => $year]) }}">تصدير Excel</a>
+</div>
 
 <div class="header-wrap">
     <div class="header-logo">

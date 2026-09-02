@@ -8,6 +8,7 @@ use App\Models\InvoiceCategory;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class ReportService
 {
@@ -340,5 +341,225 @@ class ReportService
             'daily'        => $sum('daily'),
             'grand_total'  => $sum('grand_total'),
         ];
+    }
+
+    // ── Excel exports ─────────────────────────────────────────────────────────
+
+    public function exportMonthlySpreadsheet(int $month, int $year): Spreadsheet
+    {
+        $rows   = $this->monthlyReport($month, $year);
+        $totals = $this->columnTotals($rows);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        $headers = ['#', 'المريض', 'الرقم القومي', 'شركة التأمين', 'تاريخ الإدخال', 'تاريخ الخروج',
+            'أدوية محلية', 'أدوية مستوردة', 'تحاليل مخبرية', 'أشعة', 'رسوم يومية', 'الإجمالي الكلي'];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:L1')->getFont()->setBold(true);
+
+        $row = 2;
+        foreach ($rows as $idx => $r) {
+            $sheet->fromArray([
+                $idx + 1,
+                $r['patient']->name,
+                $r['patient']->national_id,
+                $r['insurance']->name ?? '—',
+                $r['admission']->admission_date->format('d/m/Y'),
+                $r['admission']->discharge_date?->format('d/m/Y') ?? '—',
+                $r['local_med'],
+                $r['imported_med'],
+                $r['lab'],
+                $r['radiology'],
+                $r['daily'],
+                $r['grand_total'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->fromArray(['', '', '', '', '', 'الإجمالي',
+            $totals['local_med'], $totals['imported_med'], $totals['lab'],
+            $totals['radiology'], $totals['daily'], $totals['grand_total'],
+        ], null, "A{$row}");
+        $sheet->getStyle("A{$row}:L{$row}")->getFont()->setBold(true);
+
+        foreach (range('A', 'L') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return $spreadsheet;
+    }
+
+    public function exportClaimSpreadsheet(int $month, int $year, int $insuranceCompanyId): Spreadsheet
+    {
+        $data       = $this->getClaimData($month, $year, $insuranceCompanyId);
+        $categories = $data['categories'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        $headers = ['#', 'اسم المنتفع', 'بطاقة صحية', 'تاريخ الدخول', 'تاريخ الخروج', 'المدة'];
+        foreach ($categories as $cat) {
+            $headers[] = $cat->name;
+        }
+        $headers = array_merge($headers, [
+            'إجمالي الإقامة', 'تحاليل', 'أدوية محلية بعد خصم', 'أدوية مستوردة بعد خصم',
+            'مستلزمات', 'الإجمالي العام', 'المعدل اليومي',
+        ]);
+        $lastCol = $this->columnLetter(count($headers));
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+
+        $row = 2;
+        foreach ($data['rows'] as $r) {
+            $values = [
+                $r['seq'],
+                $r['patient']->name,
+                $r['admission']->referral_number ?? '—',
+                $r['admission']->admission_date->format('d/m/Y'),
+                $r['admission']->discharge_date?->format('d/m/Y') ?? '—',
+                $r['days'],
+            ];
+            foreach ($categories as $cat) {
+                $values[] = $r['by_category'][$cat->id] ?? 0;
+            }
+            $values = array_merge($values, [
+                $r['stay_subtotal'], $r['labs'], $r['local_meds'], $r['imported_meds'],
+                $r['supplies'], $r['grand_total'], $r['per_day'],
+            ]);
+            $sheet->fromArray($values, null, "A{$row}");
+            $row++;
+        }
+
+        $totals       = $data['totals'];
+        $totalsValues = ['', '', '', '', '', $totals['days']];
+        foreach ($categories as $cat) {
+            $totalsValues[] = $totals['by_category'][$cat->id] ?? 0;
+        }
+        $totalsValues = array_merge($totalsValues, [
+            $totals['stay_subtotal'], $totals['labs'], $totals['local_meds'], $totals['imported_meds'],
+            $totals['supplies'], $totals['grand_total'], '',
+        ]);
+        $sheet->fromArray($totalsValues, null, "A{$row}");
+        $sheet->getStyle("A{$row}:{$lastCol}{$row}")->getFont()->setBold(true);
+
+        foreach (range(1, count($headers)) as $i) {
+            $sheet->getColumnDimension($this->columnLetter($i))->setAutoSize(true);
+        }
+
+        return $spreadsheet;
+    }
+
+    public function exportPatientListSpreadsheet(int $month, int $year, int $insuranceCompanyId): Spreadsheet
+    {
+        $data = $this->getPatientListData($month, $year, $insuranceCompanyId);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        $headers = ['م', 'اسم المريض', 'تاريخ الميلاد', 'السن', 'تاريخ الدخول', 'تاريخ الخروج',
+            'مدة الإقامة', 'رقم خ. التحويل', 'جهة التحويل', 'قيمة الفاتورة', 'المعدل اليومي'];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+
+        $row = 2;
+        foreach ($data['rows'] as $r) {
+            $sheet->fromArray([
+                $r['seq'],
+                $r['patient']->name,
+                $r['patient']->dob?->format('d/m/Y') ?? '—',
+                $r['age'] ?? '—',
+                $r['admission']->admission_date->format('d/m/Y'),
+                $r['admission']->discharge_date?->format('d/m/Y') ?? '—',
+                $r['days'],
+                $r['referral_number'] ?? '—',
+                $r['referral_source'] ?? '—',
+                $r['invoice_total'],
+                $r['per_day'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->fromArray(['', '', '', '', '', '', $data['totals']['days'], '', '', $data['totals']['invoice_total'], ''], null, "A{$row}");
+        $sheet->getStyle("A{$row}:K{$row}")->getFont()->setBold(true);
+
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return $spreadsheet;
+    }
+
+    public function exportSummarySpreadsheet(int $month, int $year, int $insuranceCompanyId): Spreadsheet
+    {
+        $data = $this->getSummaryData($month, $year, $insuranceCompanyId);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        $headers = ['الكشف', 'نوع الخدمة', 'قانون المحاسبة', 'عدد الحالات', 'عدد أيام الإقامة', 'المبلغ'];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+
+        $row = 2;
+        foreach ($data['rows'] as $r) {
+            $sheet->fromArray([
+                $r['seq'], $r['service_type'], $r['law'], $r['count'], $r['days'], $r['amount'],
+            ], null, "A{$row}");
+            $row++;
+        }
+
+        $sheet->fromArray(['', '', 'الإجمالي', $data['totals']['count'], $data['totals']['days'], $data['totals']['amount']], null, "A{$row}");
+        $sheet->getStyle("A{$row}:F{$row}")->getFont()->setBold(true);
+
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return $spreadsheet;
+    }
+
+    public function exportPerformanceSpreadsheet(int $month, int $year): Spreadsheet
+    {
+        $data = $this->getPerformanceData($month, $year);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        $sheet->fromArray(['المؤشر', 'القيمة'], null, 'A1');
+        $sheet->getStyle('A1:B1')->getFont()->setBold(true);
+
+        $indicators = [
+            'عدد أيام الشهر'                                    => $data['days_in_month'],
+            'عدد أسرة الرعاية المركزة'                          => $data['icu_beds'],
+            'إجمالي أيام الإقامة المتاحة خلال الشهر'            => $data['available_days'],
+            'عدد المرضى خلال الشهر'                             => $data['patient_count'],
+            'عدد أيام إقامة المرضى بالرعاية المركزة'            => $data['stay_days'],
+            'عدد الأيام المتاحة المتبقية خلال الشهر'            => $data['remaining_days'],
+            'عدد الوفيات خلال 24 ساعة من الدخول للرعاية'        => $data['deaths_24h'],
+            'عدد الوفيات بالرعاية المركزة'                      => $data['deaths'],
+            'متوسط التردد اليومي على الرعاية المركزة'           => $data['avg_daily_freq'],
+            'معدل وفيات الرعاية المركزة'                        => $data['mortality_rate'],
+            'متوسط فترة الإقامة بالرعاية المركزة'               => $data['avg_stay'],
+            'معدل دوران السرير بالرعاية المركزة'                => $data['bed_turnover'],
+            'معدل إشغال أسرة الرعاية المركزة'                   => $data['occupancy_rate'],
+        ];
+
+        $row = 2;
+        foreach ($indicators as $label => $value) {
+            $sheet->fromArray([$label, $value], null, "A{$row}");
+            $row++;
+        }
+
+        foreach (['A', 'B'] as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return $spreadsheet;
+    }
+
+    private function columnLetter(int $index): string
+    {
+        return \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index);
     }
 }

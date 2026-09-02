@@ -17,12 +17,14 @@
 
         @page { size: A3 landscape; margin: 10mm 8mm; }
 
+        .print-toolbar { position: fixed; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; }
         .no-print {
-            position: fixed; top: 10px; left: 10px; z-index: 10;
             background: #0d6efd; color: #fff; border: none; border-radius: 4px;
             padding: 8px 16px; font-size: 10pt; font-family: inherit; cursor: pointer;
+            text-decoration: none; display: inline-block;
         }
-        @media print { .no-print { display: none !important; } }
+        .no-print.excel-btn { background: #198754; }
+        @media print { .print-toolbar { display: none !important; } }
 
         /* ── Fixed header — repeats on every page ───────────────────────── */
         .page-header {
@@ -215,7 +217,10 @@
     $totalRows   = $rows->count();
 @endphp
 
-<button type="button" class="no-print" onclick="window.print()">طباعة</button>
+<div class="print-toolbar">
+    <button type="button" class="no-print" onclick="window.print()">طباعة</button>
+    <a class="no-print excel-btn" href="{{ route('reports.export-excel', ['month' => $month, 'year' => $year]) }}">تصدير Excel</a>
+</div>
 
 {{-- ── Page header — repeats on every printed page (position: fixed) ───── --}}
 <div class="page-header">
