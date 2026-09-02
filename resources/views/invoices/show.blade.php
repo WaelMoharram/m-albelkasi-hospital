@@ -377,6 +377,22 @@
                 </button>
             </li>
             @endforeach
+
+            {{-- Medical report tabs --}}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-report-inpatient"
+                        type="button" role="tab">
+                    {{ \App\Enums\MedicalReportType::Inpatient->label() }}
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $inpatientReports->isEmpty() ? 'd-none' : '' }}">{{ $inpatientReports->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-report-radiology"
+                        type="button" role="tab">
+                    {{ \App\Enums\MedicalReportType::Radiology->label() }}
+                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $radiologyReports->isEmpty() ? 'd-none' : '' }}">{{ $radiologyReports->count() }}</span>
+                </button>
+            </li>
         </ul>
     </div>
 
@@ -783,116 +799,9 @@
             </div>
         </div>
         @endforeach
-    </div>
-
-    @php
-        $dailyItems = $allSvcItems;
-        $medDiscounts = $invoice->medicationDiscountedSubtotals();
-    @endphp
-
-    {{-- Grand total --}}
-    <style>
-        .gt-table td { border-bottom: 0; }
-        .gt-table tr + tr td { border-top: 1px solid #dee2e6; }
-        .discount-amount {
-            display: inline-block;
-            background: #cfe2ff;
-            color: #052c65;
-            font-weight: 700;
-            padding: 0.1rem 0.5rem;
-            border-radius: 4px;
-        }
-    </style>
-    <div class="card-body py-3">
-        <div class="row justify-content-start">
-            <div class="col-md-5">
-                <table class="table table-sm mb-0 gt-table">
-                    @if($dailyItems->isNotEmpty())
-                    <tr>
-                        <td class="text-muted small">{{ __('Daily Charges') }}</td>
-                        <td class="text-end fw-medium">{{ number_format($dailyItems->sum('total'), 2) }}</td>
-                    </tr>
-                    @endif
-                    @foreach ($sections as $sectionKey => $meta)
-                    @if(in_array($sectionKey, ['local_med', 'imported_med']))
-                        @php
-                            $isLocal = $sectionKey === 'local_med';
-                            $raw     = $isLocal ? $medDiscounts['local_raw']    : $medDiscounts['imported_raw'];
-                            $pct     = $isLocal ? $medDiscounts['local_discount_pct'] : $medDiscounts['imported_discount_pct'];
-                            $after   = $isLocal ? $medDiscounts['local_after'] : $medDiscounts['imported_after'];
-                        @endphp
-                        @if($raw > 0)
-                        <tr>
-                            <td class="text-muted small">
-                                {{ $meta['subtotal_label'] }}
-                                @if($pct > 0)<br><span class="text-muted" style="font-size: .75rem;">{{ __('after :pct% discount', ['pct' => number_format($pct, 0)]) }}</span>@endif
-                            </td>
-                            <td class="text-end">
-                                @if($pct > 0)
-                                <div class="text-muted text-decoration-line-through" style="font-size: .75rem;">{{ number_format($raw, 2) }}</div>
-                                <div class="discount-amount">{{ number_format($after, 2) }}</div>
-                                @else
-                                <div class="fw-medium">{{ number_format($after, 2) }}</div>
-                                @endif
-                            </td>
-                        </tr>
-                        @endif
-                    @else
-                    @php $sectionTotal = ($grouped[$sectionKey] ?? collect())->sum('total'); @endphp
-                    @if($sectionTotal > 0)
-                    <tr>
-                        <td class="text-muted small">{{ $meta['subtotal_label'] }}</td>
-                        <td class="text-end fw-medium">{{ number_format($sectionTotal, 2) }}</td>
-                    </tr>
-                    @endif
-                    @endif
-                    @endforeach
-                    <tr class="border-top">
-                        <td class="fw-bold pt-2 border-0">{{ __('GRAND TOTAL') }}</td>
-                        <td class="text-end fw-bold fs-5 pt-2 border-0" id="grand-total-display">
-                            {{ number_format($invoice->total_amount, 2) }}
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-{{-- ── Medical Reports ─────────────────────────────────────────────────── --}}
-<style>
-#medicalReportsTabs { --bs-nav-tabs-link-active-color: #212529; }
-#medicalReportsTabs .nav-link          { color: #6c757d !important; }
-#medicalReportsTabs .nav-link.active   { color: #212529 !important; font-weight: 600; }
-#medicalReportsTabs .nav-link:hover:not(.active) { color: #343a40 !important; }
-</style>
-
-<div class="card border-0 shadow-sm mt-3">
-    <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
-        <h6 class="mb-2 text-muted">{{ __('Medical Reports') }}</h6>
-        <ul class="nav nav-tabs card-header-tabs" id="medicalReportsTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-report-inpatient"
-                        type="button" role="tab">
-                    {{ \App\Enums\MedicalReportType::Inpatient->label() }}
-                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $inpatientReports->isEmpty() ? 'd-none' : '' }}">{{ $inpatientReports->count() }}</span>
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-report-radiology"
-                        type="button" role="tab">
-                    {{ \App\Enums\MedicalReportType::Radiology->label() }}
-                    <span class="badge bg-secondary-subtle text-secondary ms-1 {{ $radiologyReports->isEmpty() ? 'd-none' : '' }}">{{ $radiologyReports->count() }}</span>
-                </button>
-            </li>
-        </ul>
-    </div>
-
-    <div class="tab-content">
 
         {{-- ── تقرير طبي لمريض داخلي ─────────────────────────────────────── --}}
-        <div class="tab-pane fade show active p-3" id="tab-report-inpatient" role="tabpanel">
+        <div class="tab-pane fade p-3" id="tab-report-inpatient" role="tabpanel">
             @hasanyrole('super_admin|admin|data_entry')
             <div class="d-flex justify-content-end mb-2">
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInpatientReportModal">
@@ -980,8 +889,81 @@
                 </div>
             @endif
         </div>
-
     </div>
+
+    @php
+        $dailyItems = $allSvcItems;
+        $medDiscounts = $invoice->medicationDiscountedSubtotals();
+    @endphp
+
+    {{-- Grand total --}}
+    <style>
+        .gt-table td { border-bottom: 0; }
+        .gt-table tr + tr td { border-top: 1px solid #dee2e6; }
+        .discount-amount {
+            display: inline-block;
+            background: #cfe2ff;
+            color: #052c65;
+            font-weight: 700;
+            padding: 0.1rem 0.5rem;
+            border-radius: 4px;
+        }
+    </style>
+    <div class="card-body py-3">
+        <div class="row justify-content-start">
+            <div class="col-md-5">
+                <table class="table table-sm mb-0 gt-table">
+                    @if($dailyItems->isNotEmpty())
+                    <tr>
+                        <td class="text-muted small">{{ __('Daily Charges') }}</td>
+                        <td class="text-end fw-medium">{{ number_format($dailyItems->sum('total'), 2) }}</td>
+                    </tr>
+                    @endif
+                    @foreach ($sections as $sectionKey => $meta)
+                    @if(in_array($sectionKey, ['local_med', 'imported_med']))
+                        @php
+                            $isLocal = $sectionKey === 'local_med';
+                            $raw     = $isLocal ? $medDiscounts['local_raw']    : $medDiscounts['imported_raw'];
+                            $pct     = $isLocal ? $medDiscounts['local_discount_pct'] : $medDiscounts['imported_discount_pct'];
+                            $after   = $isLocal ? $medDiscounts['local_after'] : $medDiscounts['imported_after'];
+                        @endphp
+                        @if($raw > 0)
+                        <tr>
+                            <td class="text-muted small">
+                                {{ $meta['subtotal_label'] }}
+                                @if($pct > 0)<br><span class="text-muted" style="font-size: .75rem;">{{ __('after :pct% discount', ['pct' => number_format($pct, 0)]) }}</span>@endif
+                            </td>
+                            <td class="text-end">
+                                @if($pct > 0)
+                                <div class="text-muted text-decoration-line-through" style="font-size: .75rem;">{{ number_format($raw, 2) }}</div>
+                                <div class="discount-amount">{{ number_format($after, 2) }}</div>
+                                @else
+                                <div class="fw-medium">{{ number_format($after, 2) }}</div>
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
+                    @else
+                    @php $sectionTotal = ($grouped[$sectionKey] ?? collect())->sum('total'); @endphp
+                    @if($sectionTotal > 0)
+                    <tr>
+                        <td class="text-muted small">{{ $meta['subtotal_label'] }}</td>
+                        <td class="text-end fw-medium">{{ number_format($sectionTotal, 2) }}</td>
+                    </tr>
+                    @endif
+                    @endif
+                    @endforeach
+                    <tr class="border-top">
+                        <td class="fw-bold pt-2 border-0">{{ __('GRAND TOTAL') }}</td>
+                        <td class="text-end fw-bold fs-5 pt-2 border-0" id="grand-total-display">
+                            {{ number_format($invoice->total_amount, 2) }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @hasanyrole('super_admin|admin|data_entry')
